@@ -1,5 +1,7 @@
 // pages/api/callback.js
-
+export default async function handler(req, res) {
+  return res.status(200).json({ message: "Sí se ejecutó este archivo de verdad" })
+}
 export default async function handler(req, res) {
   const code = req.query.code;
 
