@@ -2,8 +2,8 @@
 
 export default async function handler(req, res) {
     const code = req.query.code
-    const client_id = "TU_CLIENT_ID_AQUÍ"
-    const client_secret = "TU_CLIENT_SECRET_AQUÍ"
+    const client_id = "A7ZaJoVv7FN2UkMJ7JWX"
+    const client_secret = "T6JynZ2hFdbGSIBXy78wGowuiEj42HBJa79YfH1VPOn5XItNsg_vOgw=="
     const redirect_uri = "https://puerto-copy-site.vercel.app/api/callback"
   
     const tokenResponse = await fetch("https://api.loyverse.com/oauth/token", {
