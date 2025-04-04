@@ -1,11 +1,11 @@
 // pages/api/login.js
 
 export default function handler(req, res) {
-    const client_id = "A7ZaJoVv7FN2UkMJ7JWX" // ⬅️ reemplaza esto
+    const client_id = "A7ZaJoVv7FN2UkMJ7JWX"
     const redirect_uri = "https://puerto-copy-site.vercel.app/api/callback"
   
-    // ✅ Scopes válidos para leer tickets y clientes
-    const scope = "receipt.read customer.read store.read"
+    // ✅ Scopes válidos con formato correcto desde la documentación oficial
+    const scope = "RECEIPTS_READ CUSTOMERS_READ"
   
     const authURL = `https://api.loyverse.com/oauth/authorize` +
       `?response_type=code` +
