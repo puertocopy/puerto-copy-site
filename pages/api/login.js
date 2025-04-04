@@ -5,6 +5,7 @@ export default function handler(req, res) {
     const redirect_uri = "https://puerto-copy-site.vercel.app/api/callback"
   
     // ✅ Scopes válidos con formato correcto desde la documentación oficial
+    // ✅ Scopes válidos con formato correcto desde la documentación oficial
     const scope = "RECEIPTS_READ CUSTOMERS_READ"
   
     const authURL = `https://api.loyverse.com/oauth/authorize` +

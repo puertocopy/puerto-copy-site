@@ -1,15 +1,12 @@
-// pages/api/callback.js
-
 export default async function handler(req, res) {
   const code = req.query.code
-  const client_id = process.env.LOYVERSE_CLIENT_ID
-  const client_secret = process.env.LOYVERSE_CLIENT_SECRET
+
+  // ⚠️ Inserta directamente los valores aquí (temporalmente)
+  const client_id = "A7ZaJoVv7FN2UkMJ7JWX"
+  const client_secret = "6JynZ2hFdbGSIBXy78wGowuiEj42HBJa79YfH1VPOn5XItNsg_vOgw=="
   const redirect_uri = "https://puerto-copy-site.vercel.app/api/callback"
 
   const tokenURL = "https://api.loyverse.com/oauth/token"
-
-  console.log("🎯 CLIENT_ID:", client_id)
-  console.log("🔐 CLIENT_SECRET:", client_secret)
 
   try {
     const response = await fetch(tokenURL, {
@@ -38,7 +35,7 @@ export default async function handler(req, res) {
     }
 
   } catch (error) {
-    console.error("❌ Error al obtener token:", error)
+    console.error("❌ Error:", error)
     res.status(500).json({ success: false, error: error.message })
   }
 }
