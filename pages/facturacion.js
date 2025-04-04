@@ -1,4 +1,5 @@
-import Navbar from "../components/Navbar"
+// pages/facturacion.js
+import Navbar from "../components/Navbar";
 
 export default function Facturacion() {
   return (
@@ -6,15 +7,20 @@ export default function Facturacion() {
       <Navbar />
       <section className="py-16 px-6 bg-gray-100">
         <h2 className="text-3xl font-semibold mb-6 text-center">Generar Factura</h2>
-        <div className="max-w-xl mx-auto space-y-4 bg-white p-6 rounded shadow">
-          <input type="text" placeholder="Número de ticket" className="w-full border p-2 rounded" />
-          <input type="text" placeholder="RFC" className="w-full border p-2 rounded" />
-          <input type="text" placeholder="Razón social" className="w-full border p-2 rounded" />
-          <input type="text" placeholder="Uso de CFDI" className="w-full border p-2 rounded" />
-          <input type="email" placeholder="Correo electrónico" className="w-full border p-2 rounded" />
-          <button className="bg-blue-600 text-white px-4 py-2 rounded w-full">Generar factura</button>
+        <div className="max-w-4xl mx-auto shadow-lg p-4 bg-white rounded-lg">
+          <iframe
+            src="https://docs.google.com/forms/d/e/1FAIpQLSclHDoFDAUl--M53kvbbqQqkt8QOhqcpTl7rTrPSCHr7uI_yA/viewform?embedded=true"
+            width="100%"
+            height="2858"
+            frameBorder="0"
+            marginHeight="0"
+            marginWidth="0"
+            title="Formulario de facturación"
+          >
+            Cargando…
+          </iframe>
         </div>
       </section>
     </div>
-  )
+  );
 }
