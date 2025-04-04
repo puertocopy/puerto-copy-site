@@ -1,13 +1,8 @@
-// pages/api/callback.js
-export default async function handler(req, res) {
-  return res.status(200).json({ message: "Sí se ejecutó este archivo de verdad" })
-}
 export default async function handler(req, res) {
   const code = req.query.code;
 
-  // 🔥 Valores directamente en el código para pruebas (¡no en producción!)
-  const client_id = "A7ZaJoVv7FN2UkMJ7JWX";
-  const client_secret = "6JynZ2hFdbGSIBXy78wGowuiEj42HBJa79YfH1VPOn5XItNsg_vOgw==";
+  const client_id = process.env.LOYVERSE_CLIENT_ID;
+  const client_secret = process.env.LOYVERSE_CLIENT_SECRET;
   const redirect_uri = "https://puerto-copy-site.vercel.app/api/callback";
 
   console.log("📥 CODE:", code);
