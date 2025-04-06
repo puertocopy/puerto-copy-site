@@ -68,7 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       "Type": "I"
     };
 
-    const facturaRes = await fetch("https://api.facturama.com.mx/api-lite/3/cfdis", {
+    const facturaRes = await fetch("https://api.facturama.mx/api-lite/3/cfdis", {
       method: "POST",
       headers: {
         "Authorization": `Basic ${auth}`,
