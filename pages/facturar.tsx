@@ -64,44 +64,37 @@ export default function Facturar() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Datos del formulario:', formData);
 
-    const {
-      ticket,
-      rfc,
-      razonSocial,
-      correo,
-      codigoPostal,
-      usoCfdi,
-      regimenFiscal
-    } = formData;
+    try {
+      const response = await fetch('/api/generar-factura', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ticket: formData.ticket,
+          rfc: formData.rfc,
+          razonSocial: formData.razonSocial,
+          correo: formData.correo,
+          cp: formData.codigoPostal,
+          usoCfdi: formData.usoCfdi,
+          regimenFiscal: formData.regimenFiscal
+        })
+      });
 
-    if (!ticket || !rfc || !razonSocial || !correo || !codigoPostal || !usoCfdi || !regimenFiscal) {
-      alert('Por favor completa todos los campos');
-      return;
-    }
+      const result = await response.json();
 
-    const response = await fetch('/api/generar-factura', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        ticket,
-        rfc,
-        razonSocial,
-        correo,
-        cp: codigoPostal,
-        usoCfdi,
-        regimenFiscal
-      })
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-      alert('✅ Factura generada correctamente');
-    } else {
-      alert('❌ Error al generar factura: ' + result.error);
+      if (response.ok) {
+        alert('✅ Factura generada correctamente');
+        console.log('Resultado:', result);
+      } else {
+        alert('❌ Error al generar factura: ' + result.error);
+        console.error('Error:', result);
+      }
+    } catch (error) {
+      alert('❌ Error inesperado al generar factura');
+      console.error(error);
     }
   };
 
