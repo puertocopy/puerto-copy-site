@@ -78,19 +78,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (!facturaRes.ok) {
+        const rawError = await facturaRes.text();
         let errorDetail = '';
       
         try {
-          const errorJson = await facturaRes.json();
-          errorDetail = JSON.stringify(errorJson);
+          const parsed = JSON.parse(rawError);
+          errorDetail = JSON.stringify(parsed, null, 2); // bonito para imprimir
         } catch {
-          const errorText = await facturaRes.text();
-          errorDetail = errorText;
+          errorDetail = rawError; // no era JSON, solo texto
         }
       
         console.error("❌ Error Facturama:", errorDetail);
         return res.status(500).json({ error: `Error de Facturama: ${errorDetail}` });
       }
+      
       
 
     const factura = await facturaRes.json();
