@@ -1,3 +1,4 @@
+// pages/api/generar-factura.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const btoa = (str: string) => Buffer.from(str).toString('base64');
@@ -30,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       "Items": [
         {
           "Quantity": 1,
-          "ProductCode": "01010101", // Genérico
+          "ProductCode": "01010101",
           "UnitCode": "E48",
           "Unit": "Servicio",
           "Description": `Venta mostrador - Ticket ${ticket}`,
@@ -49,13 +50,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           "Total": 116
         }
       ],
-      "PaymentForm": "01",     // Efectivo
-      "PaymentMethod": "PUE",  // Pago en una sola exhibición
+      "PaymentForm": "01",
+      "PaymentMethod": "PUE",
       "Currency": "MXN",
-      "Type": "I"              // Ingreso
+      "Type": "I"
     };
 
-    const facturaRes = await fetch("https://apisandbox.facturama.mx/api-lite/3/cfdis",        {
+    const facturaRes = await fetch("https://apisandbox.facturama.mx/api-lite/3/cfdis", {
       method: "POST",
       headers: {
         "Authorization": `Basic ${auth}`,
@@ -65,18 +66,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (!facturaRes.ok) {
-      const rawError = await facturaRes.text();
-      let errorDetail = '';
-
-      try {
-        const parsed = JSON.parse(rawError);
-        errorDetail = JSON.stringify(parsed, null, 2);
-      } catch {
-        errorDetail = rawError;
-      }
-
-      console.error("❌ Error Facturama:", errorDetail);
-      return res.status(500).json({ error: `Error de Facturama: ${errorDetail}` });
+      const error = await facturaRes.text();
+      console.error("❌ Error Facturama:", error);
+      return res.status(500).json({ error: 'Error al generar factura' });
     }
 
     const factura = await facturaRes.json();
