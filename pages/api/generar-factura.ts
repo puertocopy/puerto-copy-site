@@ -1,3 +1,4 @@
+// pages/api/generar-factura.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -6,83 +7,91 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const {
+    ticket,
     rfc,
     razonSocial,
     correo,
     cp,
-    ticket,
     usoCfdi,
-    regimenFiscal
+    regimenFiscal,
   } = req.body;
 
-  if (!rfc || !razonSocial || !correo || !cp || !ticket || !usoCfdi || !regimenFiscal) {
+  // Validación de campos
+  if (!ticket || !rfc || !razonSocial || !correo || !cp || !usoCfdi || !regimenFiscal) {
     return res.status(400).json({ error: 'Faltan campos requeridos' });
   }
 
-  const apiKey = process.env.FACTURACOM_API_KEY;
-  const apiSecret = process.env.FACTURACOM_API_SECRET;
-  const baseUrl = process.env.FACTURACOM_BASE_URL || 'https://sandbox.factura.com.mx';
+  const apiKey = process.env.FACTURA_API_KEY;
+  const apiSecret = process.env.FACTURA_API_SECRET;
+
+  if (!apiKey || !apiSecret) {
+    return res.status(500).json({ error: '❌ API KEY o SECRET no configurados' });
+  }
+
+  const payload = {
+    Receptor: {
+      Rfc: rfc,
+      Nombre: razonSocial,
+      UsoCFDI: usoCfdi,
+      CodigoPostal: cp,
+      RegimenFiscalReceptor: regimenFiscal
+    },
+    Conceptos: [
+      {
+        ClaveProdServ: "01010101",
+        Cantidad: 1,
+        ClaveUnidad: "E48",
+        Unidad: "Servicio",
+        Descripcion: `Venta mostrador - Ticket ${ticket}`,
+        ValorUnitario: 100,
+        Importe: 100,
+        Descuento: 0
+      }
+    ],
+    TipoComprobante: "I",
+    FormaPago: "01",
+    MetodoPago: "PUE",
+    LugarExpedicion: cp,
+    RegimenFiscal: process.env.EMISOR_REGIMEN,
+    Emisor: {
+      Nombre: process.env.EMISOR_NAME,
+      Rfc: process.env.EMISOR_RFC,
+      RegimenFiscal: process.env.EMISOR_REGIMEN
+    }
+  };
 
   try {
-    const facturaRes = await fetch(`${baseUrl}/v4/cfdi40/create`, {
+    const response = await fetch('https://sandbox.factura.com.mx/api/v4/cfdi33/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'api-key': apiKey!,
-        'api-secret': apiSecret!
+        'F-Api-Key': apiKey,
+        'F-Secret-Key': apiSecret
       },
-      body: JSON.stringify({
-        Receptor: {
-          Rfc: rfc,
-          Nombre: razonSocial,
-          UsoCFDI: usoCfdi,
-          DomicilioFiscalReceptor: cp,
-          RegimenFiscalReceptor: regimenFiscal
-        },
-        Conceptos: [
-          {
-            ClaveProdServ: '01010101',
-            Cantidad: 1,
-            ClaveUnidad: 'E48',
-            Unidad: 'Servicio',
-            Descripcion: `Venta mostrador - Ticket ${ticket}`,
-            ValorUnitario: 100,
-            Importe: 100,
-            ObjetoImp: '02',
-            Impuestos: {
-              Traslados: [
-                {
-                  Base: 100,
-                  Impuesto: '002',
-                  TipoFactor: 'Tasa',
-                  TasaOCuota: 0.16,
-                  Importe: 16
-                }
-              ]
-            }
-          }
-        ],
-        Serie: 'A',
-        Folio: ticket,
-        Fecha: new Date().toISOString(),
-        FormaPago: '01',
-        MetodoPago: 'PUE',
-        Moneda: 'MXN',
-        LugarExpedicion: cp,
-        TipoDeComprobante: 'I',
-        Exportacion: '01'
-      })
+      body: JSON.stringify(payload)
     });
 
-    const data = await facturaRes.json();
+    const text = await response.text();
 
-    if (!facturaRes.ok) {
-      return res.status(facturaRes.status).json({ error: 'Error al generar factura', detalle: data });
+    if (!response.ok) {
+      console.error('❌ Error Factura.com:', text);
+      return res.status(response.status).json({
+        error: '❌ Error al generar la factura',
+        detalle: text
+      });
     }
 
-    return res.status(200).json({ success: true, factura: data });
-
+    console.log('✅ Factura generada:', text);
+    return res.status(200).json({
+      success: true,
+      message: '✅ Factura generada correctamente',
+      data: text
+    });
   } catch (error: any) {
-    return res.status(500).json({ error: 'Error inesperado', detalle: error.message });
+    console.error('❌ Error general:', error);
+    return res.status(500).json({
+      error: '❌ Error general',
+      detalle: error.message
+    });
   }
 }
