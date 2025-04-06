@@ -1,3 +1,4 @@
+// pages/api/generar-factura.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const btoa = (str: string) => Buffer.from(str).toString('base64');
@@ -62,23 +63,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   try {
-    const auth = btoa(`${process.env.FACTURAMA_USER}:${process.env.FACTURAMA_PASS}`);
-  
-    const testResponse = await fetch('https://apisandbox.facturama.mx/api-lite/catalogs/forma-pago', {
+    const facturaRes = await fetch('https://apisandbox.facturama.mx/api-lite/3/cfdis', {
+      method: 'POST',
       headers: {
         Authorization: `Basic ${auth}`,
-      }
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(facturaData)
     });
-  
-    if (!testResponse.ok) {
-      const errorText = await testResponse.text();
-      return res.status(testResponse.status).json({ error: '❌ Error autenticación', detalle: errorText });
+
+    if (!facturaRes.ok) {
+      const errorText = await facturaRes.text();
+      return res.status(facturaRes.status).json({ error: '❌ Error al generar la factura', detalle: errorText });
     }
-  
-    return res.status(200).json({ success: true, message: '✅ Credenciales válidas' });
-  
+
+    const result = await facturaRes.json();
+    return res.status(200).json({ success: true, factura: result });
+
   } catch (e: any) {
     return res.status(500).json({ error: '❌ Error general', detalle: e.message });
   }
-  
 }
