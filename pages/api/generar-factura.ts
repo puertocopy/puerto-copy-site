@@ -1,120 +1,80 @@
-// pages/api/generar-factura.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-function btoa(str: string): string {
-    return Buffer.from(str, 'binary').toString('base64');
-  }
-  
+
+const btoa = (str: string) => Buffer.from(str).toString('base64');
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const {
-    rfc,
-    razonSocial,
-    correo,
-    cp,
-    ticket,
-    usoCfdi,
-    regimenFiscal,
+    rfc, razonSocial, correo, cp, ticket, usoCfdi, regimenFiscal
   } = req.body;
 
-  if (!ticket) {
-    return res.status(400).json({ error: 'Número de ticket requerido' });
+  if (!rfc || !razonSocial || !correo || !cp || !ticket || !usoCfdi || !regimenFiscal) {
+    return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  // Paso 1: Buscar el ticket en Loyverse
-  const loyverseUrl = `https://api.loyverse.com/v1.0/receipts?receipt_number=${ticket}`;
+  try {
+    const auth = btoa(`${process.env.FACTURAMA_USER}:${process.env.FACTURAMA_PASS}`);
 
-  const loyverseResponse = await fetch(loyverseUrl, {
-    headers: {
-      Authorization: `Bearer ${process.env.LOYVERSE_API_TOKEN}`,
-    },
-  });
-
-  if (!loyverseResponse.ok) {
-    const errorText = await loyverseResponse.text();
-    console.error('Error con Loyverse:', errorText);
-    return res.status(500).json({ error: 'No se pudo obtener el ticket de Loyverse' });
-  }
-
-  const loyverseData = await loyverseResponse.json();
-  const receipts = loyverseData.receipts;
-
-  const receipt = receipts.find(
-    (r: any) => String(r.receipt_number).trim() === String(ticket).trim()
-  );
-
-  if (!receipt) {
-    return res.status(404).json({ error: 'Ticket no encontrado' });
-  }
-
-  // Paso 2: Construir el cuerpo de la factura (simplificado para pruebas)
-  const invoiceBody = {
-    Serie: 'A',
-    Folio: '100',
-    Fecha: new Date().toISOString(),
-    FormaPago: '01', // Efectivo
-    CondicionesDePago: 'Contado',
-    SubTotal: receipt.total_money - receipt.total_tax,
-    Descuento: 0,
-    Moneda: 'MXN',
-    Total: receipt.total_money,
-    TipoDeComprobante: 'I',
-    MetodoPago: 'PUE',
-    LugarExpedicion: cp,
-    Receptor: {
-      Rfc: rfc,
-      Nombre: razonSocial,
-      UsoCFDI: usoCfdi,
-      RegimenFiscalReceptor: regimenFiscal,
-      DomicilioFiscalReceptor: cp,
-    },
-    Conceptos: receipt.line_items.map((item: any) => ({
-      ClaveProdServ: '84111506', // Producto genérico
-      NoIdentificacion: item.sku,
-      Cantidad: item.quantity,
-      ClaveUnidad: 'ACT',
-      Unidad: 'Servicio',
-      Descripcion: item.item_name,
-      ValorUnitario: item.price,
-      Importe: item.total_money,
-      Descuento: 0,
-      Impuestos: {
-        Traslados: [
-          {
-            Base: item.total_money,
-            Impuesto: '002',
-            TipoFactor: 'Tasa',
-            TasaOCuota: 0.16,
-            Importe: item.total_money * 0.16,
-          },
-        ],
+    const bodyData = {
+      "ExpeditionPlace": cp,
+      "Receiver": {
+        "Rfc": rfc,
+        "Name": razonSocial,
+        "CfdiUse": usoCfdi,
+        "FiscalRegime": regimenFiscal,
+        "TaxZipCode": cp
       },
-    })),
-  };
+      "Items": [
+        {
+          "Quantity": 1,
+          "ProductCode": "01010101",
+          "UnitCode": "E48",
+          "Unit": "Servicio",
+          "Description": `Venta mostrador - Ticket ${ticket}`,
+          "IdentificationNumber": ticket,
+          "UnitPrice": 100,
+          "Subtotal": 100,
+          "Taxes": [
+            {
+              "Total": 16,
+              "Name": "IVA",
+              "Base": 100,
+              "Rate": 0.16,
+              "IsRetention": false
+            }
+          ],
+          "Total": 116
+        }
+      ],
+      "PaymentForm": "01",
+      "PaymentMethod": "PUE",
+      "Currency": "MXN",
+      "Type": "I"
+    };
 
-  // Paso 3: Enviar a Facturama
-  const facturamaUser = process.env.FACTURAMA_USER || '';
-  const facturamaPass = process.env.FACTURAMA_PASSWORD || '';
-  const facturamaAuth = btoa(`${facturamaUser}:${facturamaPass}`);
+    const facturaRes = await fetch("https://api.facturama.com.mx/api-lite/3/cfdis", {
+      method: "POST",
+      headers: {
+        "Authorization": `Basic ${auth}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(bodyData)
+    });
 
-  const facturamaResponse = await fetch('https://apisandbox.facturama.mx/api-lite/2/cfdis', {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${facturamaAuth}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(invoiceBody),
-  });
+    if (!facturaRes.ok) {
+      const error = await facturaRes.text();
+      console.error("Error Facturama:", error);
+      return res.status(500).json({ error: 'Error al generar factura' });
+    }
 
-  const facturaResult = await facturamaResponse.json();
+    const factura = await facturaRes.json();
+    return res.status(200).json({ success: true, factura });
 
-  if (!facturamaResponse.ok) {
-    console.error('Error Facturama:', facturaResult);
-    return res.status(500).json({ error: 'Error al generar la factura con Facturama', detail: facturaResult });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Unexpected server error' });
   }
-
-  return res.status(200).json({ factura: facturaResult });
 }
