@@ -8,8 +8,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const {
-    rfc, razonSocial, correo, cp, ticket, usoCfdi, regimenFiscal
+    rfc, razonSocial, correo, codigoPostal, ticket, usoCfdi, regimenFiscal
   } = req.body;
+  
+  const cp = codigoPostal;
+  
 
   if (!rfc || !razonSocial || !correo || !cp || !ticket || !usoCfdi || !regimenFiscal) {
     return res.status(400).json({ error: 'Missing required fields' });
