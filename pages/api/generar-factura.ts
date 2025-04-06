@@ -62,6 +62,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   try {
+    console.log('🟢 Enviando datos a Facturama:', JSON.stringify(facturaData, null, 2));
+
     const facturaRes = await fetch('https://api.facturama.com.mx/api-lite/3/cfdis', {
       method: 'POST',
       headers: {
@@ -71,15 +73,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       body: JSON.stringify(facturaData)
     });
 
+    const text = await facturaRes.text();
+
     if (!facturaRes.ok) {
-      const errorText = await facturaRes.text();
-      return res.status(facturaRes.status).json({ error: '❌ Error al generar la factura', detalle: errorText });
+      console.error('❌ Error Facturama status:', facturaRes.status);
+      console.error('❌ Respuesta de Facturama:', text);
+      return res.status(facturaRes.status).json({ error: 'Error al generar la factura', detalle: text });
     }
 
-    const result = await facturaRes.json();
+    const result = JSON.parse(text);
+    console.log('✅ Factura generada:', result);
     return res.status(200).json({ success: true, factura: result });
 
   } catch (e: any) {
-    return res.status(500).json({ error: '❌ Error general', detalle: e.message });
+    console.error('❌ Error general:', e);
+    return res.status(500).json({ error: 'Error general', detalle: e.message });
   }
 }
