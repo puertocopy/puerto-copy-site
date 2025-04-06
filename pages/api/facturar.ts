@@ -63,7 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   try {
-    const response = await fetch('https://apisandbox.facturama.mx/api/v1/cfdi33/create', {
+    const response = await fetch('https://sandbox.factura.com.mx/api/v4/cfdi33/create', {
       method: 'POST',
       headers: {
         Authorization: `Basic ${auth}`,
