@@ -1,92 +1,88 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const btoa = (str: string) => Buffer.from(str).toString('base64');
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
   const {
-    ticket,
     rfc,
     razonSocial,
     correo,
     cp,
+    ticket,
     usoCfdi,
-    regimenFiscal,
+    regimenFiscal
   } = req.body;
 
   if (!rfc || !razonSocial || !correo || !cp || !ticket || !usoCfdi || !regimenFiscal) {
     return res.status(400).json({ error: 'Faltan campos requeridos' });
   }
 
-  const auth = btoa(`${process.env.FACTURAMA_USER}:${process.env.FACTURAMA_PASS}`);
-
-  const facturaData = {
-    CfdiType: 'I',
-    PaymentForm: '01',
-    PaymentMethod: 'PUE',
-    ExpeditionPlace: cp,
-    Folio: `F-${ticket}`,
-    Issuer: {
-      FiscalRegime: process.env.EMISOR_REGIMEN,
-      Rfc: process.env.EMISOR_RFC,
-      Name: process.env.EMISOR_NAME
-    },
-    Receiver: {
-      Rfc: rfc,
-      Name: razonSocial,
-      CfdiUse: usoCfdi,
-      FiscalRegime: regimenFiscal,
-      TaxZipCode: cp
-    },
-    Items: [{
-      ProductCode: "01010101",
-      Description: `Venta mostrador - Ticket ${ticket}`,
-      UnitCode: "E48",
-      Unit: "Servicio",
-      Quantity: 1,
-      UnitPrice: 100,
-      Subtotal: 100,
-      TaxObject: "02",
-      Taxes: [{
-        Total: 16,
-        Name: "IVA",
-        Base: 100,
-        Rate: 0.16,
-        IsRetention: false
-      }],
-      Total: 116
-    }]
-  };
+  const apiKey = process.env.FACTURACOM_API_KEY;
+  const apiSecret = process.env.FACTURACOM_API_SECRET;
+  const baseUrl = process.env.FACTURACOM_BASE_URL || 'https://sandbox.factura.com.mx';
 
   try {
-    console.log('🟢 Enviando datos a Facturama:', JSON.stringify(facturaData, null, 2));
-
-    const facturaRes = await fetch(`${process.env.FACTURAMA_API_URL}/api-lite/3/cfdis`, {
+    const facturaRes = await fetch(`${baseUrl}/v4/cfdi40/create`, {
       method: 'POST',
       headers: {
-        Authorization: `Basic ${auth}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'api-key': apiKey!,
+        'api-secret': apiSecret!
       },
-      body: JSON.stringify(facturaData)
+      body: JSON.stringify({
+        Receptor: {
+          Rfc: rfc,
+          Nombre: razonSocial,
+          UsoCFDI: usoCfdi,
+          DomicilioFiscalReceptor: cp,
+          RegimenFiscalReceptor: regimenFiscal
+        },
+        Conceptos: [
+          {
+            ClaveProdServ: '01010101',
+            Cantidad: 1,
+            ClaveUnidad: 'E48',
+            Unidad: 'Servicio',
+            Descripcion: `Venta mostrador - Ticket ${ticket}`,
+            ValorUnitario: 100,
+            Importe: 100,
+            ObjetoImp: '02',
+            Impuestos: {
+              Traslados: [
+                {
+                  Base: 100,
+                  Impuesto: '002',
+                  TipoFactor: 'Tasa',
+                  TasaOCuota: 0.16,
+                  Importe: 16
+                }
+              ]
+            }
+          }
+        ],
+        Serie: 'A',
+        Folio: ticket,
+        Fecha: new Date().toISOString(),
+        FormaPago: '01',
+        MetodoPago: 'PUE',
+        Moneda: 'MXN',
+        LugarExpedicion: cp,
+        TipoDeComprobante: 'I',
+        Exportacion: '01'
+      })
     });
 
-    const text = await facturaRes.text();
+    const data = await facturaRes.json();
 
     if (!facturaRes.ok) {
-      console.error('❌ Error Facturama status:', facturaRes.status);
-      console.error('❌ Respuesta de Facturama:', text);
-      return res.status(facturaRes.status).json({ error: 'Error al generar la factura', detalle: text });
+      return res.status(facturaRes.status).json({ error: 'Error al generar factura', detalle: data });
     }
 
-    const result = JSON.parse(text);
-    console.log('✅ Factura generada:', result);
-    return res.status(200).json({ success: true, factura: result });
+    return res.status(200).json({ success: true, factura: data });
 
-  } catch (e: any) {
-    console.error('❌ Error general:', e);
-    return res.status(500).json({ error: 'Error general', detalle: e.message });
+  } catch (error: any) {
+    return res.status(500).json({ error: 'Error inesperado', detalle: error.message });
   }
 }
