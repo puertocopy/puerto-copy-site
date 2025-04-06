@@ -1,87 +1,94 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+const btoa = (str: string) => Buffer.from(str).toString('base64');
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
-
-  // Extraer datos del cuerpo
-  const { rfc, razonSocial, correo, cp, ticket, usoCfdi, regimenFiscal } = req.body;
-
-  // Validar datos
-  if (!rfc || !razonSocial || !correo || !cp || !ticket || !usoCfdi || !regimenFiscal) {
-    return res.status(400).json({ error: 'Missing required fields' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // Ver credenciales desde las variables de entorno
-    const user = process.env.FACTURAMA_USER || '';
-    const pass = process.env.FACTURAMA_PASS || '';
-    const auth = Buffer.from(`${user}:${pass}`).toString('base64');
+    const {
+      ticket,
+      rfc,
+      razonSocial,
+      correo,
+      cp,
+      usoCfdi,
+      regimenFiscal
+    } = req.body;
 
-    // Construir el objeto de factura (ejemplo con importe fijo)
-    const bodyData = {
+    if (!ticket || !rfc || !razonSocial || !correo || !cp || !usoCfdi || !regimenFiscal) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Autenticación
+    const username = process.env.FACTURAMA_USER!;
+    const password = process.env.FACTURAMA_PASS!;
+    const auth = btoa(`${username}:${password}`);
+
+    // Datos del CFDI
+    const data = {
+      CfdiType: "I",
+      PaymentForm: "01",
+      PaymentMethod: "PUE",
       ExpeditionPlace: cp,
+      Folio: ticket,
+      Issuer: {
+        FiscalRegime: process.env.FACTURAMA_REGIMEN || "601", // usa tu régimen real
+        Rfc: process.env.FACTURAMA_RFC || "EKU9003173C9",      // RFC de pruebas
+        Name: process.env.FACTURAMA_NAME || "ESCUELA KEMPER URGATE"
+      },
       Receiver: {
         Rfc: rfc,
-        Name: razonSocial,
+        Name: razonSocial.toUpperCase(),
         CfdiUse: usoCfdi,
         FiscalRegime: regimenFiscal,
         TaxZipCode: cp
       },
       Items: [
         {
-          Quantity: 1,
-          ProductCode: '01010101',
-          UnitCode: 'E48',
-          Unit: 'Servicio',
+          ProductCode: "25173301",
           Description: `Venta mostrador - Ticket ${ticket}`,
-          IdentificationNumber: ticket,
+          UnitCode: "E48",
+          Quantity: 1,
           UnitPrice: 100,
           Subtotal: 100,
-          Taxes: [
-            {
-              Total: 16,
-              Name: 'IVA',
-              Base: 100,
-              Rate: 0.16,
-              IsRetention: false
-            }
-          ],
-          Total: 116
+          Taxes: [{
+            Total: 16,
+            Name: "IVA",
+            Base: 100,
+            Rate: 0.16,
+            IsRetention: false
+          }],
+          Total: 116,
+          TaxObject: "02"
         }
-      ],
-      PaymentForm: '01', // Efectivo
-      PaymentMethod: 'PUE', // Pago en una sola exhibición
-      Currency: 'MXN',
-      Type: 'I'
+      ]
     };
 
-    // Hacer la solicitud a Facturama (sandbox)
-    const facturaRes = await fetch('https://apisandbox.facturama.mx/api-lite/3/cfdis', {
-      method: 'POST',
+    const facturaRes = await fetch("https://apisandbox.facturama.mx/api-lite/3/cfdis", {
+      method: "POST",
       headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/json'
+        "Authorization": `Basic ${auth}`,
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify(bodyData)
+      body: JSON.stringify(data)
     });
 
-    // Mostrar estatus y texto de error si falla
+    const text = await facturaRes.text();
+
     if (!facturaRes.ok) {
-      const errorText = await facturaRes.text();
-      console.error('❌ Error Facturama status:', facturaRes.status);
-      console.error('❌ Error Facturama:', errorText);
-      return res.status(500).json({ error: `Error Facturama: ${facturaRes.status}` });
+      console.error("❌ Error Facturama status:", facturaRes.status);
+      console.error("❌ Error Facturama:", text);
+      return res.status(500).json({ error: `Error Facturama: ${text}` });
     }
 
-    // Factura generada con éxito
-    const factura = await facturaRes.json();
-    console.log('✅ Factura generada:', factura);
+    const factura = JSON.parse(text);
     return res.status(200).json({ success: true, factura });
 
-  } catch (err) {
-    console.error('❌ Error general:', err);
-    return res.status(500).json({ error: 'Error interno al generar la factura' });
+  } catch (error: any) {
+    console.error("Error general:", error);
+    return res.status(500).json({ error: 'Unexpected server error' });
   }
 }
