@@ -5,7 +5,7 @@ const btoa = (str: string) => Buffer.from(str).toString('base64');
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: 'Método no permitido' });
   }
 
   const {
@@ -25,9 +25,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const auth = btoa(`${process.env.FACTURAMA_USER}:${process.env.FACTURAMA_PASS}`);
 
   const facturaData = {
-    CfdiType: 'I',
-    PaymentForm: '01',
-    PaymentMethod: 'PUE',
+    CfdiType: 'I', // Ingreso
+    PaymentForm: '01', // Efectivo
+    PaymentMethod: 'PUE', // Pago en una sola exhibición
     ExpeditionPlace: cp,
     Folio: `F-${ticket}`,
     Issuer: {
@@ -63,7 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   try {
-    const facturaRes = await fetch('https://apisandbox.facturama.mx/api-lite/3/cfdis', {
+    const facturaRes = await fetch('https://api.facturama.com.mx/api-lite/3/cfdis', {
       method: 'POST',
       headers: {
         Authorization: `Basic ${auth}`,
