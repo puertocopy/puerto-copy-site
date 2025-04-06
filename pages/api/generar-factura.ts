@@ -7,16 +7,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const body = req.body;
+
+  console.log("📦 Cuerpo recibido en /api/generar-factura:", body);
+
   const {
-    rfc, razonSocial, correo, codigoPostal, ticket, usoCfdi, regimenFiscal
-  } = req.body;
-  
-  const cp = codigoPostal;
-  
+    rfc,
+    razonSocial,
+    correo,
+    cp,
+    ticket,
+    usoCfdi,
+    regimenFiscal
+  } = body;
 
   if (!rfc || !razonSocial || !correo || !cp || !ticket || !usoCfdi || !regimenFiscal) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
+
+  // Continúa con tu código normal...
+
 
   try {
     const auth = btoa(`${process.env.FACTURAMA_USER}:${process.env.FACTURAMA_PASS}`);
