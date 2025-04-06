@@ -67,7 +67,7 @@ export default function Facturar() {
     console.log('Datos del formulario:', formData);
 
     try {
-      const response = await fetch('/api/generar-factura', {
+      const response = await fetch('/api/factura-com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -81,7 +81,7 @@ export default function Facturar() {
           usoCfdi: formData.usoCfdi,
           regimenFiscal: formData.regimenFiscal
         })
-      });
+      });      
 
       const result = await response.json();
 
