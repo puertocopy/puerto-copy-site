@@ -1,4 +1,3 @@
-// pages/facturar.tsx
 import { useState } from 'react';
 
 const usosCFDI = [
@@ -65,19 +64,44 @@ export default function Facturar() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Datos del formulario:', formData);
+
+    const {
+      ticket,
+      rfc,
+      razonSocial,
+      correo,
+      codigoPostal,
+      usoCfdi,
+      regimenFiscal
+    } = formData;
+
+    if (!ticket || !rfc || !razonSocial || !correo || !codigoPostal || !usoCfdi || !regimenFiscal) {
+      alert('Por favor completa todos los campos');
+      return;
+    }
 
     const response = await fetch('/api/generar-factura', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ticket,
+        rfc,
+        razonSocial,
+        correo,
+        cp: codigoPostal,
+        usoCfdi,
+        regimenFiscal
+      })
     });
 
     const result = await response.json();
+
     if (response.ok) {
-      alert('Factura generada correctamente');
+      alert('✅ Factura generada correctamente');
     } else {
-      alert('Error al generar factura: ' + result.error);
+      alert('❌ Error al generar factura: ' + result.error);
     }
   };
 
