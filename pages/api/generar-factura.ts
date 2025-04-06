@@ -62,27 +62,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   try {
-    const response = await fetch('https://apisandbox.facturama.mx/api-lite/3/cfdis', {
-      method: 'POST',
+    const auth = btoa(`${process.env.FACTURAMA_USER}:${process.env.FACTURAMA_PASS}`);
+  
+    const testResponse = await fetch('https://apisandbox.facturama.mx/api-lite/catalogs/forma-pago', {
       headers: {
         Authorization: `Basic ${auth}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(facturaData)
+      }
     });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('❌ Error Facturama:', error);
-      return res.status(response.status).json({ error: 'Error al generar la factura', detalle: error });
+  
+    if (!testResponse.ok) {
+      const errorText = await testResponse.text();
+      return res.status(testResponse.status).json({ error: '❌ Error autenticación', detalle: errorText });
     }
-
-    const factura = await response.json();
-    console.log('✅ Factura generada:', factura);
-    return res.status(200).json({ success: true, factura });
-
-  } catch (error: any) {
-    console.error('❌ Error general:', error);
-    return res.status(500).json({ error: 'Error interno del servidor', detalle: error.message });
+  
+    return res.status(200).json({ success: true, message: '✅ Credenciales válidas' });
+  
+  } catch (e: any) {
+    return res.status(500).json({ error: '❌ Error general', detalle: e.message });
   }
+  
 }
