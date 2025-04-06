@@ -1,4 +1,3 @@
-// pages/api/generar-factura.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const btoa = (str: string) => Buffer.from(str).toString('base64');
@@ -25,15 +24,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const auth = btoa(`${process.env.FACTURAMA_USER}:${process.env.FACTURAMA_PASS}`);
 
   const facturaData = {
-    CfdiType: 'I', // Ingreso
-    PaymentForm: '01', // Efectivo
-    PaymentMethod: 'PUE', // Pago en una sola exhibición
+    CfdiType: 'I',
+    PaymentForm: '01',
+    PaymentMethod: 'PUE',
     ExpeditionPlace: cp,
     Folio: `F-${ticket}`,
     Issuer: {
-      FiscalRegime: process.env.EMISOR_REGIMEN || '601',
-      Rfc: process.env.EMISOR_RFC || 'EKU9003173C9',
-      Name: process.env.EMISOR_NAME || 'ESCUELA KEMPER URGATE'
+      FiscalRegime: process.env.EMISOR_REGIMEN,
+      Rfc: process.env.EMISOR_RFC,
+      Name: process.env.EMISOR_NAME
     },
     Receiver: {
       Rfc: rfc,
