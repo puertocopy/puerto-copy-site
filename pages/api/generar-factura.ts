@@ -1,4 +1,3 @@
-// pages/api/generar-factura.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -16,7 +15,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     regimenFiscal,
   } = req.body;
 
-  // Validación de campos
   if (!ticket || !rfc || !razonSocial || !correo || !cp || !usoCfdi || !regimenFiscal) {
     return res.status(400).json({ error: 'Faltan campos requeridos' });
   }
@@ -73,15 +71,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const text = await response.text();
 
+    console.log('📦 Respuesta de Factura.com:');
+    console.log(text);
+
     if (!response.ok) {
-      console.error('❌ Error Factura.com:', text);
       return res.status(response.status).json({
-        error: '❌ Error al generar la factura',
+        error: '❌ Error al generar factura',
+        status: response.status,
         detalle: text
       });
     }
 
-    console.log('✅ Factura generada:', text);
     return res.status(200).json({
       success: true,
       message: '✅ Factura generada correctamente',
