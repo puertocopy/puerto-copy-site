@@ -78,7 +78,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   try {
-    const response = await fetch("https://sandbox.factura.com/api/v4/cfdi40/create", {
+    console.log('👉 URL que se usará:', process.env.FACTURA_COM_API_BASE_URL);
+    const response = await fetch(process.env.FACTURA_COM_API_BASE_URL!, {
+
       method: "POST",
       headers: {
         "Content-Type": "application/json",
