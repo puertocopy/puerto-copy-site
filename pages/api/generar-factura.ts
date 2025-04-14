@@ -1,4 +1,3 @@
-// pages/api/generar-factura.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -16,81 +15,86 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     regimenFiscal,
   } = req.body;
 
-  if (!ticket || !rfc || !razonSocial || !correo || !cp || !usoCfdi || !regimenFiscal) {
-    return res.status(400).json({ error: 'Faltan campos requeridos' });
+  if (!rfc || !razonSocial || !correo || !cp || !ticket || !usoCfdi || !regimenFiscal) {
+    return res.status(400).json({ error: '❌ Faltan campos requeridos' });
   }
 
-  const apiKey = process.env.FACTURA_API_KEY;
-  const apiSecret = process.env.FACTURA_API_SECRET;
-
-  if (!apiKey || !apiSecret) {
-    return res.status(500).json({ error: 'API Key o Secret Key no configurados' });
-  }
-
-  const payload = {
+  const facturaData = {
     Receptor: {
       Rfc: rfc,
       Nombre: razonSocial,
+      DomicilioFiscalReceptor: cp,
+      RegimenFiscalReceptor: regimenFiscal,
       UsoCFDI: usoCfdi,
-      CodigoPostal: cp,
-      RegimenFiscalReceptor: regimenFiscal
     },
+    TipoDeComprobante: "I",
+    Exportacion: "01",
+    MetodoPago: "PUE",
+    FormaPago: "01",
+    Serie: "A",
+    Folio: `${ticket}`,
+    LugarExpedicion: cp,
+    CfdiRelacionados: [],
     Conceptos: [
       {
         ClaveProdServ: "01010101",
         Cantidad: 1,
         ClaveUnidad: "E48",
         Unidad: "Servicio",
-        Descripcion: `Venta mostrador - Ticket ${ticket}`,
+        Descripcion: `Venta en mostrador Ticket ${ticket}`,
         ValorUnitario: 100,
         Importe: 100,
-        Descuento: 0
+        ObjetoImp: "02",
+        Impuestos: {
+          Traslados: [
+            {
+              Base: 100,
+              Impuesto: "002",
+              TipoFactor: "Tasa",
+              TasaOCuota: 0.16,
+              Importe: 16
+            }
+          ]
+        }
       }
     ],
-    TipoComprobante: "I",
-    FormaPago: "01",
-    MetodoPago: "PUE",
-    LugarExpedicion: cp,
-    RegimenFiscal: process.env.EMISOR_REGIMEN,
-    Emisor: {
-      Nombre: process.env.EMISOR_NAME,
-      Rfc: process.env.EMISOR_RFC,
-      RegimenFiscal: process.env.EMISOR_REGIMEN
-    }
+    Impuestos: {
+      TotalImpuestosTrasladados: 16,
+      Traslados: [
+        {
+          Impuesto: "002",
+          TipoFactor: "Tasa",
+          TasaOCuota: 0.16,
+          Importe: 16
+        }
+      ]
+    },
+    SubTotal: 100,
+    Total: 116
   };
 
   try {
-    const response = await fetch('http://sandbox.factura.com/api/v4/cfdi/list', {
-      method: 'POST',
+    const response = await fetch("https://sandbox.factura.com/api/v4/cfdi40/create", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'F-Api-Key': apiKey,
-        'F-Secret-Key': apiSecret
+        "Content-Type": "application/json",
+        "api-key": process.env.FACTURA_COM_API_KEY || '',
+        "api-secret": process.env.FACTURA_COM_API_SECRET || ''
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(facturaData)
     });
-
-    const text = await response.text();
 
     if (!response.ok) {
-      console.error('Error al generar la factura:', text);
-      return res.status(response.status).json({
-        error: 'Error al generar la factura',
-        detalle: text
-      });
+      const errorText = await response.text();
+      console.error("❌ Error Factura.com:", errorText);
+      return res.status(response.status).json({ error: '❌ Error al conectar con Factura.com', detalle: errorText });
     }
 
-    console.log('Factura generada:', text);
-    return res.status(200).json({
-      success: true,
-      message: 'Factura generada correctamente',
-      data: text
-    });
+    const result = await response.json();
+    return res.status(200).json({ success: true, factura: result });
+
   } catch (error: any) {
-    console.error('Error general:', error);
-    return res.status(500).json({
-      error: 'Error general',
-      detalle: error.message
-    });
+    console.error("❌ Error general:", error);
+    return res.status(500).json({ error: '❌ Error general', detalle: error.message });
   }
 }
