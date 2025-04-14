@@ -1,3 +1,4 @@
+// pages/api/generar-factura.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -23,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const apiSecret = process.env.FACTURA_API_SECRET;
 
   if (!apiKey || !apiSecret) {
-    return res.status(500).json({ error: '❌ API KEY o SECRET no configurados' });
+    return res.status(500).json({ error: 'API Key o Secret Key no configurados' });
   }
 
   const payload = {
@@ -59,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   try {
-    const response = await fetch('http://sandbox.factura.com/api/v4/cfdi/list', {
+    const response = await fetch('https://sandbox.factura.com/api/v4/cfdi33/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -71,26 +72,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const text = await response.text();
 
-    console.log('📦 Respuesta de Factura.com:');
-    console.log(text);
-
     if (!response.ok) {
+      console.error('Error al generar la factura:', text);
       return res.status(response.status).json({
-        error: '❌ Error al generar factura',
-        status: response.status,
+        error: 'Error al generar la factura',
         detalle: text
       });
     }
 
+    console.log('Factura generada:', text);
     return res.status(200).json({
       success: true,
-      message: '✅ Factura generada correctamente',
+      message: 'Factura generada correctamente',
       data: text
     });
   } catch (error: any) {
-    console.error('❌ Error general:', error);
+    console.error('Error general:', error);
     return res.status(500).json({
-      error: '❌ Error general',
+      error: 'Error general',
       detalle: error.message
     });
   }
