@@ -74,7 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   try {
-    const response = await fetch("https://sandbox.factura.com/api/v4/cfdi40/create", {
+    const response = await fetch("http://sandbox.factura.com/api/v4/cfdi40/create", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
