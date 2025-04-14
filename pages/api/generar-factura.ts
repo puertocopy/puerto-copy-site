@@ -27,6 +27,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       RegimenFiscalReceptor: regimenFiscal,
       UsoCFDI: usoCfdi,
     },
+    Emisor: {
+      Rfc: process.env.EMISOR_RFC!,
+      Nombre: process.env.EMISOR_NAME!,
+      RegimenFiscal: process.env.EMISOR_REGIMEN!
+    },
     TipoDeComprobante: "I",
     Exportacion: "01",
     MetodoPago: "PUE",
@@ -34,7 +39,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     Serie: "A",
     Folio: `${ticket}`,
     LugarExpedicion: cp,
-    CfdiRelacionados: [],
     Conceptos: [
       {
         ClaveProdServ: "01010101",
@@ -74,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   try {
-    const response = await fetch("http://sandbox.factura.com/api/v4/cfdi40/create", {
+    const response = await fetch("https://sandbox.factura.com/api/v4/cfdi40/create", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
