@@ -143,7 +143,12 @@ export default function Home() {
   </div>
 </footer>
 
+import Footer from "../components/Footer";
 
-    </div>
+...
+
+<Footer />
+</div> 
+
   );
 }
