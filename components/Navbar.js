@@ -1,15 +1,16 @@
-import Link from "next/link"
-
+// components/Navbar.tsx
 export default function Navbar() {
   return (
-    <nav className="flex justify-between items-center px-6 py-4 shadow bg-white">
-      <div className="text-xl font-bold">Puerto Copy</div>
-      <div className="space-x-6">
-        <Link href="/">Inicio</Link>
-        <Link href="/servicios">Servicios</Link>
-        <Link href="/facturacion">Facturación</Link>
-        <Link href="/contacto">Contacto</Link>
+    <nav className="fixed top-0 w-full z-50 bg-blue-900 bg-opacity-70 backdrop-blur-md shadow">
+      <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <img src="/logoweb.png" alt="Puerto Copy Logo" className="h-10 w-auto" />
+        <ul className="flex gap-6 text-sm font-medium text-white">
+          <li className="hover:text-blue-300 cursor-pointer">Inicio</li>
+          <li className="hover:text-blue-300 cursor-pointer">Servicios</li>
+          <li className="hover:text-blue-300 cursor-pointer">Facturación</li>
+          <li className="hover:text-blue-300 cursor-pointer">Contacto</li>
+        </ul>
       </div>
     </nav>
-  )
+  );
 }
