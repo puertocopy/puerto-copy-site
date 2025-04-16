@@ -19,7 +19,7 @@ export default function Home() {
         <p className="max-w-xl text-lg text-gray-600 mb-8">
           Copias, planos, documentos oficiales y más. Impresiones de calidad para tus necesidades diarias y profesionales.
         </p>
-        <a href="/facturar" className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-md text-lg transition">
+        <a href="/facturacion" className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-md text-lg transition">
           Generar Factura
         </a>
       </main>
