@@ -5,6 +5,8 @@ function MyApp({ Component, pageProps }) {
   return (
     <>
       <Head>
+        <title>Puerto Copy | Centro de Impresiones</title>
+        <meta name="description" content="Impresión de planos, copias y documentos en Puerto Vallarta" />
         {/* Ícono en la pestaña */}
         <link rel="icon" href="/favicon.png" />
 
@@ -28,6 +30,7 @@ function MyApp({ Component, pageProps }) {
             }),
           }}
         />
+    
       </Head>
 
       <Component {...pageProps} />
