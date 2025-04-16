@@ -60,7 +60,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* VENTAJAS */}
       <section className="bg-blue-50 py-20 px-6 md:px-12">
         <div className="max-w-6xl mx-auto text-center" data-aos="fade-up">
@@ -91,5 +90,5 @@ export default function Home() {
       <Footer />
     </div>
   );
-}
+}//act 
 
