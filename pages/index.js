@@ -1,31 +1,55 @@
-import { useEffect, useState } from "react";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import Head from "next/head";
+import { useEffect, useState } from 'react';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 export default function Home() {
-  const slides = ["/slides/slide1.jpg", "/slides/slide2.jpg", "/slides/slide3.jpg"];
+  const slides = ['/slides/slide1.jpg', '/slides/slide2.jpg', '/slides/slide3.jpg'];
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fade, setFade] = useState(true);
 
   useEffect(() => {
+    AOS.init({ duration: 1000 });
+
     const interval = setInterval(() => {
-      setFade(false); // inicia transición de salida
+      setFade(false);
       setTimeout(() => {
         setCurrentSlide((prev) => (prev + 1) % slides.length);
-        setFade(true); // activa transición de entrada
-      }, 500); // duración del fade-out
-    }, 5000); // cada 5 segundos
+        setFade(true);
+      }, 500);
+    }, 5000);
+
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="bg-white text-gray-900">
-      <Head>
-        <title>Puerto Copy | Impresiones y Facturación</title>
-      </Head>
       <Navbar />
 
+      {/* SLIDER */}
+      <section className="relative h-[80vh] w-full overflow-hidden mt-20">
+        <img
+          src={slides[currentSlide]}
+          alt="Puerto Copy Slide"
+          key={slides[currentSlide]}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+            fade ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-900 to-blue-700 opacity-80 z-10"></div>
+        <div className="relative z-20 flex flex-col items-center justify-center h-full text-white text-center px-4">
+          <img src="/logoweb.png" className="h-24 w-auto mb-6" alt="Puerto Copy Logo" />
+          <h1 className="text-4xl md:text-6xl font-bold mb-4">Bienvenido a Puerto Copy</h1>
+          <p className="text-lg md:text-xl mb-6">Impresiones digitales, copias y planos con estilo profesional.</p>
+          <a
+            href="/facturar"
+            className="inline-block bg-white text-blue-800 hover:bg-blue-100 transition px-6 py-3 rounded-full font-semibold shadow"
+          >
+            Generar Factura
+          </a>
+        </div>
+      </section>
 
       {/* SERVICIOS */}
       <section
@@ -55,6 +79,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       {/* VENTAJAS */}
       <section className="bg-blue-50 py-20 px-6 md:px-12">
         <div className="max-w-6xl mx-auto text-center" data-aos="fade-up">
@@ -81,9 +106,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FOOTER */}
       <Footer />
     </div>
   );
-}//act 
-
+}
