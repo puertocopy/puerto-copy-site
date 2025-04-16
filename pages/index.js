@@ -1,16 +1,29 @@
-import { useEffect } from 'react';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import { useEffect, useState } from "react";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import Head from "next/head";
 
 export default function Home() {
+  const slides = ["/slides/slide1.jpg", "/slides/slide2.jpg", "/slides/slide3.jpg"];
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [fade, setFade] = useState(true);
+
   useEffect(() => {
-    AOS.init({ duration: 1000 });
+    const interval = setInterval(() => {
+      setFade(false); // inicia transición de salida
+      setTimeout(() => {
+        setCurrentSlide((prev) => (prev + 1) % slides.length);
+        setFade(true); // activa transición de entrada
+      }, 500); // duración del fade-out
+    }, 5000); // cada 5 segundos
+    return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="bg-white text-gray-900">
+      <Head>
+        <title>Puerto Copy | Impresiones y Facturación</title>
+      </Head>
       <Navbar />
 
 
