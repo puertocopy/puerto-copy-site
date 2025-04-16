@@ -27,7 +27,7 @@ export default function Home() {
     <div className="bg-white text-gray-900">
       <Navbar />
 
-      {/* SLIDER SIN TEXTO */}
+      {/* SLIDER */}
       <section className="relative h-[80vh] w-full overflow-hidden mt-20">
         <img
           src={slides[currentSlide]}
@@ -40,10 +40,7 @@ export default function Home() {
       </section>
 
       {/* SERVICIOS */}
-      <section
-        id="servicios"
-        className="relative bg-white text-gray-800 py-20 px-6 md:px-12 z-10"
-      >
+      <section id="servicios" className="relative bg-white text-gray-800 py-20 px-6 md:px-12 z-10">
         <div className="max-w-6xl mx-auto text-center" data-aos="fade-up">
           <h2 className="text-3xl md:text-4xl font-bold mb-12 text-blue-900">Nuestros Servicios</h2>
           <div className="grid md:grid-cols-3 gap-10">
