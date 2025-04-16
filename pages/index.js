@@ -13,24 +13,6 @@ export default function Home() {
     <div className="bg-white text-gray-900">
       <Navbar />
 
-      {/* HERO */}
-      <header
-        className="relative flex items-center justify-center h-screen pt-24 text-white"
-        style={{ backgroundImage: "url('/heroweb.png')", backgroundSize: "cover", backgroundPosition: "center" }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900 to-blue-700 opacity-80"></div>
-        <div className="relative z-10 text-center max-w-2xl px-4" data-aos="fade-up">
-          <img src="/logoweb.png" className="mx-auto h-24 w-auto mb-6" />
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">Bienvenido a Puerto Copy</h1>
-          <p className="text-lg md:text-xl mb-6">Impresiones digitales, copias y planos con estilo profesional.</p>
-          <a
-            href="/facturar"
-            className="inline-block bg-white text-blue-800 hover:bg-blue-100 transition px-6 py-3 rounded-full font-semibold shadow"
-          >
-            Generar Factura
-          </a>
-        </div>
-      </header>
 
       {/* SERVICIOS */}
       <section
