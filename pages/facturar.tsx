@@ -156,6 +156,6 @@ export default function Facturar() {
           Generar Factura
         </button>
       </form>
-    </div>//nada
+    </div>//nad
   );
 }
