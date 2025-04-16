@@ -27,7 +27,7 @@ export default function Home() {
     <div className="bg-white text-gray-900">
       <Navbar />
 
-      {/* SLIDER */}
+      {/* SLIDER SIN TEXTO */}
       <section className="relative h-[80vh] w-full overflow-hidden mt-20">
         <img
           src={slides[currentSlide]}
@@ -37,18 +37,6 @@ export default function Home() {
             fade ? 'opacity-100' : 'opacity-0'
           }`}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900 to-blue-700 opacity-80 z-10"></div>
-        <div className="relative z-20 flex flex-col items-center justify-center h-full text-white text-center px-4">
-          <img src="/logoweb.png" className="h-24 w-auto mb-6" alt="Puerto Copy Logo" />
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">Bienvenido a Puerto Copy</h1>
-          <p className="text-lg md:text-xl mb-6">Impresiones digitales, copias y planos con estilo profesional.</p>
-          <a
-            href="/facturar"
-            className="inline-block bg-white text-blue-800 hover:bg-blue-100 transition px-6 py-3 rounded-full font-semibold shadow"
-          >
-            Generar Factura
-          </a>
-        </div>
       </section>
 
       {/* SERVICIOS */}
@@ -108,5 +96,5 @@ export default function Home() {
 
       <Footer />
     </div>
-  );//coment
+  );
 }
