@@ -18,6 +18,37 @@ export default function Home() {
 
       {/* HERO */}
       <header className="relative flex items-center justify-center h-screen pt-16">
+        {/* SERVICIOS */}
+<section className="relative bg-white text-gray-800 py-20 px-6 md:px-12">
+  <div className="max-w-6xl mx-auto text-center">
+    <h2 className="text-3xl md:text-4xl font-bold mb-12 text-blue-900">Nuestros Servicios</h2>
+    <div className="grid md:grid-cols-3 gap-10">
+      
+      {/* Servicio 1 */}
+      <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg">
+        <div className="text-blue-700 text-4xl mb-4">📄</div>
+        <h3 className="text-xl font-semibold mb-2">Impresión de Documentos</h3>
+        <p className="text-gray-600">Impresión en tamaño carta, oficio y doble carta con la mejor calidad.</p>
+      </div>
+
+      {/* Servicio 2 */}
+      <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg">
+        <div className="text-blue-700 text-4xl mb-4">📐</div>
+        <h3 className="text-xl font-semibold mb-2">Impresión de Planos</h3>
+        <p className="text-gray-600">Impresión en gran formato en papel Bond y fotográfico, ideal para arquitectos e ingenieros.</p>
+      </div>
+
+      {/* Servicio 3 */}
+      <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg">
+        <div className="text-blue-700 text-4xl mb-4">🧾</div>
+        <h3 className="text-xl font-semibold mb-2">Facturación Electrónica</h3>
+        <p className="text-gray-600">Genera tu factura fácil y rápido con tu número de ticket y datos fiscales.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
         <img
           src="/heroweb.png"
           alt="Puerto Vallarta Background"
