@@ -63,6 +63,37 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {/* VENTAJAS */}
+<section className="bg-blue-50 py-20 px-6 md:px-12">
+  <div className="max-w-6xl mx-auto text-center">
+    <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-12">¿Por qué elegirnos?</h2>
+    <div className="grid md:grid-cols-3 gap-10">
+      
+      {/* Rapidez */}
+      <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition transform hover:-translate-y-1 duration-300">
+        <div className="text-blue-700 text-5xl mb-4">⚡</div>
+        <h3 className="text-xl font-semibold mb-2">Servicio Rápido</h3>
+        <p className="text-gray-600">Entregamos tus trabajos en tiempo récord, sin perder calidad.</p>
+      </div>
+
+      {/* Calidad */}
+      <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition transform hover:-translate-y-1 duration-300">
+        <div className="text-blue-700 text-5xl mb-4">🎯</div>
+        <h3 className="text-xl font-semibold mb-2">Alta Calidad</h3>
+        <p className="text-gray-600">Utilizamos tecnología de impresión profesional para los mejores resultados.</p>
+      </div>
+
+      {/* Atención personalizada */}
+      <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition transform hover:-translate-y-1 duration-300">
+        <div className="text-blue-700 text-5xl mb-4">🤝</div>
+        <h3 className="text-xl font-semibold mb-2">Atención Personalizada</h3>
+        <p className="text-gray-600">Nos importa cada cliente. Brindamos asesoría y soporte directo.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
     </div>
   );
 }
