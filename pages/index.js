@@ -142,12 +142,6 @@ export default function Home() {
     © {new Date().getFullYear()} Puerto Copy. Todos los derechos reservados.
   </div>
 </footer>
-
-import Footer from "../components/Footer";
-
-...
-
-<Footer />
 </div> 
 
   );
