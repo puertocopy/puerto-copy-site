@@ -38,9 +38,9 @@ export default function Home() {
     <div className="bg-white text-gray-900 overflow-x-hidden">
       <Navbar />
 
-      {/* SLIDER */}
-<section className="relative w-full mt-[60px]">
-  <div className="relative h-[calc(100vh-60px)]">
+     {/* SLIDER */}
+<section className="relative w-full mt-[60px] min-h-[calc(100vh+1px)]">
+  <div className="relative h-[calc(100vh-60px)] overflow-hidden">
     {slides.map((slide, index) => {
       const imageUrl = isMobile
         ? `/slides/slide${slide}-mobile.jpg`
@@ -51,8 +51,7 @@ export default function Home() {
           key={index}
           src={imageUrl}
           alt={`Slide ${slide}`}
-          loading="eager"
-          className={`pointer-events-none absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
             currentSlide === index && fade ? 'opacity-100' : 'opacity-0'
           }`}
         />
@@ -60,6 +59,7 @@ export default function Home() {
     })}
   </div>
 </section>
+
 
 {/* SEPARADOR INVISIBLE PARA EVITAR LAG DE SCROLL */}
 <div className="h-10 md:h-16"></div>
