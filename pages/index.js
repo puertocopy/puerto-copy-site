@@ -28,7 +28,7 @@ export default function Home() {
       <Navbar />
 
       {/* SLIDER */}
-<section className="relative h-[calc(100vh-60px)] w-full overflow-hidden mt-[60px]">
+<section className="relative w-full h-[calc(100vh-60px)] mt-[60px]">
   <img
     src={slides[currentSlide]}
     alt="Puerto Copy Slide"
@@ -37,7 +37,6 @@ export default function Home() {
       fade ? 'opacity-100' : 'opacity-0'
     }`}
   />
-  <div className="absolute inset-0 bg-[#004b71] opacity-60 z-10"></div>
 </section>
 
 
