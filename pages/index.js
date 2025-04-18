@@ -39,7 +39,7 @@ export default function Home() {
       <Navbar />
 
       {/* SLIDER */}
-      <section className="relative w-full mt-[60px]">
+      <section id="inicio" className="relative w-full mt-[60px]">
       <div className="relative min-h-[calc(100vh-60px)] overflow-x-hidden overflow-y-auto">
           {slides.map((slide, index) => {
             const imageUrl = isMobile
