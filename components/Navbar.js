@@ -23,7 +23,7 @@ export default function Navbar() {
         <ul className="hidden md:flex gap-6 text-white font-medium text-sm">
           <li className="cursor-pointer hover:text-blue-200" onClick={() => scrollToSection('top')}>Inicio</li>
           <li className="cursor-pointer hover:text-blue-200" onClick={() => scrollToSection('servicios')}>Servicios</li>
-          <li className="cursor-pointer hover:text-blue-200" onClick={() => router.push('/facturar')}>Facturación</li>
+          <li className="cursor-pointer hover:text-blue-200" onClick={() => router.push('/facturacion')}>Facturación</li>
           <li className="cursor-pointer hover:text-blue-200" onClick={() => scrollToSection('contacto')}>Contacto</li>
         </ul>
 

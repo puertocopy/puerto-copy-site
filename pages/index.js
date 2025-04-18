@@ -38,18 +38,27 @@ export default function Home() {
     <div className="bg-white text-gray-900 overflow-x-hidden">
 
       <Navbar />
+      <section id="top"></section>
 
       {/* SLIDER */}
-      <section className="relative w-full h-[calc(100vh-60px)] mt-[60px]">
-        <img
-          src={`${slides[currentSlide]}${isMobile ? '-mobile.jpg' : '-desktop.jpg'}`}
-          alt={`Slide ${currentSlide + 1}`}
-          key={slides[currentSlide]}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
-            fade ? 'opacity-100' : 'opacity-0'
-          }`}
-        />
-      </section>
+<section className="relative w-full h-screen mt-[60px] overflow-hidden">
+  <div className="relative w-full h-full">
+    <img
+      src={
+        isMobile
+          ? `/slides/slide${currentSlide + 1}-mobile.jpg`
+          : `/slides/slide${currentSlide + 1}-desktop.jpg`
+      }
+      alt={`Slide ${currentSlide + 1}`}
+      key={currentSlide}
+      className={`w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
+        fade ? 'opacity-100' : 'opacity-0'
+      }`}
+    />
+    <div className="absolute inset-0 bg-gradient-to-r from-blue-900 to-blue-700 opacity-40 z-10 pointer-events-none"></div>
+  </div>
+</section>
+
 
       {/* SERVICIOS */}
       <section id="servicios" className="relative bg-white text-gray-800 py-20 px-6 md:px-12 z-10">
