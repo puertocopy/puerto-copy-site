@@ -5,12 +5,20 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 export default function Home() {
-  const slides = ['/slides/slide1.jpg', '/slides/slide2.jpg', '/slides/slide3.jpg'];
+  const slides = ['/slides/slide1', '/slides/slide2', '/slides/slide3'];
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fade, setFade] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     AOS.init({ duration: 1000 });
+
+    // Detectar si es móvil
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
 
     const interval = setInterval(() => {
       setFade(false);
@@ -20,7 +28,10 @@ export default function Home() {
       }, 500);
     }, 5000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   return (
@@ -28,17 +39,16 @@ export default function Home() {
       <Navbar />
 
       {/* SLIDER */}
-<section className="relative w-full h-[calc(100vh-60px)] mt-[60px]">
-  <img
-    src={slides[currentSlide]}
-    alt="Puerto Copy Slide"
-    key={slides[currentSlide]}
-    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
-      fade ? 'opacity-100' : 'opacity-0'
-    }`}
-  />
-</section>
-
+      <section className="relative w-full h-[calc(100vh-60px)] mt-[60px]">
+        <img
+          src={`${slides[currentSlide]}${isMobile ? '-mobile.jpg' : '-desktop.jpg'}`}
+          alt={`Slide ${currentSlide + 1}`}
+          key={slides[currentSlide]}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+            fade ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      </section>
 
       {/* SERVICIOS */}
       <section id="servicios" className="relative bg-white text-gray-800 py-20 px-6 md:px-12 z-10">
