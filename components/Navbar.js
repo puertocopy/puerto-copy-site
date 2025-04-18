@@ -1,16 +1,9 @@
-// components/Navbar.js
-// components/Navbar.tsx
-import Link from 'next/link';
+import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
 
 export default function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
-  const [isHome, setIsHome] = useState(false);
-
-  useEffect(() => {
-    setIsHome(router.pathname === '/');
-  }, [router.pathname]);
 
   const scrollToSection = (id) => {
     const section = document.getElementById(id);
@@ -22,19 +15,35 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-[#004b71] bg-opacity-90 backdrop-blur-md shadow text-white">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-        <Link href="/">
-          <img src="/logoweb.png" alt="Puerto Copy Logo" className="h-10 w-auto cursor-pointer" />
-        </Link>
+    <nav className="fixed top-0 left-0 w-full z-50 bg-[#004b71] bg-opacity-90 shadow backdrop-blur-md">
+      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <img src="/logoweb.png" alt="Puerto Copy Logo" className="h-10 w-auto" />
 
-        <ul className="hidden md:flex gap-6 text-sm font-medium">
-          <li className="hover:text-blue-300 cursor-pointer" onClick={() => router.push('/')}>Inicio</li>
-          <li className="hover:text-blue-300 cursor-pointer" onClick={() => scrollToSection('servicios')}>Servicios</li>
-          <li className="hover:text-blue-300 cursor-pointer" onClick={() => router.push('/facturacion')}>Facturación</li>
-          <li className="hover:text-blue-300 cursor-pointer" onClick={() => scrollToSection('contacto')}>Contacto</li>
+        {/* Menu desktop */}
+        <ul className="hidden md:flex gap-6 text-white font-medium text-sm">
+          <li className="cursor-pointer hover:text-blue-200" onClick={() => scrollToSection('top')}>Inicio</li>
+          <li className="cursor-pointer hover:text-blue-200" onClick={() => scrollToSection('servicios')}>Servicios</li>
+          <li className="cursor-pointer hover:text-blue-200" onClick={() => router.push('/facturar')}>Facturación</li>
+          <li className="cursor-pointer hover:text-blue-200" onClick={() => scrollToSection('contacto')}>Contacto</li>
         </ul>
+
+        {/* Menu mobile */}
+        <div className="md:hidden">
+          <button onClick={() => setMenuOpen(!menuOpen)} className="text-white focus:outline-none">
+            ☰
+          </button>
+        </div>
       </div>
+
+      {/* Mobile dropdown */}
+      {menuOpen && (
+        <ul className="md:hidden bg-[#004b71] text-white px-4 pb-4 space-y-2 font-medium text-sm">
+          <li className="cursor-pointer hover:text-blue-200" onClick={() => { scrollToSection('top'); setMenuOpen(false); }}>Inicio</li>
+          <li className="cursor-pointer hover:text-blue-200" onClick={() => { scrollToSection('servicios'); setMenuOpen(false); }}>Servicios</li>
+          <li className="cursor-pointer hover:text-blue-200" onClick={() => { router.push('/facturar'); setMenuOpen(false); }}>Facturación</li>
+          <li className="cursor-pointer hover:text-blue-200" onClick={() => { scrollToSection('contacto'); setMenuOpen(false); }}>Contacto</li>
+        </ul>
+      )}
     </nav>
   );
 }
