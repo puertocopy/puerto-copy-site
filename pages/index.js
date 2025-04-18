@@ -40,7 +40,7 @@ export default function Home() {
 
       {/* SLIDER */}
       <section className="relative w-full mt-[60px]">
-       <div className="relative w-full h-full">
+      <div className="relative min-h-[calc(100vh-60px)] overflow-x-hidden overflow-y-auto">
           {slides.map((slide, index) => {
             const imageUrl = isMobile
               ? `/slides/slide${slide}-mobile.jpg`
