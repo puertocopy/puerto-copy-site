@@ -1,0 +1,285 @@
+{
+  "success": true,
+  "catalog": [
+    {
+      "servicio": "Copias de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "45x60",
+      "tipo": "Líneas / Texto",
+      "precio": 20.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "45x60",
+      "tipo": "Cobertura completa",
+      "precio": 33.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "60x90",
+      "tipo": "Líneas / Texto",
+      "precio": 24.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "60x90",
+      "tipo": "Cobertura completa",
+      "precio": 43.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "60x120",
+      "tipo": "Líneas / Texto",
+      "precio": 35.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "60x120",
+      "tipo": "Cobertura completa",
+      "precio": 55.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "90x120",
+      "tipo": "Líneas / Texto",
+      "precio": 49.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "90x120",
+      "tipo": "Cobertura completa",
+      "precio": 66.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "90x150",
+      "tipo": "Líneas / Texto",
+      "precio": 69.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "90x150",
+      "tipo": "Cobertura completa",
+      "precio": 87.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Color",
+      "tamano": "45x60",
+      "tipo": "Líneas / Texto",
+      "precio": 28.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Color",
+      "tamano": "45x60",
+      "tipo": "Cobertura completa",
+      "precio": 45.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Color",
+      "tamano": "60x90",
+      "tipo": "Líneas / Texto",
+      "precio": 35.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Color",
+      "tamano": "60x90",
+      "tipo": "Cobertura completa",
+      "precio": 65.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Color",
+      "tamano": "60x120",
+      "tipo": "Líneas / Texto",
+      "precio": 40.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Color",
+      "tamano": "60x120",
+      "tipo": "Cobertura completa",
+      "precio": 79.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Color",
+      "tamano": "90x120",
+      "tipo": "Líneas / Texto",
+      "precio": 59.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Color",
+      "tamano": "90x120",
+      "tipo": "Cobertura completa",
+      "precio": 105.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Color",
+      "tamano": "90x150",
+      "tipo": "Líneas / Texto",
+      "precio": 79.0
+    },
+    {
+      "servicio": "Copias de Planos",
+      "color": "Color",
+      "tamano": "90x150",
+      "tipo": "Cobertura completa",
+      "precio": 129.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "45x60",
+      "tipo": "Líneas / Texto",
+      "precio": 18.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "45x60",
+      "tipo": "Cobertura completa",
+      "precio": 29.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "60x90",
+      "tipo": "Líneas / Texto",
+      "precio": 20.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "60x90",
+      "tipo": "Cobertura completa",
+      "precio": 39.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "60x120",
+      "tipo": "Líneas / Texto",
+      "precio": 29.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "60x120",
+      "tipo": "Cobertura completa",
+      "precio": 49.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "90x120",
+      "tipo": "Líneas / Texto",
+      "precio": 45.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "90x120",
+      "tipo": "Cobertura completa",
+      "precio": 62.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "90x150",
+      "tipo": "Líneas / Texto",
+      "precio": 66.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Blanco y Negro",
+      "tamano": "90x150",
+      "tipo": "Cobertura completa",
+      "precio": 82.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Color",
+      "tamano": "45x60",
+      "tipo": "Líneas / Texto",
+      "precio": 24.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Color",
+      "tamano": "45x60",
+      "tipo": "Cobertura completa",
+      "precio": 40.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Color",
+      "tamano": "60x90",
+      "tipo": "Líneas / Texto",
+      "precio": 30.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Color",
+      "tamano": "60x90",
+      "tipo": "Cobertura completa",
+      "precio": 59.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Color",
+      "tamano": "60x120",
+      "tipo": "Líneas / Texto",
+      "precio": 36.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Color",
+      "tamano": "60x120",
+      "tipo": "Cobertura completa",
+      "precio": 75.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Color",
+      "tamano": "90x120",
+      "tipo": "Líneas / Texto",
+      "precio": 54.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Color",
+      "tamano": "90x120",
+      "tipo": "Cobertura completa",
+      "precio": 99.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Color",
+      "tamano": "90x150",
+      "tipo": "Líneas / Texto",
+      "precio": 75.0
+    },
+    {
+      "servicio": "Impresión de Planos",
+      "color": "Color",
+      "tamano": "90x150",
+      "tipo": "Cobertura completa",
+      "precio": 125.0
+    }
+  ]
+}
