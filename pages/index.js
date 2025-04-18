@@ -40,7 +40,7 @@ export default function Home() {
 
      {/* SLIDER */}
 <section id="inicio" className="relative w-full mt-[60px] min-h-[calc(100vh+1px)]">
-  <div className="relative h-[calc(100vh-60px)] overflow-hidden">
+<div className="relative min-h-[100vh] overflow-hidden">
     {slides.map((slide, index) => {
       const imageUrl = isMobile
         ? `/slides/slide${slide}-mobile.jpg`
@@ -62,7 +62,8 @@ export default function Home() {
 
 
 {/* SEPARADOR INVISIBLE PARA EVITAR LAG DE SCROLL */}
-<div className="h-10 md:h-16"></div>
+<div className="h-4 md:h-6 lg:h-8" />
+
 
 {/* SERVICIOS */}
 <section id="servicios" className="relative bg-white text-gray-800 pt-20 pb-16 px-6 md:px-12 z-10">
