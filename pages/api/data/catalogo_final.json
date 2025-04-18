@@ -1,0 +1,435 @@
+[
+  {
+    "id": "carpeta",
+    "name": "CARPETA",
+    "category": "PAPELERÍA",
+    "price": "6.00",
+    "variant": [
+      "T/CARTA"
+    ]
+  },
+  {
+    "id": "cd/dvd",
+    "name": "CD/DVD",
+    "category": "PAPELERÍA",
+    "price": "37.00",
+    "variant": []
+  },
+  {
+    "id": "clip",
+    "name": "CLIP",
+    "category": "PAPELERÍA",
+    "price": "0.50",
+    "variant": []
+  },
+  {
+    "id": "copia-de-ine",
+    "name": "COPIA DE INE",
+    "category": "COPIA T/ESTANDAR",
+    "price": "2.00",
+    "variant": []
+  },
+  {
+    "id": "copia-plano-img/fondo",
+    "name": "COPIA PLANO IMG/FONDO B/N",
+    "category": "PLANOS",
+    "price": "39.00",
+    "variant": [
+      "45X60"
+    ]
+  },
+  {
+    "id": "copia-plano-img/fondo-color",
+    "name": "COPIA PLANO IMG/FONDO COLOR",
+    "category": "PLANOS",
+    "price": "45.00",
+    "variant": [
+      "45X60"
+    ]
+  },
+  {
+    "id": "copia-plano-lineas/texto",
+    "name": "COPIA PLANO LINEAS/TEXTO B/N",
+    "category": "PLANOS",
+    "price": "24.00",
+    "variant": [
+      "45X60"
+    ]
+  },
+  {
+    "id": "copia-plano-lineas/texto-color",
+    "name": "COPIA PLANO LINEAS/TEXTO COLOR",
+    "category": "PLANOS",
+    "price": "28.00",
+    "variant": [
+      "45X60"
+    ]
+  },
+  {
+    "id": "copia-t/carta-a-color",
+    "name": "COPIA T/CARTA A COLOR",
+    "category": "COPIA T/ESTANDAR",
+    "price": "6.00",
+    "variant": [
+      "1-50"
+    ]
+  },
+  {
+    "id": "copia-t/carta-b/n",
+    "name": "COPIA T/CARTA B/N",
+    "category": "COPIA T/ESTANDAR",
+    "price": "1.00",
+    "variant": [
+      "1-50"
+    ]
+  },
+  {
+    "id": "copia-t/doble-carta-a-color",
+    "name": "COPIA T/DOBLE CARTA A COLOR",
+    "category": "COPIA T/ESTANDAR",
+    "price": "12.00",
+    "variant": [
+      "1-50"
+    ]
+  },
+  {
+    "id": "copia-t/doble-carta-b/n",
+    "name": "COPIA T/DOBLE CARTA B/N",
+    "category": "COPIA T/ESTANDAR",
+    "price": "4.50",
+    "variant": [
+      "1-50"
+    ]
+  },
+  {
+    "id": "copia-t/oficio-a-color",
+    "name": "COPIA T/OFICIO A COLOR",
+    "category": "COPIA T/ESTANDAR",
+    "price": "7.00",
+    "variant": [
+      "1-50"
+    ]
+  },
+  {
+    "id": "copia-t/oficio-b/n",
+    "name": "COPIA T/OFICIO B/N",
+    "category": "COPIA T/ESTANDAR",
+    "price": "1.50",
+    "variant": [
+      "1-50"
+    ]
+  },
+  {
+    "id": "doblado-de-plano",
+    "name": "DOBLADO DE PLANO",
+    "category": "PLANOS",
+    "price": "5.00",
+    "variant": [
+      "1-100"
+    ]
+  },
+  {
+    "id": "eng-t/carta",
+    "name": "ENG T/CARTA",
+    "category": "ENGARGOLADOS",
+    "price": "20.00",
+    "variant": [
+      "1-100"
+    ]
+  },
+  {
+    "id": "eng-t/doble-carta",
+    "name": "ENG T/DOBLE CARTA",
+    "category": "ENGARGOLADOS",
+    "price": "35.00",
+    "variant": [
+      "1-100"
+    ]
+  },
+  {
+    "id": "eng-t/oficio",
+    "name": "ENG T/OFICIO",
+    "category": "ENGARGOLADOS",
+    "price": "25.00",
+    "variant": [
+      "1-100"
+    ]
+  },
+  {
+    "id": "enmicado-t/carta",
+    "name": "ENMICADO T/CARTA",
+    "category": "ENMICADOS",
+    "price": "20.00",
+    "variant": []
+  },
+  {
+    "id": "enmicado-t/oficio",
+    "name": "ENMICADO T/OFICIO",
+    "category": "ENMICADOS",
+    "price": "25.00",
+    "variant": []
+  },
+  {
+    "id": "escaneo-de-plano",
+    "name": "ESCANEO DE PLANO",
+    "category": "ESCANEO",
+    "price": "15.00",
+    "variant": [
+      "1-30"
+    ]
+  },
+  {
+    "id": "escaneo-t/estandar",
+    "name": "ESCANEO T/ESTANDAR",
+    "category": "ESCANEO",
+    "price": "5.00",
+    "variant": [
+      "1-30"
+    ]
+  },
+  {
+    "id": "grabado-de-archivos",
+    "name": "GRABADO DE ARCHIVOS",
+    "category": "PAPELERÍA",
+    "price": "17.00",
+    "variant": []
+  },
+  {
+    "id": "grapa-grande",
+    "name": "GRAPA GRANDE",
+    "category": "PAPELERÍA",
+    "price": "variable",
+    "variant": [
+      "Chica 1-5"
+    ]
+  },
+  {
+    "id": "imp-metro-lineal-vinil-blanco",
+    "name": "IMP METRO LINEAL VINIL BLANCO",
+    "category": "IMP GRAN FORMATO",
+    "price": "390.00",
+    "variant": []
+  },
+  {
+    "id": "imp-metro-lineal-vinil-microperforado",
+    "name": "IMP METRO LINEAL VINIL MICROPERFORADO",
+    "category": "IMP GRAN FORMATO",
+    "price": "490.00",
+    "variant": []
+  },
+  {
+    "id": "imp-metro-lineal-vinil-transparente",
+    "name": "IMP METRO LINEAL VINIL TRANSPARENTE",
+    "category": "IMP GRAN FORMATO",
+    "price": "490.00",
+    "variant": []
+  },
+  {
+    "id": "imp-plano-img/fondo",
+    "name": "IMPRESION PLANO IMG/FONDO B/N",
+    "category": "PLANOS",
+    "price": "33.00",
+    "variant": [
+      "45X60"
+    ]
+  },
+  {
+    "id": "imp-plano-img/fondo-color",
+    "name": "IMPRESION PLANO IMG/FONDO COLOR",
+    "category": "PLANOS",
+    "price": "45.00",
+    "variant": [
+      "45X60"
+    ]
+  },
+  {
+    "id": "imp-plano-lineas/texto",
+    "name": "IMPRESION PLANO LINEAS/TEXTO B/N",
+    "category": "PLANOS",
+    "price": "20.00",
+    "variant": [
+      "45X60"
+    ]
+  },
+  {
+    "id": "imp-plano-lineas/texto-color",
+    "name": "IMP PLANO LINEAS/TEXTO COLOR",
+    "category": "PLANOS",
+    "price": "28.00",
+    "variant": [
+      "45X60"
+    ]
+  },
+  {
+    "id": "imp-t/carta-a-color",
+    "name": "IMP T/CARTA A COLOR",
+    "category": "IMP T/ESTÁNDAR",
+    "price": "5.50",
+    "variant": [
+      "1-50"
+    ]
+  },
+  {
+    "id": "imp-t/carta-b/n",
+    "name": "IMP T/CARTA B/N",
+    "category": "IMP T/ESTÁNDAR",
+    "price": "1.00",
+    "variant": [
+      "1-50"
+    ]
+  },
+  {
+    "id": "imp-t/doble-carta",
+    "name": "IMP T/DOBLE CARTA B/N",
+    "category": "IMP T/ESTÁNDAR",
+    "price": "4.00",
+    "variant": [
+      "1-50"
+    ]
+  },
+  {
+    "id": "imp-t/doble-carta-1",
+    "name": "ENMICADO T/DOBLE CARTA",
+    "category": "ENMICADOS",
+    "price": "35.00",
+    "variant": []
+  },
+  {
+    "id": "imp-t/doble-carta-a-color",
+    "name": "IMP T/DOBLE CARTA A COLOR",
+    "category": "IMP T/ESTÁNDAR",
+    "price": "12.00",
+    "variant": [
+      "1-50"
+    ]
+  },
+  {
+    "id": "imp-t/oficio",
+    "name": "IMP T/OFICIO B/N",
+    "category": "IMP T/ESTÁNDAR",
+    "price": "1.50",
+    "variant": [
+      "1-50"
+    ]
+  },
+  {
+    "id": "imp-t/oficio-a-color",
+    "name": "IMP T/OFICIO A COLOR",
+    "category": "IMP T/ESTÁNDAR",
+    "price": "7.00",
+    "variant": [
+      "1-50"
+    ]
+  },
+  {
+    "id": "impresión-curp",
+    "name": "IMPRESIÓN CURP",
+    "category": "PAPELERÍA",
+    "price": "15.00",
+    "variant": []
+  },
+  {
+    "id": "impresión/copia-con-fondo-b/n-carta",
+    "name": "IMPRESIÓN/COPIA CON FONDO B/N CARTA",
+    "category": "COP/IMP T/ESTÁNDAR CON FONDO O IMAGEN",
+    "price": "2.00",
+    "variant": [
+      "1-30"
+    ]
+  },
+  {
+    "id": "impresión/copia-con-fondo-b/n-oficio",
+    "name": "IMPRESIÓN/COPIA CON FONDO B/N OFICIO",
+    "category": "COP/IMP T/ESTÁNDAR CON FONDO O IMAGEN",
+    "price": "2.50",
+    "variant": [
+      "1-30"
+    ]
+  },
+  {
+    "id": "lapicera",
+    "name": "LAPICERA",
+    "category": "PAPELERÍA",
+    "price": "6.00",
+    "variant": [
+      "TINTA AZUL"
+    ]
+  },
+  {
+    "id": "lona-m2",
+    "name": "LONA M2",
+    "category": "IMP GRAN FORMATO",
+    "price": "160.00",
+    "variant": []
+  },
+  {
+    "id": "papel-especial-t/45x60",
+    "name": "PAPEL ESPECIAL T/45X60",
+    "category": "PAPEL ESPECIAL",
+    "price": "60.00",
+    "variant": [
+      "FOTOGRAFICO"
+    ]
+  },
+  {
+    "id": "papel-especial-t/60x120",
+    "name": "PAPEL ESPECIAL T/60X120",
+    "category": "PAPEL ESPECIAL",
+    "price": "130.00",
+    "variant": [
+      "FOTOGRAFICO"
+    ]
+  },
+  {
+    "id": "papel-especial-t/60x90",
+    "name": "PAPEL ESPECIAL T/60X90",
+    "category": "PAPEL ESPECIAL",
+    "price": "100.00",
+    "variant": [
+      "FOTOGRAFICO"
+    ]
+  },
+  {
+    "id": "papel-especial-t/carta",
+    "name": "PAPEL ESPECIAL T/CARTA",
+    "category": "PAPEL ESPECIAL",
+    "price": "5.00",
+    "variant": [
+      "ADHERIBLE"
+    ]
+  },
+  {
+    "id": "papel-especial-t/doble-carta",
+    "name": "PAPEL ESPECIAL T/DOBLE CARTA",
+    "category": "PAPEL ESPECIAL",
+    "price": "7.00",
+    "variant": [
+      "ADHERIBLE"
+    ]
+  },
+  {
+    "id": "sobre",
+    "name": "SOBRE",
+    "category": "PAPELERÍA",
+    "price": "7.00",
+    "variant": [
+      "T/CARTA"
+    ]
+  },
+  {
+    "id": "sujeta-documentos",
+    "name": "SUJETA DOCUMENTOS",
+    "category": "PAPELERÍA",
+    "price": "2.50",
+    "variant": [
+      "CHICO"
+    ]
+  },
+  {
+    "id": "usb",
+    "name": "USB",
+    "category": "PAPELERÍA",
+    "price": "80.00",
+    "variant": []
+  }
+]
