@@ -1,0 +1,45 @@
+[
+  {
+    "id": "1",
+    "name": "Impresi\u00f3n Carta B/N",
+    "category": "Impresi\u00f3n",
+    "price": 1.5,
+    "variants": []
+  },
+  {
+    "id": "2",
+    "name": "Impresi\u00f3n Carta Color",
+    "category": "Impresi\u00f3n",
+    "price": 3.0,
+    "variants": []
+  },
+  {
+    "id": "3",
+    "name": "Plano Bond Blanco y Negro",
+    "category": "Planos",
+    "price": 15.0,
+    "variants": [
+      "90x60",
+      "A0",
+      "A1"
+    ]
+  },
+  {
+    "id": "4",
+    "name": "Engargolado Pl\u00e1stico",
+    "category": "Acabados",
+    "price": 10.0,
+    "variants": [
+      "15 hojas",
+      "50 hojas",
+      "100 hojas"
+    ]
+  },
+  {
+    "id": "5",
+    "name": "Escaneo de documentos",
+    "category": "Servicios",
+    "price": 2.0,
+    "variants": []
+  }
+]
