@@ -5,20 +5,12 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 export default function Home() {
-  const slides = ['/slides/slide1', '/slides/slide2', '/slides/slide3'];
+  const slides = ['/slides/slide1.jpg', '/slides/slide2.jpg', '/slides/slide3.jpg'];
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fade, setFade] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     AOS.init({ duration: 1000 });
-
-    // Detectar si es móvil
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
 
     const interval = setInterval(() => {
       setFade(false);
@@ -28,42 +20,29 @@ export default function Home() {
       }, 500);
     }, 5000);
 
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('resize', handleResize);
-    };
+    return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="bg-white text-gray-900 overflow-x-hidden">
-
       <Navbar />
-      <section id="top"></section>
 
       {/* SLIDER */}
-<section className="relative w-full h-screen mt-[60px] overflow-hidden">
-  <div className="relative w-full h-full">
-    <img
-      src={
-        isMobile
-          ? `/slides/slide${currentSlide + 1}-mobile.jpg`
-          : `/slides/slide${currentSlide + 1}-desktop.jpg`
-      }
-      alt={`Slide ${currentSlide + 1}`}
-      key={currentSlide}
-      className={`w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
-        fade ? 'opacity-100' : 'opacity-0'
-      }`}
-    />
-    <div className="absolute inset-0 bg-gradient-to-r from-blue-900 to-blue-700 opacity-40 z-10 pointer-events-none"></div>
-  </div>
-</section>
-
+      <section className="relative w-full h-[calc(100vh-60px)] mt-[60px]">
+        <img
+          src={slides[currentSlide]}
+          alt={`Slide ${currentSlide + 1}`}
+          key={slides[currentSlide]}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+            fade ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      </section>
 
       {/* SERVICIOS */}
       <section id="servicios" className="relative bg-white text-gray-800 py-20 px-6 md:px-12 z-10">
         <div className="max-w-6xl mx-auto text-center" data-aos="fade-up">
-          <h2 className="text-3xl md:text-4xl font-bold mb-12 text-blue-900">Nuestros Servicios</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-12 text-[#004b71]">Nuestros Servicios</h2>
           <div className="grid md:grid-cols-3 gap-10">
             <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg" data-aos="zoom-in">
               <div className="text-blue-700 text-4xl mb-4">📄</div>
@@ -89,7 +68,7 @@ export default function Home() {
       {/* VENTAJAS */}
       <section className="bg-blue-50 py-20 px-6 md:px-12">
         <div className="max-w-6xl mx-auto text-center" data-aos="fade-up">
-          <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-12">¿Por qué elegirnos?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-[#004b71] mb-12">¿Por qué elegirnos?</h2>
           <div className="grid md:grid-cols-3 gap-10">
             <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition transform hover:-translate-y-1 duration-300" data-aos="fade-right">
               <div className="text-blue-700 text-5xl mb-4">⚡</div>
