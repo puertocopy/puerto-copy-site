@@ -12,37 +12,47 @@ export default function Navbar() {
     } else {
       router.push(`/#${id}`);
     }
+    setMenuOpen(false);
   };
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-[#004b71] bg-opacity-90 shadow backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        <img src="/logoweb.png" alt="Puerto Copy Logo" className="h-10 w-auto" />
+    <nav className="fixed top-0 w-full z-50 bg-[#004b71] bg-opacity-80 backdrop-blur-md shadow text-white">
+      <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        {/* Logo */}
+        <a href="/" className="flex items-center">
+          <img src="/logoweb.png" alt="Puerto Copy Logo" className="h-10 w-auto" />
+        </a>
 
-        {/* Menu desktop */}
-        <ul className="hidden md:flex gap-6 text-white font-medium text-sm">
-          <li className="cursor-pointer hover:text-blue-200" onClick={() => scrollToSection('top')}>Inicio</li>
-          <li className="cursor-pointer hover:text-blue-200" onClick={() => scrollToSection('servicios')}>Servicios</li>
-          <li className="cursor-pointer hover:text-blue-200" onClick={() => router.push('/facturacion')}>Facturación</li>
-          <li className="cursor-pointer hover:text-blue-200" onClick={() => scrollToSection('contacto')}>Contacto</li>
+        {/* Menú Desktop */}
+        <ul className="hidden md:flex gap-6 text-sm font-medium">
+          <li onClick={() => scrollToSection('inicio')} className="hover:text-blue-300 cursor-pointer">Inicio</li>
+          <li onClick={() => scrollToSection('servicios')} className="hover:text-blue-300 cursor-pointer">Servicios</li>
+          <li onClick={() => router.push('/facturar')} className="hover:text-blue-300 cursor-pointer">Facturación</li>
+          <li onClick={() => scrollToSection('contacto')} className="hover:text-blue-300 cursor-pointer">Contacto</li>
         </ul>
 
-        {/* Menu mobile */}
+        {/* Menú Mobile Icono */}
         <div className="md:hidden">
-          <button onClick={() => setMenuOpen(!menuOpen)} className="text-white focus:outline-none">
-            ☰
+          <button onClick={() => setMenuOpen(!menuOpen)}>
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2"
+              viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d={menuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'} />
+            </svg>
           </button>
         </div>
       </div>
 
-      {/* Mobile dropdown */}
+      {/* Menú Mobile */}
       {menuOpen && (
-        <ul className="md:hidden bg-[#004b71] text-white px-4 pb-4 space-y-2 font-medium text-sm">
-          <li className="cursor-pointer hover:text-blue-200" onClick={() => { scrollToSection('top'); setMenuOpen(false); }}>Inicio</li>
-          <li className="cursor-pointer hover:text-blue-200" onClick={() => { scrollToSection('servicios'); setMenuOpen(false); }}>Servicios</li>
-          <li className="cursor-pointer hover:text-blue-200" onClick={() => { router.push('/facturar'); setMenuOpen(false); }}>Facturación</li>
-          <li className="cursor-pointer hover:text-blue-200" onClick={() => { scrollToSection('contacto'); setMenuOpen(false); }}>Contacto</li>
-        </ul>
+        <div className="md:hidden px-4 pb-4">
+          <ul className="flex flex-col gap-3">
+            <li onClick={() => scrollToSection('inicio')} className="hover:text-blue-300 cursor-pointer">Inicio</li>
+            <li onClick={() => scrollToSection('servicios')} className="hover:text-blue-300 cursor-pointer">Servicios</li>
+            <li onClick={() => router.push('/facturacion')} className="hover:text-blue-300 cursor-pointer">Facturación</li>
+            <li onClick={() => scrollToSection('contacto')} className="hover:text-blue-300 cursor-pointer">Contacto</li>
+          </ul>
+        </div>
       )}
     </nav>
   );
