@@ -1,81 +1,65 @@
-// pages/api/pedido.ts
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
-export default function Pedido() {
-  const [catalog, setCatalog] = useState([]);
-  const [cart, setCart] = useState([]);
-  const [file, setFile] = useState<File | null>(null);
+export default function PedidoPage() {
+  const [archivo, setArchivo] = useState(null);
+  const [mensaje, setMensaje] = useState('');
 
-  useEffect(() => {
-    fetch('/api/catalogo')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setCatalog(data.catalog);
-        }
-      });
-  }, []);
-
-  const addToCart = (item: any, variant = '') => {
-    setCart([...cart, { ...item, variant, id: `${item.id}-${variant}-${cart.length}`, quantity: 1 }]);
+  const handleArchivoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setArchivo(file);
+      setMensaje('');
+    }
   };
 
-  const total = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const handleEnviarPedido = () => {
+    if (!archivo) {
+      setMensaje('Por favor, carga un archivo antes de enviar el pedido.');
+      return;
+    }
+
+    alert('✅ Pedido enviado correctamente con archivo');
+  };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-[#004b71] mb-6">Realiza tu Pedido</h1>
+    <div className="bg-white text-gray-900 min-h-screen overflow-x-hidden">
+      <Navbar />
 
-      <div className="grid gap-6 mb-10">
-        {catalog.map((item) => (
-          <div key={item.id} className="border p-4 rounded shadow-sm">
-            <h2 className="text-xl font-semibold">{item.name}</h2>
-            <p className="text-gray-600">${item.price.toFixed(2)}</p>
+      <section className="pt-28 px-4 pb-20">
+        <div className="max-w-xl mx-auto bg-white shadow-lg rounded-lg p-6">
+          <h1 className="text-3xl font-bold text-center text-[#004b71] mb-6">Realizar Pedido</h1>
 
-            {item.variants.length > 0 ? (
-              <div className="flex gap-2 mt-2">
-                {item.variants.map((variant: string) => (
-                  <button
-                    key={variant}
-                    onClick={() => addToCart(item, variant)}
-                    className="px-3 py-1 bg-blue-100 text-sm rounded hover:bg-blue-200"
-                  >
-                    {variant}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <button
-                onClick={() => addToCart(item)}
-                className="mt-2 px-4 py-1 bg-[#004b71] text-white rounded hover:bg-blue-800"
-              >
-                Agregar al carrito
-              </button>
-            )}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Carga tu archivo
+            </label>
+            <input
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.docx"
+              onChange={handleArchivoChange}
+              className="w-full border rounded px-3 py-2"
+            />
           </div>
-        ))}
-      </div>
 
-      <h2 className="text-2xl font-semibold text-[#004b71] mb-4">Carrito</h2>
-      <ul className="mb-6 space-y-3">
-        {cart.map((item, idx) => (
-          <li key={item.id} className="border p-2 rounded">
-            {item.name} {item.variant && `(${item.variant})`} — ${item.price.toFixed(2)} x {item.quantity}
-          </li>
-        ))}
-      </ul>
+          {mensaje && <p className="text-red-600 mb-4">{mensaje}</p>}
 
-      <div className="mb-6">
-        <label className="block mb-2 font-medium text-gray-700">Sube tus archivos (opcional):</label>
-        <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-      </div>
+          <button
+            onClick={handleEnviarPedido}
+            disabled={!archivo}
+            className={`w-full py-3 px-4 rounded text-white font-semibold transition ${
+              archivo
+                ? 'bg-[#004b71] hover:bg-[#00678f]'
+                : 'bg-gray-400 cursor-not-allowed'
+            }`}
+          >
+            Enviar pedido por WhatsApp
+          </button>
+        </div>
+      </section>
 
-      <div className="text-right">
-        <p className="mb-2 font-bold text-lg">Total: ${total.toFixed(2)}</p>
-        <button className="bg-[#004b71] text-white px-6 py-2 rounded hover:bg-blue-800">
-          Enviar pedido por WhatsApp
-        </button>
-      </div>
+      <Footer />
     </div>
   );
 }
