@@ -39,23 +39,25 @@ export default function Home() {
       <Navbar />
 
       {/* SLIDER */}
-      <section className="relative w-full h-[calc(100vh-60px)] mt-[60px] overflow-hidden">
-        {slides.map((slide, index) => {
-          const imageUrl = isMobile
-            ? `/slides/slide${slide}-mobile.jpg`
-            : `/slides/slide${slide}-desktop.jpg`;
+      <section className="relative w-full mt-[60px] overflow-hidden">
+        <div className="relative h-[calc(100vh-60px)]">
+          {slides.map((slide, index) => {
+            const imageUrl = isMobile
+              ? `/slides/slide${slide}-mobile.jpg`
+              : `/slides/slide${slide}-desktop.jpg`;
 
-          return (
-            <img
-              key={index}
-              src={imageUrl}
-              alt={`Slide ${slide}`}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
-                currentSlide === index && fade ? 'opacity-100' : 'opacity-0'
-              }`}
-            />
-          );
-        })}
+            return (
+              <img
+                key={index}
+                src={imageUrl}
+                alt={`Slide ${slide}`}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
+                  currentSlide === index && fade ? 'opacity-100' : 'opacity-0'
+                }`}
+              />
+            );
+          })}
+        </div>
       </section>
 
       {/* SERVICIOS */}
