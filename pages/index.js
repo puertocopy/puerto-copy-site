@@ -28,16 +28,18 @@ export default function Home() {
       <Navbar />
 
       {/* SLIDER */}
-      <section className="relative h-[80vh] w-full overflow-hidden mt-20">
-        <img
-          src={slides[currentSlide]}
-          alt="Puerto Copy Slide"
-          key={slides[currentSlide]}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
-            fade ? 'opacity-100' : 'opacity-0'
-          }`}
-        />
-      </section>
+<section className="relative h-[calc(100vh-60px)] w-full overflow-hidden mt-[60px]">
+  <img
+    src={slides[currentSlide]}
+    alt="Puerto Copy Slide"
+    key={slides[currentSlide]}
+    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+      fade ? 'opacity-100' : 'opacity-0'
+    }`}
+  />
+  <div className="absolute inset-0 bg-[#004b71] opacity-60 z-10"></div>
+</section>
+
 
       {/* SERVICIOS */}
       <section id="servicios" className="relative bg-white text-gray-800 py-20 px-6 md:px-12 z-10">
