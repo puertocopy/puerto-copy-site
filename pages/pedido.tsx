@@ -19,9 +19,17 @@ export default function PedidoPage() {
       setMensaje('Por favor, carga un archivo antes de enviar el pedido.');
       return;
     }
-
-    alert('✅ Pedido enviado correctamente con archivo');
+  
+    const numeroPedido = Math.floor(100000 + Math.random() * 900000); // Número aleatorio de 6 dígitos
+    const nombreArchivo = archivo.name;
+    const mensajeWhatsApp = `Hola, acabo de realizar un pedido en línea.\n\n📦 *N° de Pedido:* ${numeroPedido}\n📄 *Archivo:* ${nombreArchivo}\n\nPor favor confirmar recepción.`;
+  
+    const telefono = '3223499334'; // Reemplaza con tu número real sin espacios
+    const urlWhatsApp = `https://wa.me/52${telefono}?text=${encodeURIComponent(mensajeWhatsApp)}`;
+  
+    window.open(urlWhatsApp, '_blank');
   };
+  
 
   return (
     <div className="bg-white text-gray-900 min-h-screen overflow-x-hidden">
