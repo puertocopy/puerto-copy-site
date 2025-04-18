@@ -39,27 +39,26 @@ export default function Home() {
       <Navbar />
 
       {/* SLIDER */}
-<section className="relative w-full min-h-[calc(100vh-60px)] mt-[60px] overflow-hidden">
-  <div className="relative w-full h-full">
-    {slides.map((slide, index) => {
-      const imageUrl = isMobile
-        ? `/slides/slide${slide}-mobile.jpg`
-        : `/slides/slide${slide}-desktop.jpg`;
+      <section className="relative w-full mt-[60px]">
+       <div className="relative w-full h-full">
+          {slides.map((slide, index) => {
+            const imageUrl = isMobile
+              ? `/slides/slide${slide}-mobile.jpg`
+              : `/slides/slide${slide}-desktop.jpg`;
 
-      return (
-        <img
-          key={index}
-          src={imageUrl}
-          alt={`Slide ${slide}`}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
-            currentSlide === index && fade ? 'opacity-100' : 'opacity-0'
-          }`}
-        />
-      );
-    })}
-  </div>
-</section>
-
+            return (
+              <img
+                key={index}
+                src={imageUrl}
+                alt={`Slide ${slide}`}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
+                  currentSlide === index && fade ? 'opacity-100' : 'opacity-0'
+                }`}
+              />
+            );
+          })}
+        </div>
+      </section>
 
       {/* ESPACIADOR PARA FORZAR SCROLL FLUIDO */}
       <div className="h-6 md:h-8" />
