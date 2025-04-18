@@ -1,7 +1,7 @@
 // components/Footer.tsx
 export default function Footer() {
     return (
-      <footer className="bg-blue-900 text-white py-10 px-6 md:px-12" data-aos="fade-up">
+      <footer id="contacto" className="bg-[#004b71] text-white py-10 px-6 md:px-12" data-aos="fade-up">
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-10">
           {/* Logo y descripción */}
           <div>

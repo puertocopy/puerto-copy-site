@@ -1,9 +1,25 @@
 // components/Navbar.js
-import { useState } from 'react';
+// components/Navbar.tsx
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+  const [isHome, setIsHome] = useState(false);
+
+  useEffect(() => {
+    setIsHome(router.pathname === '/');
+  }, [router.pathname]);
+
+  const scrollToSection = (id) => {
+    const section = document.getElementById(id);
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      router.push(`/#${id}`);
+    }
+  };
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#004b71] bg-opacity-90 backdrop-blur-md shadow text-white">
@@ -12,27 +28,11 @@ export default function Navbar() {
           <img src="/logoweb.png" alt="Puerto Copy Logo" className="h-10 w-auto cursor-pointer" />
         </Link>
 
-        {/* Botón hamburguesa */}
-        <button
-          className="md:hidden focus:outline-none"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d={!isOpen ? 'M4 6h16M4 12h16M4 18h16' : 'M6 18L18 6M6 6l12 12'}
-            />
-          </svg>
-        </button>
-
-        {/* Enlaces de navegación */}
-        <ul className={`md:flex md:items-center gap-6 text-sm font-medium transition-all duration-300 ${isOpen ? 'block absolute top-full left-0 w-full bg-[#004b71] p-4' : 'hidden md:flex'}`}>
-          <li><a href="/" className="hover:text-blue-300 block py-2 md:py-0">Inicio</a></li>
-          <li><a href="#servicios" className="hover:text-blue-300 block py-2 md:py-0">Servicios</a></li>
-          <li><a href="/facturacion" className="hover:text-blue-300 block py-2 md:py-0">Facturación</a></li>
-          <li><a href="#contacto" className="hover:text-blue-300 block py-2 md:py-0">Contacto</a></li>
+        <ul className="hidden md:flex gap-6 text-sm font-medium">
+          <li className="hover:text-blue-300 cursor-pointer" onClick={() => router.push('/')}>Inicio</li>
+          <li className="hover:text-blue-300 cursor-pointer" onClick={() => scrollToSection('servicios')}>Servicios</li>
+          <li className="hover:text-blue-300 cursor-pointer" onClick={() => router.push('/facturar')}>Facturación</li>
+          <li className="hover:text-blue-300 cursor-pointer" onClick={() => scrollToSection('contacto')}>Contacto</li>
         </ul>
       </div>
     </nav>
