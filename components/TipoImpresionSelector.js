@@ -1,41 +1,30 @@
-import { useState } from 'react';
+// components/TipoImpresionSelector.js
+import React from 'react';
 
-export default function TipoImpresionSelector({ onSelect }) {
-  const [selected, setSelected] = useState(null);
-
-  const handleSelect = (tipo) => {
-    setSelected(tipo);
-    onSelect(tipo);
-  };
-
+export default function TipoImpresionSelector({ tipo, setTipo }) {
   const opciones = [
-    {
-      nombre: 'Líneas / Texto',
-      valor: 'lineas',
-      imagen: '/tipo/lineas.jpg', // Puedes cambiar esta imagen luego
-    },
-    {
-      nombre: 'Cobertura Completa',
-      valor: 'completa',
-      imagen: '/tipo/completa.jpg', // Puedes cambiar esta imagen luego
-    },
+    { valor: 'lineas', nombre: 'Líneas / Texto', icono: '📏' },
+    { valor: 'cobertura', nombre: 'Cobertura Completa', icono: '🎨' }
   ];
 
   return (
-    <div className="py-8 text-center">
-      <h2 className="text-2xl font-bold text-[#004b71] mb-6">¿Qué tipo de impresión necesitas?</h2>
-      <div className="flex flex-wrap justify-center gap-6">
-        {opciones.map((opcion) => (
-          <div
-            key={opcion.valor}
-            onClick={() => handleSelect(opcion.valor)}
-            className={`cursor-pointer rounded-lg overflow-hidden shadow-md border-4 ${
-              selected === opcion.valor ? 'border-[#004b71]' : 'border-transparent'
-            } transition duration-300 max-w-xs`}
+    <div className="mb-8">
+      <h2 className="text-xl font-semibold mb-4">Tipo de Impresión</h2>
+      <div className="flex flex-wrap gap-6">
+        {opciones.map((op) => (
+          <button
+            key={op.valor}
+            onClick={() => setTipo(op.valor)}
+            className={`flex flex-col items-center justify-center p-6 border-2 rounded-lg shadow transition-all w-36 ${
+              tipo === op.valor
+                ? 'border-[#004b71] bg-blue-50'
+                : 'border-gray-300 hover:border-[#004b71]'
+            }`}
+            type="button"
           >
-            <img src={opcion.imagen} alt={opcion.nombre} className="w-full h-40 object-cover" />
-            <div className="bg-white text-gray-800 font-semibold py-3">{opcion.nombre}</div>
-          </div>
+            <span className="text-4xl mb-2">{op.icono}</span>
+            <span className="text-sm font-medium text-center">{op.nombre}</span>
+          </button>
         ))}
       </div>
     </div>

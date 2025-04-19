@@ -6,6 +6,8 @@ import ServicioSelector from '../components/ServicioSelector';
 import ColorSelector from '../components/ColorSelector';
 import TamanoSelector from '../components/TamanoSelector';
 import TipoImpresionSelector from '../components/TipoImpresionSelector';
+import MetodoPagoSelector from '../components/MetodoPagoSelector';
+import PagoFormulario from '../components/PagoFormulario';
 
 export default function Pedido() {
   const [total, setTotal] = useState(0);
@@ -15,6 +17,10 @@ export default function Pedido() {
     tamano: '',
     tipo: '',
   });
+
+  const [archivo, setArchivo] = useState(null);
+  const [mostrarPago, setMostrarPago] = useState(false);
+  const [metodoPago, setMetodoPago] = useState('');
 
   return (
     <div className="bg-white text-gray-900">
@@ -33,19 +39,39 @@ export default function Pedido() {
         {/* SUBIDA DE ARCHIVOS */}
         <div className="mt-16">
           <h2 className="text-xl font-semibold mb-4">Sube tus archivos</h2>
-          <input type="file" multiple className="w-full border rounded p-2" />
+          <input
+            type="file"
+            multiple
+            className="w-full border rounded p-2"
+            onChange={(e) => setArchivo(e.target.files[0])}
+          />
         </div>
 
-        {/* TOTAL Y PAGO */}
+        {/* TOTAL Y BOTÓN DE PAGO */}
         <div className="mt-10 text-right">
-          <p className="text-lg font-semibold mb-4">Total: <span className="text-[#004b71]">${total.toFixed(2)}</span></p>
+          <p className="text-lg font-semibold mb-4">
+            Total: <span className="text-[#004b71]">${total.toFixed(2)}</span>
+          </p>
           <button
             type="button"
             className="bg-[#004b71] hover:bg-blue-800 text-white px-6 py-3 rounded shadow"
+            onClick={() => setMostrarPago(true)}
           >
             Proceder al Pago
           </button>
         </div>
+
+        {/* MÉTODO DE PAGO Y FORMULARIO */}
+        {mostrarPago && (
+          <div className="mt-10">
+            <MetodoPagoSelector
+              metodo={metodoPago}
+              setMetodo={setMetodoPago}
+              onConfirmar={() => setMostrarPago(true)}
+            />
+            {metodoPago && <PagoFormulario metodo={metodoPago} />}
+          </div>
+        )}
       </section>
 
       <Footer />
