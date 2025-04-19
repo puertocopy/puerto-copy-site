@@ -1,10 +1,20 @@
-// pages/pedido.js
+
 import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import ServicioSelector from '../components/ServicioSelector';
+import ColorSelector from '../components/ColorSelector';
+import TamanoSelector from '../components/TamanoSelector';
+import TipoImpresionSelector from '../components/TipoImpresionSelector';
 
 export default function Pedido() {
   const [total, setTotal] = useState(0);
+  const [seleccion, setSeleccion] = useState({
+    servicio: '',
+    color: '',
+    tamano: '',
+    tipo: '',
+  });
 
   return (
     <div className="bg-white text-gray-900">
@@ -13,31 +23,29 @@ export default function Pedido() {
       <section className="mt-[60px] px-6 py-16 max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-[#004b71] mb-8 text-center">Realizar Pedido</h1>
 
-        <form className="space-y-8">
-          {/* SELECCIÓN DE SERVICIOS */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Selecciona tus servicios</h2>
-            {/* Aquí más adelante colocaremos checkboxes o selects con precio */}
-            <p className="text-sm text-gray-600">Ejemplo: impresión de planos, enmicado, etc.</p>
-          </div>
+        <div className="space-y-10">
+          <ServicioSelector onSelect={(s) => setSeleccion((prev) => ({ ...prev, servicio: s }))} />
+          <ColorSelector onSelect={(c) => setSeleccion((prev) => ({ ...prev, color: c }))} />
+          <TamanoSelector onSelect={(t) => setSeleccion((prev) => ({ ...prev, tamano: t }))} />
+          <TipoImpresionSelector onSelect={(ti) => setSeleccion((prev) => ({ ...prev, tipo: ti }))} />
+        </div>
 
-          {/* SUBIDA DE ARCHIVOS */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Sube tus archivos</h2>
-            <input type="file" multiple className="w-full border rounded p-2" />
-          </div>
+        {/* SUBIDA DE ARCHIVOS */}
+        <div className="mt-16">
+          <h2 className="text-xl font-semibold mb-4">Sube tus archivos</h2>
+          <input type="file" multiple className="w-full border rounded p-2" />
+        </div>
 
-          {/* TOTAL Y PAGO */}
-          <div className="text-right">
-            <p className="text-lg font-semibold mb-4">Total: <span className="text-[#004b71]">${total.toFixed(2)}</span></p>
-            <button
-              type="button"
-              className="bg-[#004b71] hover:bg-blue-800 text-white px-6 py-3 rounded shadow"
-            >
-              Proceder al Pago
-            </button>
-          </div>
-        </form>
+        {/* TOTAL Y PAGO */}
+        <div className="mt-10 text-right">
+          <p className="text-lg font-semibold mb-4">Total: <span className="text-[#004b71]">${total.toFixed(2)}</span></p>
+          <button
+            type="button"
+            className="bg-[#004b71] hover:bg-blue-800 text-white px-6 py-3 rounded shadow"
+          >
+            Proceder al Pago
+          </button>
+        </div>
       </section>
 
       <Footer />
