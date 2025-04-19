@@ -1,6 +1,25 @@
-node_modules
-.next
-dist
-.DS_Store
-.env
-
+diff --git a/.gitignore b/.gitignore
+index e69de29..d4e2a9b 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -0,0 +1,19 @@
++# Dependencias
++/node_modules/
++
++# Variables de entorno
++.env.local
++.env.*.local
++
++# Archivos de sistema
++.DS_Store
++Thumbs.db
++
++# Next.js / compilados
++/.next/
+/out/
+/build/
++
++# Logs
++npm-debug.log*
++yarn-debug.log*
++pnpm-debug.log*
