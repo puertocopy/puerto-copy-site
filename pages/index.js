@@ -38,12 +38,12 @@ export default function Home() {
   return (
     <div className="bg-white text-gray-900 overflow-x-hidden">
       <Navbar />
-      <section className="text-center pt-28 pb-6 px-6 md:px-12">
-  <h1 className="text-3xl md:text-5xl font-bold text-[#004b71] leading-tight">
+      <section className="text-center bg-[#16284f] text-white pt-24 pb-12 px-6 md:px-12">
+  <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-4">
     Copias, Impresiones de Planos y Documentos en Puerto Vallarta
   </h1>
-  <p className="text-lg md:text-xl text-gray-700 mt-4 max-w-2xl mx-auto">
-    Calidad profesional, servicio rápido y atención personalizada en <strong>Puerto Copy</strong>.
+  <p className="text-lg md:text-xl text-gray-300 mt-6 max-w-3xl mx-auto">
+    Calidad profesional, servicio rápido y atención personalizada en <strong className="text-white">Puerto Copy</strong>.
   </p>
 </section>
 
@@ -52,24 +52,24 @@ export default function Home() {
 
       {/* SLIDER */}
       <section id="inicio" className="relative w-full mt-[60px]">
-      <div className="relative min-h-[calc(100vh-60px)] overflow-x-hidden overflow-y-auto">
-          {slides.map((slide, index) => {
-            const imageUrl = isMobile
-              ? `/slides/slide${slide}-mobile.jpg`
-              : `/slides/slide${slide}-desktop.jpg`;
+      <div className="relative w-full h-[50vh] md:h-[60vh] overflow-hidden">
+    {slides.map((slide, index) => {
+      const imageUrl = isMobile
+        ? `/slides/slide${slide}-mobile.jpg`
+        : `/slides/slide${slide}-desktop.jpg`;
 
-            return (
-              <img
-                key={index}
-                src={imageUrl}
-                alt={`Slide ${slide}`}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
-                  currentSlide === index && fade ? 'opacity-100' : 'opacity-0'
-                }`}
-              />
-            );
-          })}
-        </div>
+      return (
+        <img
+          key={index}
+          src={imageUrl}
+          alt={`Slide ${slide}`}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
+            currentSlide === index && fade ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      );
+    })}
+  </div>
       </section>
       <section className="bg-white text-center py-20 px-6 md:px-12">
   <div className="max-w-4xl mx-auto" data-aos="fade-up">
