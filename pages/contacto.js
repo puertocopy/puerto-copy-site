@@ -14,4 +14,4 @@ export default function Contacto() {
       </section>
     </div>
   )
-}
+}//fotos
