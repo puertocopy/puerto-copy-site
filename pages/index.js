@@ -97,56 +97,59 @@ export default function Home() {
       <div className="h-6 md:h-8" />
 
       {/* SERVICIOS */}
-<section id="servicios" className="relative bg-white text-gray-800 py-20 px-6 md:px-12 z-10">
+      <section id="servicios" className="relative bg-white text-gray-800 py-20 px-6 md:px-12 z-10">
   <div className="max-w-6xl mx-auto text-center" data-aos="fade-up">
-    <h2 className="text-3xl md:text-4xl font-bold mb-12 text-[#004b71]">Nuestros Servicios</h2>
+    <h2 className="text-3xl md:text-4xl font-bold mb-12 text-[#004b71]">
+      Servicios de Impresión, Copiado y Escaneo en Puerto Vallarta
+    </h2>
     <div className="grid md:grid-cols-3 gap-10">
 
       {/* Impresión de Planos */}
       <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg" data-aos="zoom-in">
         <div className="text-blue-700 text-4xl mb-4">📐</div>
-        <h3 className="text-xl font-semibold mb-2">Impresión de Planos</h3>
-        <p className="text-gray-600">Planos en gran formato sobre papel Bond, fotográfico o lona, ideales para arquitectura e ingeniería.</p>
+        <h3 className="text-xl font-semibold mb-2">Impresión de Planos en Puerto Vallarta</h3>
+        <p className="text-gray-600">Imprime tus planos arquitectónicos y de ingeniería en gran formato sobre papel Bond, fotográfico o lona. Entregas rápidas y alta calidad garantizada.</p>
       </div>
 
       {/* Copias e Impresiones */}
       <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg" data-aos="zoom-in" data-aos-delay="100">
         <div className="text-blue-700 text-4xl mb-4">🖨️</div>
-        <h3 className="text-xl font-semibold mb-2">Copias e Impresiones</h3>
-        <p className="text-gray-600">Copias en blanco y negro o color en tamaños carta, oficio y doble carta.</p>
+        <h3 className="text-xl font-semibold mb-2">Copias a Color y Blanco y Negro</h3>
+        <p className="text-gray-600">Copias de documentos en tamaños carta, oficio y doble carta. Calidad de impresión excelente, ideal para trámites y presentaciones.</p>
       </div>
 
       {/* Engargolados */}
       <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg" data-aos="zoom-in" data-aos-delay="200">
         <div className="text-blue-700 text-4xl mb-4">📚</div>
-        <h3 className="text-xl font-semibold mb-2">Engargolados</h3>
-        <p className="text-gray-600">Presenta tus documentos de manera profesional con engargolados resistentes y estéticos.</p>
+        <h3 className="text-xl font-semibold mb-2">Engargolados Profesionales</h3>
+        <p className="text-gray-600">Organiza y protege tus documentos importantes con nuestros servicios de engargolado en diferentes estilos y tamaños.</p>
       </div>
 
       {/* Enmicados */}
       <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg" data-aos="zoom-in">
         <div className="text-blue-700 text-4xl mb-4">🔒</div>
-        <h3 className="text-xl font-semibold mb-2">Enmicados</h3>
-        <p className="text-gray-600">Protege tus documentos con enmicados de alta calidad, duraderos y resistentes.</p>
+        <h3 className="text-xl font-semibold mb-2">Enmicado de Documentos</h3>
+        <p className="text-gray-600">Protege tus certificados, fotografías o documentos importantes contra el desgaste diario con enmicados de alta calidad.</p>
       </div>
 
       {/* Escaneo de Archivos */}
       <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg" data-aos="zoom-in" data-aos-delay="100">
         <div className="text-blue-700 text-4xl mb-4">📁</div>
-        <h3 className="text-xl font-semibold mb-2">Escaneo de Archivos</h3>
-        <p className="text-gray-600">Digitaliza tus documentos físicos en alta resolución y accede a ellos cuando lo necesites.</p>
+        <h3 className="text-xl font-semibold mb-2">Escaneo de Documentos</h3>
+        <p className="text-gray-600">Digitaliza tus documentos físicos en alta resolución. Ideal para respaldar información y simplificar trámites.</p>
       </div>
 
       {/* Facturación Electrónica */}
       <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg" data-aos="zoom-in" data-aos-delay="200">
         <div className="text-blue-700 text-4xl mb-4">🧾</div>
-        <h3 className="text-xl font-semibold mb-2">Facturación Electrónica</h3>
-        <p className="text-gray-600">Genera tu factura fácilmente ingresando el número de ticket y tus datos fiscales.</p>
+        <h3 className="text-xl font-semibold mb-2">Facturación Electrónica Rápida</h3>
+        <p className="text-gray-600">Genera tu factura electrónica al momento ingresando tu ticket y datos fiscales. ¡Fácil, rápido y sin complicaciones!</p>
       </div>
 
     </div>
   </div>
 </section>
+
       {/* VENTAJAS */}
       <section className="bg-blue-50 py-20 px-6 md:px-12">
         <div className="max-w-6xl mx-auto text-center" data-aos="fade-up">
