@@ -38,6 +38,10 @@ export default function Home() {
   return (
     <div className="bg-white text-gray-900 overflow-x-hidden">
       <Navbar />
+      <section className="text-center mt-[60px]">
+  <h1 className="text-2xl md:text-4xl font-bold text-[#004b71]">Copias e Impresiones de Planos en Puerto Vallarta</h1>
+</section>
+
 
 
       {/* SLIDER */}
