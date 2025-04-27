@@ -73,20 +73,24 @@ export default function Home() {
   </div>
 </section>
 
-      <section className="bg-white text-center py-20 px-6 md:px-12">
+<section className="bg-white text-center pt-16 pb-20 px-6 md:px-12">
   <div className="max-w-4xl mx-auto" data-aos="fade-up">
-    <h2 className="text-3xl md:text-4xl font-bold text-[#004b71] mb-6">
+    <h2 className="text-3xl md:text-4xl font-bold text-[#004b71] leading-tight mb-6">
       Servicios de Copiado e Impresión en Puerto Vallarta
     </h2>
-    <p className="text-lg md:text-xl text-gray-700 mb-8">
-      En <strong>Puerto Copy</strong> realizamos impresión de planos arquitectónicos, copias en varios tamaños, escaneo de documentos, enmicados y engargolados profesionales. 
-      Nuestro compromiso es ofrecerte calidad, rapidez y excelente atención en Puerto Vallarta.
+    <p className="text-lg md:text-xl text-gray-700 mt-4 mb-8">
+      En <strong className="text-[#004b71]">Puerto Copy</strong> realizamos impresión de planos arquitectónicos, copias en distintos tamaños, escaneo de documentos, enmicados y engargolados profesionales.
+      Nuestro compromiso es ofrecerte calidad, rapidez y atención personalizada en Puerto Vallarta.
     </p>
-    <a href="#servicios" className="inline-block bg-[#004b71] text-white py-3 px-6 rounded-full text-lg hover:bg-blue-800 transition">
+    <a 
+      href="#servicios" 
+      className="inline-block bg-[#004b71] text-white py-3 px-8 rounded-full text-lg hover:bg-blue-800 transition duration-300"
+    >
       Conoce nuestros servicios
     </a>
   </div>
 </section>
+
 
 
       {/* ESPACIADOR PARA FORZAR SCROLL FLUIDO */}
