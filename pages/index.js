@@ -38,11 +38,11 @@ export default function Home() {
   return (
     <div className="bg-white text-gray-900 overflow-x-hidden">
       <Navbar />
-      <section className="text-center bg-[#16284f] text-white pt-24 pb-12 px-6 md:px-12">
-  <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-4">
+      <section className="text-center bg-[#16284f] text-white pt-20 pb-0 px-6 md:px-12">
+  <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-2">
     Copias, Impresiones de Planos y Documentos en Puerto Vallarta
   </h1>
-  <p className="text-lg md:text-xl text-gray-300 mt-6 max-w-3xl mx-auto">
+  <p className="text-lg md:text-xl text-gray-300 mt-2 max-w-3xl mx-auto">
     Calidad profesional, servicio rápido y atención personalizada en <strong className="text-white">Puerto Copy</strong>.
   </p>
 </section>
@@ -50,9 +50,10 @@ export default function Home() {
 
 
 
+
       {/* SLIDER */}
-      <section id="inicio" className="relative w-full mt-[60px]">
-      <div className="relative w-full h-[50vh] md:h-[60vh] overflow-hidden">
+      <section id="inicio" className="relative w-full">
+  <div className="relative w-full h-[50vh] md:h-[60vh] overflow-hidden">
     {slides.map((slide, index) => {
       const imageUrl = isMobile
         ? `/slides/slide${slide}-mobile.jpg`
@@ -70,7 +71,8 @@ export default function Home() {
       );
     })}
   </div>
-      </section>
+</section>
+
       <section className="bg-white text-center py-20 px-6 md:px-12">
   <div className="max-w-4xl mx-auto" data-aos="fade-up">
     <h2 className="text-3xl md:text-4xl font-bold text-[#004b71] mb-6">
