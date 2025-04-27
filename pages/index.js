@@ -38,19 +38,6 @@ export default function Home() {
   return (
     <div className="bg-white text-gray-900 overflow-x-hidden">
       <Navbar />
-      <section className="relative bg-white text-gray-900 py-16 px-6 md:px-12 overflow-hidden">
-  <div className="max-w-4xl mx-auto text-center" data-aos="fade-up">
-    <h1 className="text-4xl md:text-5xl font-bold text-[#004b71] leading-tight mb-6">
-      Copias, Impresiones de Planos y Documentos en Puerto Vallarta
-    </h1>
-    <p className="text-lg md:text-xl text-gray-700 mb-8">
-      En <strong>Puerto Copy</strong> ofrecemos impresión de planos arquitectónicos, copias rápidas en distintos tamaños, escaneo y servicios de enmicado y engargolado. Calidad profesional, atención personalizada y entrega exprés en Puerto Vallarta.
-    </p>
-    <a href="#servicios" className="inline-block bg-[#004b71] text-white py-3 px-6 rounded-full text-lg hover:bg-blue-800 transition">
-      Conoce nuestros servicios
-    </a>
-  </div>
-</section>
 
 
       {/* SLIDER */}
@@ -74,6 +61,19 @@ export default function Home() {
           })}
         </div>
       </section>
+      <section className="relative bg-white text-gray-900 py-16 px-6 md:px-12 overflow-hidden">
+  <div className="max-w-4xl mx-auto text-center" data-aos="fade-up">
+    <h1 className="text-4xl md:text-5xl font-bold text-[#004b71] leading-tight mb-6">
+      Copias, Impresiones de Planos y Documentos en Puerto Vallarta
+    </h1>
+    <p className="text-lg md:text-xl text-gray-700 mb-8">
+      En <strong>Puerto Copy</strong> ofrecemos impresión de planos arquitectónicos, copias rápidas en distintos tamaños, escaneo y servicios de enmicado y engargolado. Calidad profesional, atención personalizada y entrega exprés en Puerto Vallarta.
+    </p>
+    <a href="#servicios" className="inline-block bg-[#004b71] text-white py-3 px-6 rounded-full text-lg hover:bg-blue-800 transition">
+      Conoce nuestros servicios
+    </a>
+  </div>
+</section>
 
       {/* ESPACIADOR PARA FORZAR SCROLL FLUIDO */}
       <div className="h-6 md:h-8" />
