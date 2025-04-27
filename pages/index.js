@@ -38,9 +38,15 @@ export default function Home() {
   return (
     <div className="bg-white text-gray-900 overflow-x-hidden">
       <Navbar />
-      <section className="text-center mt-[60px]">
-  <h1 className="text-2xl md:text-4xl font-bold text-[#004b71]">Copias e Impresiones de Planos en Puerto Vallarta</h1>
+      <section className="text-center pt-28 pb-6 px-6 md:px-12">
+  <h1 className="text-3xl md:text-5xl font-bold text-[#004b71] leading-tight">
+    Copias, Impresiones de Planos y Documentos en Puerto Vallarta
+  </h1>
+  <p className="text-lg md:text-xl text-gray-700 mt-4 max-w-2xl mx-auto">
+    Calidad profesional, servicio rápido y atención personalizada en <strong>Puerto Copy</strong>.
+  </p>
 </section>
+
 
 
 
@@ -65,19 +71,21 @@ export default function Home() {
           })}
         </div>
       </section>
-      <section className="relative bg-white text-gray-900 py-16 px-6 md:px-12 overflow-hidden">
-  <div className="max-w-4xl mx-auto text-center" data-aos="fade-up">
-    <h1 className="text-4xl md:text-5xl font-bold text-[#004b71] leading-tight mb-6">
-      Copias, Impresiones de Planos y Documentos en Puerto Vallarta
-    </h1>
+      <section className="bg-white text-center py-20 px-6 md:px-12">
+  <div className="max-w-4xl mx-auto" data-aos="fade-up">
+    <h2 className="text-3xl md:text-4xl font-bold text-[#004b71] mb-6">
+      Servicios de Copiado e Impresión en Puerto Vallarta
+    </h2>
     <p className="text-lg md:text-xl text-gray-700 mb-8">
-      En <strong>Puerto Copy</strong> ofrecemos impresión de planos arquitectónicos, copias rápidas en distintos tamaños, escaneo y servicios de enmicado y engargolado. Calidad profesional, atención personalizada y entrega exprés en Puerto Vallarta.
+      En <strong>Puerto Copy</strong> realizamos impresión de planos arquitectónicos, copias en varios tamaños, escaneo de documentos, enmicados y engargolados profesionales. 
+      Nuestro compromiso es ofrecerte calidad, rapidez y excelente atención en Puerto Vallarta.
     </p>
     <a href="#servicios" className="inline-block bg-[#004b71] text-white py-3 px-6 rounded-full text-lg hover:bg-blue-800 transition">
       Conoce nuestros servicios
     </a>
   </div>
 </section>
+
 
       {/* ESPACIADOR PARA FORZAR SCROLL FLUIDO */}
       <div className="h-6 md:h-8" />
