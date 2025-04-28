@@ -10,8 +10,8 @@ export default function Contacto() {
           </p>
           
           <div className="flex flex-col items-center space-y-4 text-gray-700 text-lg">
-            <div>📍 Carretera Las Palmas 2246-B, Ixtapa, Puerto Vallarta, Jalisco</div>
-            <div>📞 <a href="tel:+523221234567" className="text-[#004b71] hover:underline">322 123 4567</a></div>
+            <div>📍 Villa Colonial 573, Los Portales, Puerto Vallarta, Jalisco</div>
+            <div>📞 <a href="tel:+523223499334" className="text-[#004b71] hover:underline">322 349 9334</a></div>
             <div>📧 <a href="mailto:contacto@puertocopy.com" className="text-[#004b71] hover:underline">contacto@puertocopy.com</a></div>
             <div>🕒 Lunes a Viernes: 9:00 AM – 7:00 PM</div>
           </div>
@@ -20,7 +20,7 @@ export default function Contacto() {
           <div className="mt-10">
             <iframe
               title="Ubicación Puerto Copy"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.839671960712!2d-105.23476868501265!3d20.653407986202745!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x842145741d9d7c61%3A0xfcbf8c4ec3b4d13d!2sIxtapa%2C%20Puerto%20Vallarta%2C%20Jal.!5e0!3m2!1ses!2smx!4v1682345789089!5m2!1ses!2smx"
+              src="https://www.google.com/maps/place/Puerto+Copy+Centro+de+Impresi%C3%B3n/@20.662617,-105.2333807,17z/data=!3m1!4b1!4m6!3m5!1s0x8421452e22f8ff0f:0xcd9a9374cb0132a9!8m2!3d20.662612!4d-105.2285098!16s%2Fg%2F11q1t0k81h?hl=es&entry=ttu&g_ep=EgoyMDI1MDQyMy4wIKXMDSoJLDEwMjExNDUzSAFQAw%3D%3D"
               width="100%"
               height="300"
               style={{ border: 0 }}
