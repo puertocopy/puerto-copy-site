@@ -18,17 +18,15 @@ export default function Contacto() {
   
           {/* Mapa de Google */}
           <div className="mt-10">
-            
+            <iframe
               title="Ubicación Puerto Copy"
-              <iframe title="Ubicación Puerto Copy" 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d933.2921347406307!2d-105.22970340445164!3d20.662721102463827!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8421452e22f8ff0f%3A0xcd9a9374cb0132a9!2sPuerto%20Copy%20Centro%20de%20Impresi%C3%B3n!5e0!3m2!1ses!2smx!4v1745801134728!5m2!1ses!2smx" 
-              width="600" 
-              height="450" 
-              style="border:0;" 
-              allowfullscreen="" 
-              loading="lazy" 
-              referrerpolicy="no-referrer-when-downgrade">
-              </iframe>
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d933.2921347406307!2d-105.22970340445164!3d20.662721102463827!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8421452e22f8ff0f%3A0xcd9a9374cb0132a9!2sPuerto%20Copy%20Centro%20de%20Impresi%C3%B3n!5e0!3m2!1ses!2smx!4v1745801134728!5m2!1ses!2smx"
+              width="100%"
+              height="300"
+              style={{ border: 0 }}
+              allowFullScreen=""
+              loading="lazy"
+            ></iframe>
           </div>
         </div>
       </section>
