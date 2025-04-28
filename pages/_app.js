@@ -6,7 +6,8 @@ function MyApp({ Component, pageProps }) {
     <>
       <Head>
         <title>Puerto Copy | Centro de Impresiones</title>
-        <meta name="description" content="Impresión de planos, copias y documentos en Puerto Vallarta" />
+        <meta name="description" content="Centro de copias e impresión de planos en Puerto Vallarta. Copias en carta, oficio, doble carta y gran formato. Servicio rápido, calidad profesional y atención personalizada en Puerto Copy."/>
+
         {/* Ícono en la pestaña */}
         <link rel="icon" href="/favicon.png" />
 
