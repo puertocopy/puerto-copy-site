@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import ServicioCotizacionSelector from '@/components/ServicioCotizacionSelector';
-import ResumenCotizacion from '@/components/ResumenCotizacion';
-import FormularioCotizacion from '@/components/FormularioCotizacion';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import ServicioCotizacionSelector from '../components/ServicioCotizacionSelector';
+import ResumenCotizacion from '../components/ResumenCotizacion';
+import FormularioCotizacion from '../components/FormularioCotizacion';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+
 
 export default function Cotizar() {
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
