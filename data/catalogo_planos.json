@@ -1,0 +1,94 @@
+{
+  "Copias de Planos": {
+    "Blanco y Negro": {
+      "45x60": {
+        "Líneas / Texto": 20.0,
+        "Cobertura completa": 33.0
+      },
+      "60x90": {
+        "Líneas / Texto": 24.0,
+        "Cobertura completa": 43.0
+      },
+      "60x120": {
+        "Líneas / Texto": 35.0,
+        "Cobertura completa": 55.0
+      },
+      "90x120": {
+        "Líneas / Texto": 49.0,
+        "Cobertura completa": 66.0
+      },
+      "90x150": {
+        "Líneas / Texto": 69.0,
+        "Cobertura completa": 87.0
+      }
+    },
+    "Color": {
+      "45x60": {
+        "Líneas / Texto": 28.0,
+        "Cobertura completa": 45.0
+      },
+      "60x90": {
+        "Líneas / Texto": 35.0,
+        "Cobertura completa": 65.0
+      },
+      "60x120": {
+        "Líneas / Texto": 40.0,
+        "Cobertura completa": 79.0
+      },
+      "90x120": {
+        "Líneas / Texto": 59.0,
+        "Cobertura completa": 105.0
+      },
+      "90x150": {
+        "Líneas / Texto": 79.0,
+        "Cobertura completa": 129.0
+      }
+    }
+  },
+  "Impresión de Planos": {
+    "Blanco y Negro": {
+      "45x60": {
+        "Líneas / Texto": 18.0,
+        "Cobertura completa": 29.0
+      },
+      "60x90": {
+        "Líneas / Texto": 20.0,
+        "Cobertura completa": 39.0
+      },
+      "60x120": {
+        "Líneas / Texto": 29.0,
+        "Cobertura completa": 49.0
+      },
+      "90x120": {
+        "Líneas / Texto": 45.0,
+        "Cobertura completa": 62.0
+      },
+      "90x150": {
+        "Líneas / Texto": 66.0,
+        "Cobertura completa": 82.0
+      }
+    },
+    "Color": {
+      "45x60": {
+        "Líneas / Texto": 24.0,
+        "Cobertura completa": 40.0
+      },
+      "60x90": {
+        "Líneas / Texto": 30.0,
+        "Cobertura completa": 59.0
+      },
+      "60x120": {
+        "Líneas / Texto": 36.0,
+        "Cobertura completa": 75.0
+      },
+      "90x120": {
+        "Líneas / Texto": 54.0,
+        "Cobertura completa": 99.0
+      },
+      "90x150": {
+        "Líneas / Texto": 75.0,
+        "Cobertura completa": 125.0
+      }
+    }
+  }
+}

@@ -70,6 +70,25 @@ export default function Home() {
           })}
         </div>
       </section>
+      {/* DESTACADO DE COTIZACIÓN */}
+<section className="bg-blue-50 py-16 px-6 md:px-12" data-aos="fade-up">
+  <div className="max-w-5xl mx-auto bg-white shadow-xl rounded-2xl p-8 text-center border border-blue-100">
+    <h2 className="text-3xl md:text-4xl font-bold text-blue-700 mb-4">
+      ¿Necesitas una cotización?
+    </h2>
+    <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto">
+      Cotiza planos u otros servicios de impresión en línea, de forma rápida, clara y sin compromiso. Ideal para trámites, proyectos y presupuestos empresariales.
+    </p>
+    <a
+      href="/cotizar"
+      className="inline-block bg-blue-700 hover:bg-blue-800 text-white font-medium px-8 py-3 rounded-full text-lg shadow-md transition"
+    >
+      Generar cotización
+    </a>
+  </div>
+</section>
+
+
 
       {/* INTRODUCCIÓN DE SERVICIOS */}
       <section className="bg-white text-center pt-16 pb-20 px-6 md:px-12">

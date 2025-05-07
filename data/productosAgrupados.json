@@ -1,0 +1,924 @@
+[
+  {
+    "Categoria": "COP/IMP T/ESTÁNDAR CON FONDO O IMAGEN",
+    "Nombre": "IMPRESIÓN/COPIA CON FONDO B/N CARTA",
+    "Variaciones": [
+      {
+        "Variante": "1-30",
+        "Precio": 2.0
+      },
+      {
+        "Variante": "101-300",
+        "Precio": 1.3
+      },
+      {
+        "Variante": 300,
+        "Precio": 1.1
+      },
+      {
+        "Variante": "31-100",
+        "Precio": 1.5
+      }
+    ]
+  },
+  {
+    "Categoria": "COP/IMP T/ESTÁNDAR CON FONDO O IMAGEN",
+    "Nombre": "IMPRESIÓN/COPIA CON FONDO B/N OFICIO",
+    "Variaciones": [
+      {
+        "Variante": "1-30",
+        "Precio": 2.5
+      },
+      {
+        "Variante": "101-300",
+        "Precio": 2.1
+      },
+      {
+        "Variante": "30-100",
+        "Precio": 2.3
+      },
+      {
+        "Variante": 300,
+        "Precio": 1.9
+      }
+    ]
+  },
+  {
+    "Categoria": "COPIA T/ESTANDAR",
+    "Nombre": "COPIA DE INE",
+    "Variaciones": [
+      {
+        "Variante": "Única",
+        "Precio": 2.0
+      }
+    ]
+  },
+  {
+    "Categoria": "COPIA T/ESTANDAR",
+    "Nombre": "COPIA T/CARTA A COLOR",
+    "Variaciones": [
+      {
+        "Variante": "1-50",
+        "Precio": 6.0
+      },
+      {
+        "Variante": "101-350",
+        "Precio": 3.5
+      },
+      {
+        "Variante": 351,
+        "Precio": 3.0
+      },
+      {
+        "Variante": "51-100",
+        "Precio": 5.0
+      }
+    ]
+  },
+  {
+    "Categoria": "COPIA T/ESTANDAR",
+    "Nombre": "COPIA T/CARTA B/N",
+    "Variaciones": [
+      {
+        "Variante": "1-50",
+        "Precio": 1.0
+      },
+      {
+        "Variante": "101-350",
+        "Precio": 0.75
+      },
+      {
+        "Variante": 351,
+        "Precio": 0.65
+      },
+      {
+        "Variante": "51-100",
+        "Precio": 0.89
+      }
+    ]
+  },
+  {
+    "Categoria": "COPIA T/ESTANDAR",
+    "Nombre": "COPIA T/DOBLE CARTA A COLOR",
+    "Variaciones": [
+      {
+        "Variante": "1-50",
+        "Precio": 12.0
+      },
+      {
+        "Variante": "101-350",
+        "Precio": 8.5
+      },
+      {
+        "Variante": 351,
+        "Precio": 8.0
+      },
+      {
+        "Variante": "51-100",
+        "Precio": 9.5
+      }
+    ]
+  },
+  {
+    "Categoria": "COPIA T/ESTANDAR",
+    "Nombre": "COPIA T/DOBLE CARTA B/N",
+    "Variaciones": [
+      {
+        "Variante": "1-50",
+        "Precio": 4.5
+      },
+      {
+        "Variante": "151-300",
+        "Precio": 3.5
+      },
+      {
+        "Variante": 351,
+        "Precio": 3.0
+      },
+      {
+        "Variante": "51-100",
+        "Precio": 4.0
+      }
+    ]
+  },
+  {
+    "Categoria": "COPIA T/ESTANDAR",
+    "Nombre": "COPIA T/OFICIO A COLOR",
+    "Variaciones": [
+      {
+        "Variante": "1-50",
+        "Precio": 7.0
+      },
+      {
+        "Variante": "101-350",
+        "Precio": 4.5
+      },
+      {
+        "Variante": 351,
+        "Precio": 4.0
+      },
+      {
+        "Variante": "51-100",
+        "Precio": 5.5
+      }
+    ]
+  },
+  {
+    "Categoria": "COPIA T/ESTANDAR",
+    "Nombre": "COPIA T/OFICIO B/N",
+    "Variaciones": [
+      {
+        "Variante": "1-50",
+        "Precio": 1.5
+      },
+      {
+        "Variante": "101-350",
+        "Precio": 1.15
+      },
+      {
+        "Variante": 351,
+        "Precio": 0.95
+      },
+      {
+        "Variante": "51-100",
+        "Precio": 1.4
+      }
+    ]
+  },
+  {
+    "Categoria": "ENGARGOLADOS",
+    "Nombre": "ENG T/CARTA",
+    "Variaciones": [
+      {
+        "Variante": "1-100",
+        "Precio": 20.0
+      },
+      {
+        "Variante": "101-299",
+        "Precio": 25.0
+      },
+      {
+        "Variante": 300,
+        "Precio": 30.0
+      }
+    ]
+  },
+  {
+    "Categoria": "ENGARGOLADOS",
+    "Nombre": "ENG T/DOBLE CARTA",
+    "Variaciones": [
+      {
+        "Variante": "1-100",
+        "Precio": 35.0
+      },
+      {
+        "Variante": "101-299",
+        "Precio": 40.0
+      },
+      {
+        "Variante": 300,
+        "Precio": 45.0
+      }
+    ]
+  },
+  {
+    "Categoria": "ENGARGOLADOS",
+    "Nombre": "ENG T/OFICIO",
+    "Variaciones": [
+      {
+        "Variante": "1-100",
+        "Precio": 25.0
+      },
+      {
+        "Variante": "101-299",
+        "Precio": 30.0
+      },
+      {
+        "Variante": 300,
+        "Precio": 35.0
+      }
+    ]
+  },
+  {
+    "Categoria": "ENMICADOS",
+    "Nombre": "ENMICADO T/CARTA",
+    "Variaciones": [
+      {
+        "Variante": "Única",
+        "Precio": 20.0
+      }
+    ]
+  },
+  {
+    "Categoria": "ENMICADOS",
+    "Nombre": "ENMICADO T/DOBLE CARTA",
+    "Variaciones": [
+      {
+        "Variante": "Única",
+        "Precio": 35.0
+      }
+    ]
+  },
+  {
+    "Categoria": "ENMICADOS",
+    "Nombre": "ENMICADO T/OFICIO",
+    "Variaciones": [
+      {
+        "Variante": "Única",
+        "Precio": 25.0
+      }
+    ]
+  },
+  {
+    "Categoria": "ESCANEO",
+    "Nombre": "ESCANEO DE PLANO",
+    "Variaciones": [
+      {
+        "Variante": "1-30",
+        "Precio": 15.0
+      },
+      {
+        "Variante": "101-300",
+        "Precio": 13.0
+      },
+      {
+        "Variante": 300,
+        "Precio": 12.0
+      },
+      {
+        "Variante": "31-100",
+        "Precio": 14.0
+      }
+    ]
+  },
+  {
+    "Categoria": "ESCANEO",
+    "Nombre": "ESCANEO T/ESTANDAR",
+    "Variaciones": [
+      {
+        "Variante": "1-30",
+        "Precio": 5.0
+      },
+      {
+        "Variante": "101-300",
+        "Precio": 2.0
+      },
+      {
+        "Variante": 300,
+        "Precio": 1.0
+      },
+      {
+        "Variante": "31-100",
+        "Precio": 3.0
+      }
+    ]
+  },
+  {
+    "Categoria": "IMP GRAN FORMATO",
+    "Nombre": "IMP METRO LINEAL VINIL BLANCO",
+    "Variaciones": [
+      {
+        "Variante": "Única",
+        "Precio": 390.0
+      }
+    ]
+  },
+  {
+    "Categoria": "IMP GRAN FORMATO",
+    "Nombre": "IMP METRO LINEAL VINIL MICROPERFORADO",
+    "Variaciones": [
+      {
+        "Variante": "Única",
+        "Precio": 490.0
+      }
+    ]
+  },
+  {
+    "Categoria": "IMP GRAN FORMATO",
+    "Nombre": "IMP METRO LINEAL VINIL TRANSPARENTE",
+    "Variaciones": [
+      {
+        "Variante": "Única",
+        "Precio": 490.0
+      }
+    ]
+  },
+  {
+    "Categoria": "IMP GRAN FORMATO",
+    "Nombre": "LONA M2",
+    "Variaciones": [
+      {
+        "Variante": "Única",
+        "Precio": 160.0
+      }
+    ]
+  },
+  {
+    "Categoria": "IMP T/ESTÁNDAR",
+    "Nombre": "IMP T/CARTA A COLOR",
+    "Variaciones": [
+      {
+        "Variante": "1-50",
+        "Precio": 5.5
+      },
+      {
+        "Variante": "101-350",
+        "Precio": 3.0
+      },
+      {
+        "Variante": 351,
+        "Precio": 2.0
+      },
+      {
+        "Variante": "51-100",
+        "Precio": 4.5
+      }
+    ]
+  },
+  {
+    "Categoria": "IMP T/ESTÁNDAR",
+    "Nombre": "IMP T/CARTA B/N",
+    "Variaciones": [
+      {
+        "Variante": "1-50",
+        "Precio": 1.0
+      },
+      {
+        "Variante": "101-350",
+        "Precio": 0.69
+      },
+      {
+        "Variante": 351,
+        "Precio": 0.49
+      },
+      {
+        "Variante": "51-100",
+        "Precio": 0.85
+      }
+    ]
+  },
+  {
+    "Categoria": "IMP T/ESTÁNDAR",
+    "Nombre": "IMP T/DOBLE CARTA A COLOR",
+    "Variaciones": [
+      {
+        "Variante": "1-50",
+        "Precio": 12.0
+      },
+      {
+        "Variante": "101-350",
+        "Precio": 8.0
+      },
+      {
+        "Variante": 351,
+        "Precio": 7.0
+      },
+      {
+        "Variante": "51-100",
+        "Precio": 10.0
+      }
+    ]
+  },
+  {
+    "Categoria": "IMP T/ESTÁNDAR",
+    "Nombre": "IMP T/DOBLE CARTA B/N",
+    "Variaciones": [
+      {
+        "Variante": "1-50",
+        "Precio": 4.0
+      },
+      {
+        "Variante": "101-350",
+        "Precio": 3.0
+      },
+      {
+        "Variante": 351,
+        "Precio": 2.5
+      },
+      {
+        "Variante": "51-100",
+        "Precio": 3.5
+      }
+    ]
+  },
+  {
+    "Categoria": "IMP T/ESTÁNDAR",
+    "Nombre": "IMP T/OFICIO A COLOR",
+    "Variaciones": [
+      {
+        "Variante": "1-50",
+        "Precio": 7.0
+      },
+      {
+        "Variante": "101-350",
+        "Precio": 4.0
+      },
+      {
+        "Variante": 351,
+        "Precio": 3.0
+      },
+      {
+        "Variante": "51-100",
+        "Precio": 6.0
+      }
+    ]
+  },
+  {
+    "Categoria": "IMP T/ESTÁNDAR",
+    "Nombre": "IMP T/OFICIO B/N",
+    "Variaciones": [
+      {
+        "Variante": "1-50",
+        "Precio": 1.5
+      },
+      {
+        "Variante": "101-350",
+        "Precio": 1.0
+      },
+      {
+        "Variante": 351,
+        "Precio": 0.85
+      },
+      {
+        "Variante": "51-100",
+        "Precio": 1.3
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPEL ESPECIAL",
+    "Nombre": "PAPEL ESPECIAL T/45X60",
+    "Variaciones": [
+      {
+        "Variante": "FOTOGRAFICO",
+        "Precio": 60.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPEL ESPECIAL",
+    "Nombre": "PAPEL ESPECIAL T/45X61",
+    "Variaciones": [
+      {
+        "Variante": "OPALINA",
+        "Precio": 28.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPEL ESPECIAL",
+    "Nombre": "PAPEL ESPECIAL T/60X120",
+    "Variaciones": [
+      {
+        "Variante": "FOTOGRAFICO",
+        "Precio": 130.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPEL ESPECIAL",
+    "Nombre": "PAPEL ESPECIAL T/60X121",
+    "Variaciones": [
+      {
+        "Variante": "OPALINA",
+        "Precio": 65.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPEL ESPECIAL",
+    "Nombre": "PAPEL ESPECIAL T/60X90",
+    "Variaciones": [
+      {
+        "Variante": "FOTOGRAFICO",
+        "Precio": 130.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPEL ESPECIAL",
+    "Nombre": "PAPEL ESPECIAL T/60X91",
+    "Variaciones": [
+      {
+        "Variante": "OPALINA",
+        "Precio": 55.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPEL ESPECIAL",
+    "Nombre": "PAPEL ESPECIAL T/CARTA",
+    "Variaciones": [
+      {
+        "Variante": "ADHERIBLE",
+        "Precio": 5.0
+      },
+      {
+        "Variante": "COUCHE",
+        "Precio": 3.0
+      },
+      {
+        "Variante": "FOTOGRAFICO",
+        "Precio": 5.0
+      },
+      {
+        "Variante": "OPALINA",
+        "Precio": 3.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPEL ESPECIAL",
+    "Nombre": "PAPEL ESPECIAL T/DOBLE CARTA",
+    "Variaciones": [
+      {
+        "Variante": "ADHERIBLE",
+        "Precio": 7.0
+      },
+      {
+        "Variante": "COUCHE",
+        "Precio": 6.0
+      },
+      {
+        "Variante": "FOTOGRAFICO",
+        "Precio": 7.0
+      },
+      {
+        "Variante": "OPALINA",
+        "Precio": 6.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPELERÍA",
+    "Nombre": "CARPETA",
+    "Variaciones": [
+      {
+        "Variante": "T/CARTA",
+        "Precio": 6.0
+      },
+      {
+        "Variante": "T/OFICIO",
+        "Precio": 7.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPELERÍA",
+    "Nombre": "CD/DVD",
+    "Variaciones": [
+      {
+        "Variante": "Única",
+        "Precio": 37.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPELERÍA",
+    "Nombre": "CLIP",
+    "Variaciones": [
+      {
+        "Variante": "Única",
+        "Precio": 0.5
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPELERÍA",
+    "Nombre": "GRABADO DE ARCHIVOS",
+    "Variaciones": [
+      {
+        "Variante": "Única",
+        "Precio": 17.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPELERÍA",
+    "Nombre": "IMPRESIÓN CURP",
+    "Variaciones": [
+      {
+        "Variante": "Única",
+        "Precio": 15.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPELERÍA",
+    "Nombre": "LAPICERA",
+    "Variaciones": [
+      {
+        "Variante": "TINTA AZUL",
+        "Precio": 6.0
+      },
+      {
+        "Variante": "TINTA NEGRA",
+        "Precio": 6.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPELERÍA",
+    "Nombre": "SOBRE",
+    "Variaciones": [
+      {
+        "Variante": "T/CARTA",
+        "Precio": 7.0
+      },
+      {
+        "Variante": "T/OFICIO",
+        "Precio": 8.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPELERÍA",
+    "Nombre": "SUJETA DOCUMENTOS",
+    "Variaciones": [
+      {
+        "Variante": "CHICO",
+        "Precio": 2.5
+      },
+      {
+        "Variante": "GRANDE",
+        "Precio": 10.0
+      },
+      {
+        "Variante": "MEDIANO",
+        "Precio": 5.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PAPELERÍA",
+    "Nombre": "USB",
+    "Variaciones": [
+      {
+        "Variante": "Única",
+        "Precio": 80.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PLANOS",
+    "Nombre": "COPIA PLANO IMG/FONDO B/N",
+    "Variaciones": [
+      {
+        "Variante": "45X60",
+        "Precio": 39.0
+      },
+      {
+        "Variante": "60X120",
+        "Precio": 60.0
+      },
+      {
+        "Variante": "60X90",
+        "Precio": 48.0
+      },
+      {
+        "Variante": "90X120",
+        "Precio": 85.0
+      },
+      {
+        "Variante": "90X150",
+        "Precio": 95.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PLANOS",
+    "Nombre": "COPIA PLANO IMG/FONDO COLOR",
+    "Variaciones": [
+      {
+        "Variante": "45X60",
+        "Precio": 45.0
+      },
+      {
+        "Variante": "60X120",
+        "Precio": 85.0
+      },
+      {
+        "Variante": "60X90",
+        "Precio": 70.0
+      },
+      {
+        "Variante": "90X120",
+        "Precio": 125.0
+      },
+      {
+        "Variante": "90X150",
+        "Precio": 145.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PLANOS",
+    "Nombre": "COPIA PLANO LINEAS/TEXTO B/N",
+    "Variaciones": [
+      {
+        "Variante": "45X60",
+        "Precio": 24.0
+      },
+      {
+        "Variante": "60X120",
+        "Precio": 42.0
+      },
+      {
+        "Variante": "60X90",
+        "Precio": 29.0
+      },
+      {
+        "Variante": "90X120",
+        "Precio": 55.0
+      },
+      {
+        "Variante": "90X150",
+        "Precio": 75.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PLANOS",
+    "Nombre": "COPIA PLANO LINEAS/TEXTO COLOR",
+    "Variaciones": [
+      {
+        "Variante": "45X60",
+        "Precio": 28.0
+      },
+      {
+        "Variante": "60X120",
+        "Precio": 48.0
+      },
+      {
+        "Variante": "60X90",
+        "Precio": 40.0
+      },
+      {
+        "Variante": "90X120",
+        "Precio": 80.0
+      },
+      {
+        "Variante": "90X150",
+        "Precio": 85.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PLANOS",
+    "Nombre": "DOBLADO DE PLANO",
+    "Variaciones": [
+      {
+        "Variante": "1-100",
+        "Precio": 5.0
+      },
+      {
+        "Variante": 101,
+        "Precio": 4.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PLANOS",
+    "Nombre": "IMP PLANO LINEAS/TEXTO COLOR",
+    "Variaciones": [
+      {
+        "Variante": "45X60",
+        "Precio": 28.0
+      },
+      {
+        "Variante": "60X120",
+        "Precio": 40.0
+      },
+      {
+        "Variante": "60X90",
+        "Precio": 35.0
+      },
+      {
+        "Variante": "90X120",
+        "Precio": 59.0
+      },
+      {
+        "Variante": "90X150",
+        "Precio": 80.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PLANOS",
+    "Nombre": "IMPRESION PLANO IMG/FONDO B/N",
+    "Variaciones": [
+      {
+        "Variante": "45X60",
+        "Precio": 33.0
+      },
+      {
+        "Variante": "60X120",
+        "Precio": 52.0
+      },
+      {
+        "Variante": "60X90",
+        "Precio": 42.0
+      },
+      {
+        "Variante": "90X120",
+        "Precio": 65.0
+      },
+      {
+        "Variante": "90X150",
+        "Precio": 85.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PLANOS",
+    "Nombre": "IMPRESION PLANO IMG/FONDO COLOR",
+    "Variaciones": [
+      {
+        "Variante": "45X60",
+        "Precio": 45.0
+      },
+      {
+        "Variante": "60X120",
+        "Precio": 80.0
+      },
+      {
+        "Variante": "60X90",
+        "Precio": 65.0
+      },
+      {
+        "Variante": "90X120",
+        "Precio": 120.0
+      },
+      {
+        "Variante": "90X150",
+        "Precio": 140.0
+      }
+    ]
+  },
+  {
+    "Categoria": "PLANOS",
+    "Nombre": "IMPRESION PLANO LINEAS/TEXTO B/N",
+    "Variaciones": [
+      {
+        "Variante": "45X60",
+        "Precio": 20.0
+      },
+      {
+        "Variante": "60X120",
+        "Precio": 34.0
+      },
+      {
+        "Variante": "60X90",
+        "Precio": 24.0
+      },
+      {
+        "Variante": "90X120",
+        "Precio": 50.0
+      },
+      {
+        "Variante": "90X150",
+        "Precio": 72.0
+      }
+    ]
+  }
+]
