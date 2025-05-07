@@ -28,10 +28,10 @@ export async function generarCotizacionPDF(cliente, productos) {
   doc.text('Puerto Vallarta, Jalisco, México', 45, 32);
   doc.text('Tel: 3223499334 | contacto@puertocopy.com', 45, 37);
 
-  const fecha = new Date();
-  const folio = 'PC-' + fecha.getTime().toString().slice(-5);
-  doc.text(`Folio: ${folio}`, 195, 20, { align: 'right' });
-  doc.text(`Fecha: ${fecha.toLocaleDateString()}`, 195, 26, { align: 'right' });
+  doc.setTextColor('#000000');
+  doc.setFontSize(10);
+  doc.text(`Folio: ${cliente.folio || 'N/A'}`, 195, 20, { align: 'right' });
+  doc.text(`Fecha: ${cliente.fecha || new Date().toLocaleDateString()}`, 195, 26, { align: 'right' });
 
   doc.setLineWidth(0.5);
   doc.line(15, 42, 195, 42);
@@ -53,7 +53,7 @@ export async function generarCotizacionPDF(cliente, productos) {
     `$${(p.precio * p.cantidad).toFixed(2)}`,
   ]);
 
-  autoTable(doc, {
+  const tabla = autoTable(doc, {
     startY: cliente.domicilio ? 80 : 75,
     head: [['Producto', 'Tamaño', 'Cantidad', 'P. Unitario', 'Total']],
     body: rows,
@@ -68,11 +68,11 @@ export async function generarCotizacionPDF(cliente, productos) {
     theme: 'striped',
   });
 
-  // 5. Totales (usamos la posición real del final de la tabla)
+  // 5. Totales
   const total = productos.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
   const ivaIncluido = total - total / 1.16;
-  const y = doc.lastAutoTable.finalY + 10;
 
+  const y = tabla.finalY + 10;
   doc.setFontSize(12);
   doc.setTextColor('#000000');
   doc.text(`IVA (ya incluido): $${ivaIncluido.toFixed(2)}`, 195, y, { align: 'right' });
@@ -80,6 +80,19 @@ export async function generarCotizacionPDF(cliente, productos) {
   doc.setTextColor(azul);
   doc.setFontSize(12);
   doc.text(`Total: $${total.toFixed(2)}`, 195, y + 8, { align: 'right' });
+
+  // 6. Pie de página legal en gris claro
+  doc.setTextColor(150); // gris claro
+  doc.setFontSize(9);
+  const leyenda = [
+    'Esta cotización tiene una vigencia de 15 días a partir de su emisión.',
+    'Los precios pueden ajustarse si el archivo no cumple con las indicaciones de diseño o formato.',
+    'Particularmente, los planos con fondo completo serán cobrados como tal si contienen imágenes o trazos fuera de solapa.'
+  ];
+  const footerY = 280;
+  leyenda.forEach((line, i) => {
+    doc.text(line, 15, footerY + i * 5);
+  });
 
   return doc.output('blob');
 }
