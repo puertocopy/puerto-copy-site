@@ -24,3 +24,6 @@ index d4e2a9b..6a7f8c3 100644
  npm-debug.log*
  yarn-debug.log*
  pnpm-debug.log*
+
+node_modules
+.next
