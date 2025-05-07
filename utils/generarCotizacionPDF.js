@@ -53,7 +53,7 @@ export async function generarCotizacionPDF(cliente, productos) {
     `$${(p.precio * p.cantidad).toFixed(2)}`,
   ]);
 
-  autoTable(doc, {
+  const tabla = autoTable(doc, {
     startY: cliente.domicilio ? 80 : 75,
     head: [['Producto', 'Tamaño', 'Cantidad', 'P. Unitario', 'Total']],
     body: rows,
@@ -68,11 +68,11 @@ export async function generarCotizacionPDF(cliente, productos) {
     theme: 'striped',
   });
 
-  // 5. Totales (usamos la posición real del final de la tabla)
+  // 5. Totales
   const total = productos.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
   const ivaIncluido = total - total / 1.16;
-  const y = doc.lastAutoTable.finalY + 10;
 
+  const y = tabla.finalY + 10;
   doc.setFontSize(12);
   doc.setTextColor('#000000');
   doc.text(`IVA (ya incluido): $${ivaIncluido.toFixed(2)}`, 195, y, { align: 'right' });
