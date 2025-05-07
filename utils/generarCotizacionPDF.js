@@ -95,4 +95,4 @@ export async function generarCotizacionPDF(cliente, productos) {
   });
 
   return doc.output('blob');
-}
+}//hh
