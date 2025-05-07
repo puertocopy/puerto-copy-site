@@ -74,8 +74,8 @@ export async function generarCotizacionPDF(cliente, productos) {
 
   const y = tabla.finalY + 10;
   doc.setFontSize(12);
-  doc.setTextColor('#000000');
-  doc.text(`IVA (ya incluido): $${ivaIncluido.toFixed(2)}`, 195, y, { align: 'right' });
+  doc.setTextColor(azul);
+  doc.text(`IVA (incluido): $${ivaIncluido.toFixed(2)}`, 195, y, { align: 'right' });
 
   doc.setTextColor(azul);
   doc.setFontSize(12);

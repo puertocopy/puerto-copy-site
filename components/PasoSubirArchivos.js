@@ -48,7 +48,7 @@ export default function PasoSubirArchivos({ productos, archivosAsignados, setArc
       const fecha = new Date();
       const total = productos.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
 
-      // 1. Generar PDF (adaptado para folio/fecha y pie de página legal)
+      // 1. Generar PDF (modifica tu función si aún no acepta folio/fecha)
       const pdfBlob = await generarCotizacionPDF(
         { ...form, folio, fecha: fecha.toLocaleDateString() },
         productos
