@@ -1,23 +1,7 @@
 {
-  "/api/catalogo-planos": "pages/api/catalogo-planos.js",
-  "/_error": "pages/_error.js",
-  "/api/enviar-factura": "pages/api/enviar-factura.js",
-  "/api/catalogo": "pages/api/catalogo.js",
-  "/api/factura-com": "pages/api/factura-com.js",
-  "/api/factura": "pages/api/factura.js",
-  "/api/facturar": "pages/api/facturar.js",
-  "/api/generar-factura": "pages/api/generar-factura.js",
   "/_app": "pages/_app.js",
-  "/api/login": "pages/api/login.js",
-  "/api/verificar-ticket": "pages/api/verificar-ticket.js",
-  "/cotizar": "pages/cotizar.js",
-  "/pedido": "pages/pedido.js",
-  "/api/pedido/productos": "pages/api/pedido/productos.js",
-  "/": "pages/index.js",
-  "/facturacion": "pages/facturacion.js",
-  "/api/pedido": "pages/api/pedido.js",
-  "/servicios": "pages/servicios.js",
-  "/contacto": "pages/contacto.js",
+  "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/api/pedido/subir-archivo": "pages/api/pedido/subir-archivo.js"
+  "/": "pages/index.js",
+  "/cotizar": "pages/cotizar.js"
 }
