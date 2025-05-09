@@ -83,12 +83,16 @@ export async function generarCotizacionPDF(cliente, productos) {
 
    // Pie legal
    doc.setFontSize(9);
-   doc.setTextColor(120);
-   doc.text(
-     '* Esta cotización tiene una vigencia de 15 días a partir de la fecha de emisión. Los precios pueden ajustarse si no se siguen las especificaciones indicadas (por ejemplo: si un archivo con fondo completo es enviado como línea y texto).',
-     14,
-     doc.lastAutoTable.finalY + 20,
-     { maxWidth: 180 }
-   );
+doc.setTextColor(120);
+doc.text(
+  '* Esta cotización tiene una vigencia de 15 días a partir de la fecha de emisión. Los precios pueden ajustarse si no se siguen las especificaciones indicadas (por ejemplo: si un archivo con fondo completo es enviado como línea y texto).',
+  105, // posición X centrada (A4 = 210mm, por eso 105mm)
+  247, // 297mm alto total - 50mm = 247mm desde arriba
+  {
+    maxWidth: 180,
+    align: 'center'
+  }
+);
+
   return doc.output('blob');
 }
