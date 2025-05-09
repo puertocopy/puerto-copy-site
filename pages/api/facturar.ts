@@ -1,88 +1,95 @@
-// pages/api/facturar.ts
-import type { NextApiRequest, NextApiResponse } from 'next';
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
+    return res.status(405).json({ message: 'Método no permitido' });
   }
 
   const {
+    ticket,
+    productos,
     rfc,
     razonSocial,
-    correo,
-    codigoPostal,
-    usoCfdi,
     regimenFiscal,
-    ticket,
-    concepto,
-    precioUnitario,
+    usoCfdi,
+    codigoPostal,
+    email
   } = req.body;
 
-  if (!rfc || !razonSocial || !correo || !codigoPostal || !usoCfdi || !regimenFiscal || !ticket || !concepto || !precioUnitario) {
-    return res.status(400).json({ error: 'Faltan datos obligatorios' });
+  if (!productos || productos.length === 0) {
+    return res.status(400).json({ message: 'No se proporcionaron productos' });
   }
 
-  const auth = Buffer.from(`${process.env.FACTURAMA_USER}:${process.env.FACTURAMA_PASS}`).toString('base64');
-
-  const facturaData = {
-    "Receptor": {
-      "Rfc": rfc,
-      "Nombre": razonSocial,
-      "UsoCfdi": usoCfdi,
-      "RegimenFiscalReceptor": regimenFiscal,
-      "DomicilioFiscalReceptor": codigoPostal
+  // Construir el objeto de factura
+  const facturaPayload = {
+    Receptor: {
+      Rfc: rfc,
+      Nombre: razonSocial,
+      DomicilioFiscalReceptor: codigoPostal,
+      RegimenFiscalReceptor: regimenFiscal,
+      UsoCFDI: usoCfdi
     },
-    "TipoDocumento": "ingreso",
-    "Conceptos": [
-      {
-        "ClaveProdServ": "01010101",
-        "Cantidad": 1,
-        "ClaveUnidad": "E48",
-        "Unidad": "Servicio",
-        "Descripcion": concepto,
-        "ValorUnitario": precioUnitario,
-        "Importe": precioUnitario,
-        "ObjetoImp": "02",
-        "Impuestos": {
-          "Traslados": [
-            {
-              "Base": precioUnitario,
-              "Impuesto": "002",
-              "TipoFactor": "Tasa",
-              "TasaOCuota": 0.16,
-              "Importe": +(precioUnitario * 0.16).toFixed(2)
-            }
-          ]
-        }
+    Emisor: {
+      Rfc: process.env.EMISOR_RFC,
+      Nombre: process.env.EMISOR_NAME,
+      RegimenFiscal: process.env.EMISOR_REGIMEN
+    },
+    Conceptos: productos.map((item) => ({
+      ClaveProdServ: '81112100', // Genérico impresión
+      Cantidad: item.cantidad,
+      ClaveUnidad: 'E48', // Servicio
+      Descripcion: item.nombre,
+      ValorUnitario: item.precio_unitario,
+      Importe: item.cantidad * item.precio_unitario,
+      ObjetoImp: '02', // sujeto a impuesto
+      Impuestos: {
+        Traslados: [
+          {
+            Base: item.cantidad * item.precio_unitario,
+            Impuesto: '002', // IVA
+            TipoFactor: 'Tasa',
+            TasaOCuota: 0.16,
+            Importe: (item.cantidad * item.precio_unitario * 0.16)
+          }
+        ]
       }
-    ],
-    "FormaPago": "01", // Efectivo por ahora, se puede cambiar
-    "MetodoPago": "PUE",
-    "Moneda": "MXN",
-    "LugarExpedicion": codigoPostal
+    })),
+    MetodoPago: 'PUE',
+    FormaPago: '01',
+    TipoDeComprobante: 'I',
+    Exportacion: '01',
+    LugarExpedicion: codigoPostal
   };
 
   try {
-    const response = await fetch('https://sandbox.factura.com.mx/api/v4/cfdi33/create', {
+    const response = await fetch(process.env.FACTURA_COM_API_BASE_URL, {
       method: 'POST',
       headers: {
-        Authorization: `Basic ${auth}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'apikey': process.env.FACTURA_COM_API_KEY,
+        'Content-Security-Policy': 'default-src *',
+        'Authorization': `Bearer ${process.env.FACTURA_COM_API_SECRET}`
       },
-      body: JSON.stringify(facturaData)
+      body: JSON.stringify(facturaPayload)
     });
 
+    const rawText = await response.text();
+console.log('FACTURA SANDBOX RESPUESTA:', rawText);
+const data = JSON.parse(rawText);
+
+
     if (!response.ok) {
-      const error = await response.json();
-      return res.status(400).json({ error: error.Message || 'Error al emitir factura' });
+      return res.status(response.status).json({ message: data.message || 'Error al generar factura', detalles: data });
     }
 
-    const factura = await response.json();
-    return res.status(200).json({ success: true, factura });
+    // Enviar la factura por correo al cliente
+    // Aquí puedes usar Nodemailer o Mailgun si deseas enviar el PDF/XML
 
-  } catch (err) {
-    console.error('Error al facturar:', err);
-    return res.status(500).json({ error: 'Error interno al emitir factura' });
+    return res.status(200).json({
+      message: 'Factura generada correctamente',
+      links: data.Links,
+      debug: data // 👈 Esto es clave
+        
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
   }
 }
-//gg

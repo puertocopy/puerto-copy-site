@@ -87,7 +87,7 @@ export async function generarCotizacionPDF(cliente, productos) {
   doc.text(
     '* Esta cotización tiene una vigencia de 15 días a partir de la fecha de emisión. Los precios pueden ajustarse si no se siguen las especificaciones indicadas.',
     105,
-    259, // 279mm total - 50mm
+    269, // 279mm total - 50mm
     {
       maxWidth: 180,
       align: 'center'
