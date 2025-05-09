@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import WhatsAppButton from '../components/WhatsappButton';
 import PasoSeleccionCategoria from '../components/PasoSeleccionCategoria';
 import FlujoPlanos from '../components/FlujoPlanos';
 import ResumenCotizacion from '../components/ResumenCotizacion';
@@ -81,6 +82,7 @@ export default function Cotizar() {
         </div>
       </main>
       <Footer />
+      <WhatsAppButton />
     </>
   );
 }

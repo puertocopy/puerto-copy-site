@@ -1,6 +1,6 @@
 // pages/facturacion.js
 import Navbar from "../components/Navbar";
-
+import WhatsAppButton from '../components/WhatsappButton';
 export default function Facturacion() {
   return (
     <div className="min-h-screen bg-white text-black">
@@ -21,6 +21,8 @@ export default function Facturacion() {
           </iframe>
         </div>
       </section>
+      <WhatsAppButton />
     </div>
+    
   );
 }

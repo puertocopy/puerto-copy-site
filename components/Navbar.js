@@ -65,6 +65,54 @@ export default function Navbar() {
             )}
           </div>
         </ul>
+        {/* Ayuda con submenú */}
+<div className="relative">
+  <li
+    onClick={() => setHerramientasOpen('ayuda')}
+    className="hover:text-blue-300 cursor-pointer flex items-center gap-1"
+  >
+    Ayuda
+    <svg className="w-4 h-4 mt-[1px]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  </li>
+
+  {herramientasOpen === 'ayuda' && (
+    <ul
+      onMouseLeave={() => setHerramientasOpen(false)}
+      className="absolute right-0 mt-2 bg-white text-blue-700 rounded shadow-md py-2 w-64 z-50"
+    >
+      <li
+        onClick={() => {
+          setHerramientasOpen(false);
+          router.push('/ayuda/como-preparar-archivos');
+        }}
+        className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
+      >
+        Cómo entregar archivos
+      </li>
+      <li
+        onClick={() => {
+          setHerramientasOpen(false);
+          router.push('/ayuda/formatos-aceptados');
+        }}
+        className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
+      >
+        Formatos aceptados
+      </li>
+      <li
+        onClick={() => {
+          setHerramientasOpen(false);
+          router.push('/ayuda/tiempo-entrega');
+        }}
+        className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
+      >
+        Tiempo de entrega
+      </li>
+    </ul>
+  )}
+</div>
+
 
         {/* Menú Mobile Icono */}
         <div className="md:hidden">
