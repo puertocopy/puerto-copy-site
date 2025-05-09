@@ -1,8 +1,9 @@
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 export async function generarCotizacionPDF(cliente, productos) {
-  const doc = new jsPDF();
+  // Establecer formato carta
+  const doc = new jsPDF({ format: 'letter', unit: 'mm' });
   const azul = '#1e3a8a';
 
   // 1. Logo desde public/
@@ -30,11 +31,11 @@ export async function generarCotizacionPDF(cliente, productos) {
 
   const fecha = new Date();
   const folio = 'PC-' + fecha.getTime().toString().slice(-5);
-  doc.text(`Folio: ${folio}`, 195, 20, { align: 'right' });
-  doc.text(`Fecha: ${fecha.toLocaleDateString()}`, 195, 26, { align: 'right' });
+  doc.text(`Folio: ${folio}`, 200, 20, { align: 'right' });
+  doc.text(`Fecha: ${fecha.toLocaleDateString()}`, 200, 26, { align: 'right' });
 
   doc.setLineWidth(0.5);
-  doc.line(15, 42, 195, 42);
+  doc.line(15, 42, 200, 42);
 
   // 3. Cliente
   doc.setFontSize(12);
@@ -50,7 +51,7 @@ export async function generarCotizacionPDF(cliente, productos) {
     p.variante,
     p.cantidad,
     `$${p.precio.toFixed(2)}`,
-    `$${(p.precio * p.cantidad).toFixed(2)}`,
+    `$${(p.precio * p.cantidad).toFixed(2)}`
   ]);
 
   autoTable(doc, {
@@ -68,31 +69,30 @@ export async function generarCotizacionPDF(cliente, productos) {
     theme: 'striped',
   });
 
-  // 5. Totales (usamos la posición real del final de la tabla)
+  // 5. Totales
   const total = productos.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
   const ivaIncluido = total - total / 1.16;
   const y = doc.lastAutoTable.finalY + 10;
 
   doc.setFontSize(12);
   doc.setTextColor('#000000');
-  doc.text(`IVA (ya incluido): $${ivaIncluido.toFixed(2)}`, 195, y, { align: 'right' });
+  doc.text(`IVA (ya incluido): $${ivaIncluido.toFixed(2)}`, 200, y, { align: 'right' });
 
   doc.setTextColor(azul);
-  doc.setFontSize(12);
-  doc.text(`Total: $${total.toFixed(2)}`, 195, y + 8, { align: 'right' });
+  doc.text(`Total: $${total.toFixed(2)}`, 200, y + 8, { align: 'right' });
 
-   // Pie legal
-   doc.setFontSize(9);
-doc.setTextColor(120);
-doc.text(
-  '* Esta cotización tiene una vigencia de 15 días a partir de la fecha de emisión. Los precios pueden ajustarse si no se siguen las especificaciones indicadas (por ejemplo: si un archivo con fondo completo es enviado como línea y texto).',
-  105, // posición X centrada (A4 = 210mm, por eso 105mm)
-  247, // 297mm alto total - 50mm = 247mm desde arriba
-  {
-    maxWidth: 180,
-    align: 'center'
-  }
-);
+  // 6. Pie de página legal (centrado, 50mm antes del borde inferior carta)
+  doc.setFontSize(9);
+  doc.setTextColor(120);
+  doc.text(
+    '* Esta cotización tiene una vigencia de 15 días a partir de la fecha de emisión. Los precios pueden ajustarse si no se siguen las especificaciones indicadas.',
+    105,
+    259, // 279mm total - 50mm
+    {
+      maxWidth: 180,
+      align: 'center'
+    }
+  );
 
   return doc.output('blob');
 }
