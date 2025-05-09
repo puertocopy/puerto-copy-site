@@ -81,5 +81,14 @@ export async function generarCotizacionPDF(cliente, productos) {
   doc.setFontSize(12);
   doc.text(`Total: $${total.toFixed(2)}`, 195, y + 8, { align: 'right' });
 
+   // Pie legal
+   doc.setFontSize(9);
+   doc.setTextColor(120);
+   doc.text(
+     '* Esta cotización tiene una vigencia de 15 días a partir de la fecha de emisión. Los precios pueden ajustarse si no se siguen las especificaciones indicadas (por ejemplo: si un archivo con fondo completo es enviado como línea y texto).',
+     14,
+     doc.lastAutoTable.finalY + 20,
+     { maxWidth: 180 }
+   );
   return doc.output('blob');
 }
