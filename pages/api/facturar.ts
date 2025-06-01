@@ -19,6 +19,20 @@ export default async function handler(req, res) {
   }
 
   // Construir el objeto de factura
+  const esSandbox = process.env.FACTURACION_SANDBOX === 'true';
+
+const emisor = esSandbox
+  ? {
+      Rfc: 'CACX7605101P8',
+      Nombre: 'XOCHILT CASAS CHAVEZ',
+      RegimenFiscal: '621'
+    }
+  : {
+      Rfc: process.env.EMISOR_RFC,
+      Nombre: process.env.EMISOR_NAME,
+      RegimenFiscal: process.env.EMISOR_REGIMEN
+    };
+
   const facturaPayload = {
     Receptor: {
       Rfc: rfc,
@@ -27,11 +41,8 @@ export default async function handler(req, res) {
       RegimenFiscalReceptor: regimenFiscal,
       UsoCFDI: usoCfdi
     },
-    Emisor: {
-      Rfc: process.env.EMISOR_RFC,
-      Nombre: process.env.EMISOR_NAME,
-      RegimenFiscal: process.env.EMISOR_REGIMEN
-    },
+    Emisor: emisor,
+
     Conceptos: productos.map((item) => ({
       ClaveProdServ: '81112100', // Genérico impresión
       Cantidad: item.cantidad,
@@ -60,16 +71,16 @@ export default async function handler(req, res) {
   };
 
   try {
-    const response = await fetch(process.env.FACTURA_COM_API_BASE_URL, {
+    const response = await fetch(`${process.env.FACTURA_COM_API_BASE_URL}/v4/cfdi40/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': process.env.FACTURA_COM_API_KEY,
-        'Content-Security-Policy': 'default-src *',
-        'Authorization': `Bearer ${process.env.FACTURA_COM_API_SECRET}`
+        apikey: process.env.FACTURA_COM_API_KEY,
+        Authorization: `Bearer ${process.env.FACTURA_COM_API_SECRET}`
       },
       body: JSON.stringify(facturaPayload)
     });
+    
 
     const rawText = await response.text();
 console.log('FACTURA SANDBOX RESPUESTA:', rawText);

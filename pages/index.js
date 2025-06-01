@@ -3,7 +3,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import WhatsAppButton from '../components/WhatsappButton';
+import FloatingBubbles from "../components/FloatingBubbles";
 import Contacto from '../components/Contacto'; // Asegúrate de tener este componente
 
 export default function Home() {
@@ -202,7 +202,7 @@ export default function Home() {
 
       {/* FOOTER */}
       <Footer />
-      <WhatsAppButton />
+      <FloatingBubbles />
     </div>
   );
 }

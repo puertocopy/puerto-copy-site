@@ -2,9 +2,6 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/ayuda": "pages/ayuda.js",
-  "/ayuda/formatos-aceptados": "pages/ayuda/formatos-aceptados.js",
-  "/facturacion": "pages/facturacion.js",
-  "/": "pages/index.js",
-  "/ayuda/como-preparar-archivos": "pages/ayuda/como-preparar-archivos.js"
+  "/wifi": "pages/wifi.js",
+  "/": "pages/index.js"
 }

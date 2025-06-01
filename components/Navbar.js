@@ -114,6 +114,7 @@ export default function Navbar() {
 </div>
 
 
+
         {/* Menú Mobile Icono */}
         <div className="md:hidden">
           <button onClick={() => setMenuOpen(!menuOpen)}>
