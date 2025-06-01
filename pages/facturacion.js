@@ -1,6 +1,6 @@
 // pages/facturacion.js
 import Navbar from "../components/Navbar";
-import WhatsAppButton from '../components/WhatsappButton';
+import FloatingBubbles from "../components/FloatingBubbles";
 export default function Facturacion() {
   return (
     <div className="min-h-screen bg-white text-black">

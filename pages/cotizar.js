@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import WhatsAppButton from '../components/WhatsappButton';
+import FloatingBubbles from "../components/FloatingBubbles";
 import PasoSeleccionCategoria from '../components/PasoSeleccionCategoria';
 import FlujoPlanos from '../components/FlujoPlanos';
 import ResumenCotizacion from '../components/ResumenCotizacion';

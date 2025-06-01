@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import WhatsAppButton from '../components/WhatsappButton';
+import FloatingBubbles from "../components/FloatingBubbles";
 
 const regimenes = [
   { value: '601', label: '601 - General de Ley Personas Morales' },
