@@ -21,7 +21,7 @@ export default function Facturacion() {
           </iframe>
         </div>
       </section>
-      <WhatsAppButton />
+      <FloatingBubbles />
     </div>
     
   );

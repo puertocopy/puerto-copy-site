@@ -192,7 +192,7 @@ export default function Facturar() {
 
       </main>
       <Footer />
-      <WhatsAppButton />
+      <FloatingBubbles />
     </>
   );
 }

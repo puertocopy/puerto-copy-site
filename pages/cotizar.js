@@ -82,7 +82,7 @@ export default function Cotizar() {
         </div>
       </main>
       <Footer />
-      <WhatsAppButton />
+      <FloatingBubbles />
     </>
   );
 }

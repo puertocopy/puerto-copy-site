@@ -1,5 +1,4 @@
 import Navbar from "../components/Navbar"
-import FloatingBubbles from "../components/FloatingBubbles";
 
 export default function Servicios() {
   return (
@@ -17,5 +16,6 @@ export default function Servicios() {
         </ul>
       </section>
     </div>
+    
   )
 }
