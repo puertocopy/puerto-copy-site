@@ -3,19 +3,14 @@ import Navbar from "../components/Navbar";
 import FloatingBubbles from "../components/FloatingBubbles";
 
 export default function Facturacion() {
-  const [estado, setEstado] = useState("activo");
+  const [estado, setEstado] = useState("activo"); // activo | cerrado
   const [tiempoRestante, setTiempoRestante] = useState("");
-
-  // 🔧 MODO PRUEBA — CAMBIA ESTA FECHA PARA SIMULAR OTRA
-  const fechaSimulada = new Date("2025-05-30T17:59:00"); // Cambia aquí para simular
 
   useEffect(() => {
     const actualizarEstado = () => {
-      // ⚠️ Usa fecha simulada en lugar de la real
-      const ahora = new Date(fechaSimulada);
-
-      const finMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 18, 0, 0); // Último día del mes a las 6:00 pm
-      const reinicio = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 1, 8, 0, 0); // Día 1 del siguiente mes a las 8:00 am
+      const ahora = new Date();
+      const finMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 18, 0, 0); // Último día del mes a las 18:00
+      const reinicio = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 1, 8, 0, 0); // Día 1 del siguiente mes a las 08:00
 
       if (ahora >= finMes && ahora < reinicio) {
         setEstado("cerrado");
@@ -30,6 +25,8 @@ export default function Facturacion() {
     };
 
     actualizarEstado();
+    const intervalo = setInterval(actualizarEstado, 60000); // Actualiza cada minuto
+    return () => clearInterval(intervalo);
   }, []);
 
   return (
@@ -38,44 +35,24 @@ export default function Facturacion() {
       <section className="py-16 px-6 bg-gray-100 text-center">
         <h2 className="text-3xl font-semibold mb-6">Generar Factura</h2>
 
-        <p className="text-sm text-gray-500 mb-4">
-          (Simulando fecha actual: {fechaSimulada.toLocaleString()})
-        </p>
-
         {estado === "activo" && (
           <>
             <p className="text-lg text-blue-700 mb-4">
               Tiempo restante para facturar este mes: <strong>{tiempoRestante}</strong>
             </p>
             <div className="max-w-4xl mx-auto shadow-lg p-4 bg-white rounded-lg">
-  <iframe
-    src="https://docs.google.com/forms/d/e/1FAIpQLSclHDoFDAUl--M53kvbbqQqkt8QOhqcpTl7rTrPSCHr7uI_yA/viewform?embedded=true"
-    width="100%"
-    className="w-full"
-    style={{
-      height: '3000px',
-    }}
-    frameBorder="0"
-    marginHeight="0"
-    marginWidth="0"
-    title="Formulario de facturación"
-  >
-    Cargando…
-  </iframe>
-
-  <style jsx>{`
-    @media (max-width: 768px) {
-      iframe {
-        height: 3700px !important;
-      }
-    }
-  `}</style>
-</div>
-
-
-
-
-
+              <iframe
+                src="https://docs.google.com/forms/d/e/1FAIpQLSclHDoFDAUl--M53kvbbqQqkt8QOhqcpTl7rTrPSCHr7uI_yA/viewform?embedded=true"
+                width="100%"
+                height="2858"
+                frameBorder="0"
+                marginHeight="0"
+                marginWidth="0"
+                title="Formulario de facturación"
+              >
+                Cargando…
+              </iframe>
+            </div>
           </>
         )}
 

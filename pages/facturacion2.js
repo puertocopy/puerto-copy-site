@@ -90,7 +90,7 @@ export default function Facturar() {
       formData.append('entry.1852642215', datosFiscales.usoCfdi);
       formData.append('entry.2114675010', 'Sí'); // Confirmación de responsabilidad
 
-      await fetch('https://docs.google.com/forms/d/e/1J0VGi5_WoGI_6zo00hNe5aRoGEp7MJWLMZGoPTAZCXg/formResponse', {
+      await fetch('https://docs.google.com/forms/d/e/1FAIpQLSclHDoFDAUl--M53kvbbqQqkt8QOhqcpTl7rTrPSCHr7uI_yA/formResponse', {
         method: 'POST',
         mode: 'no-cors',
         body: formData,
