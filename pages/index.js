@@ -40,75 +40,77 @@ export default function Home() {
     <div className="bg-white text-gray-900 overflow-x-hidden">
       <Navbar />
 
-      {/* ENCABEZADO PRINCIPAL */}
-      <section className="text-center bg-[#16284f] text-white pt-20 pb-0 px-6 md:px-12">
-        <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-2">
-          Copias, Impresiones de Planos y Documentos en Puerto Vallarta
-        </h1>
-        <p className="text-lg md:text-xl text-gray-300 mt-2 max-w-3xl mx-auto">
-          Calidad profesional, servicio rápido y atención personalizada en <strong className="text-white">Puerto Copy</strong>.
-        </p>
-      </section>
-
-      {/* SLIDER */}
-      <section id="inicio" className="relative w-full">
-        <div className="relative w-full h-[50vh] md:h-[60vh] overflow-hidden">
-          {slides.map((slide, index) => {
-            const imageUrl = isMobile
-              ? `/slides/slide${slide}-mobile.jpg`
-              : `/slides/slide${slide}-desktop.jpg`;
-
-            return (
-              <img
-                key={index}
-                src={imageUrl}
-                alt={`Slide ${slide}`}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ease-in-out ${
-                  currentSlide === index && fade ? 'opacity-100' : 'opacity-0'
-                }`}
-              />
-            );
-          })}
-        </div>
-      </section>
-      {/* DESTACADO DE COTIZACIÓN */}
-<section className="bg-blue-50 py-16 px-6 md:px-12" data-aos="fade-up">
-  <div className="max-w-5xl mx-auto bg-white shadow-xl rounded-2xl p-8 text-center border border-blue-100">
-    <h2 className="text-3xl md:text-4xl font-bold text-blue-700 mb-4">
-      ¿Necesitas una cotización?
-    </h2>
-    <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto">
-      Cotiza planos u otros servicios de impresión en línea, de forma rápida, clara y sin compromiso. Ideal para trámites, proyectos y presupuestos empresariales.
-    </p>
-    <a
-      href="/cotizar"
-      className="inline-block bg-blue-700 hover:bg-blue-800 text-white font-medium px-8 py-3 rounded-full text-lg shadow-md transition"
-    >
-      Generar cotización
-    </a>
-  </div>
+      <section aria-hidden="true" className="sr-only">
+  <h1>Copias, Impresiones de Planos y Documentos en Puerto Vallarta</h1>
+  <p>Calidad profesional, servicio rápido y atención personalizada en Puerto Copy.</p>
 </section>
 
 
+      {/* SLIDER */}
+<section id="inicio" className="relative w-full">
+  <div className="relative w-full h-[50vh] md:h-[60vh] overflow-hidden">
+    {slides.map((slide, index) => {
+      const imageUrl = isMobile
+        ? `/slides/slide${slide}-mobile.jpg`
+        : `/slides/slide${slide}-desktop.jpg`;
 
-      {/* INTRODUCCIÓN DE SERVICIOS */}
-      <section className="bg-white text-center pt-16 pb-20 px-6 md:px-12">
-        <div className="max-w-4xl mx-auto" data-aos="fade-up">
-          <h2 className="text-3xl md:text-4xl font-bold text-[#004b71] leading-tight mb-6">
-            Servicios de Copiado e Impresión en Puerto Vallarta
-          </h2>
-          <p className="text-lg md:text-xl text-gray-700 mt-4 mb-8">
-            En <strong className="text-[#004b71]">Puerto Copy</strong> realizamos impresión de planos arquitectónicos, copias en distintos tamaños, escaneo de documentos, enmicados y engargolados profesionales. 
-            Nuestro compromiso es ofrecerte calidad, rapidez y atención personalizada en Puerto Vallarta.
-          </p>
-          <a 
-            href="#servicios" 
-            className="inline-block bg-[#004b71] text-white py-3 px-8 rounded-full text-lg hover:bg-blue-800 transition duration-300"
-          >
-            Conoce nuestros servicios
-          </a>
-        </div>
-      </section>
+      return (
+        <img
+          key={index}
+          src={imageUrl}
+          alt={`Slide ${slide}`}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[3500] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+            currentSlide === index && fade ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      );
+    })}
+  </div>
+</section>
+
+      {/* DESTACADO DE COTIZACIÓN */}
+      <section className="bg-blue-50 py-20 px-6 md:px-12" data-aos="fade-up">
+  <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+
+    {/* DESTACADO COTIZACIÓN */}
+    <div className="flex flex-col justify-between bg-gradient-to-br from-white to-blue-50 shadow-lg rounded-3xl p-10 border border-blue-100 hover:shadow-2xl transition duration-300 ease-in-out">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold text-blue-700 mb-4">
+          ¿Necesitas una cotización?
+        </h2>
+        <p className="text-lg text-gray-700 mb-10">
+          Cotiza planos u otros servicios de impresión en línea, de forma rápida, clara y sin compromiso. Ideal para trámites, proyectos y presupuestos empresariales.
+        </p>
+        <a
+          href="/cotizar"
+          className="inline-block bg-blue-700 hover:bg-blue-800 text-white font-semibold px-8 py-3 rounded-full text-base shadow-md transition"
+        >
+          Generar cotización
+        </a>
+      </div>
+    </div>
+
+    {/* DESTACADO FACTURACIÓN */}
+    <div className="flex flex-col justify-between bg-gradient-to-br from-white to-blue-50 shadow-lg rounded-3xl p-10 border border-blue-100 hover:shadow-2xl transition duration-300 ease-in-out">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold text-blue-700 mb-4">
+          Factura tu compra
+        </h2>
+        <p className="text-lg text-gray-700 mb-10">
+          Factura tu compra fácilmente ingresando tu número de ticket y tus datos fiscales. Servicio rápido, sin complicaciones.
+        </p>
+        <a
+          href="/facturacion"
+          className="inline-block bg-blue-700 hover:bg-blue-800 text-white font-semibold px-8 py-3 rounded-full text-base shadow-md transition"
+        >
+          Facturar compra
+        </a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
 
       {/* SERVICIOS */}
       <section id="servicios" className="relative bg-white text-gray-800 py-20 px-6 md:px-12 z-10">
