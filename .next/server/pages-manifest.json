@@ -2,7 +2,7 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/test-formulario": "pages/test-formulario.js",
-  "/facturacion": "pages/facturacion.js",
-  "/facturacion2": "pages/facturacion2.js"
+  "/facturacion2": "pages/facturacion2.js",
+  "/": "pages/index.js",
+  "/facturacion": "pages/facturacion.js"
 }

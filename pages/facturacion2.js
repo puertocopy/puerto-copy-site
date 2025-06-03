@@ -55,6 +55,7 @@ export default function Facturar() {
 
     try {
       const res = await fetch(`/api/consultar-ticket?ticket=${ticket}`);
+
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.message || 'Error al consultar ticket');
@@ -121,6 +122,7 @@ export default function Facturar() {
               onChange={(e) => {
                 let raw = e.target.value.replace(/[^0-9]/g, '');
                 if (raw.length > 1) raw = `${raw[0]}-${raw.slice(1)}`;
+
                 setTicket(raw);
               }}
               placeholder="Ej. 59773"
