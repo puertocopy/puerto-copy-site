@@ -63,7 +63,7 @@ export default function Home() {
                 key={index}
                 src={imageUrl}
                 alt={`Slide ${slide}`}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1500 ease-in-out ${
                   currentSlide === index && fade ? 'opacity-100' : 'opacity-0'
                 }`}
               />

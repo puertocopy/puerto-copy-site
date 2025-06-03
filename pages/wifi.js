@@ -92,7 +92,7 @@ export default function Wifi() {
             <div className="w-72 h-3 bg-white/30 rounded-full overflow-hidden">
               <div
                 className="h-full bg-white transition-all duration-1000"
-                style={{ width: `${((20 - countdown) / 20) * 100}%` }}
+                style={{ width: `${((20 - countdown) / 20) * 100}%` }}//gg
               />
             </div>
           </div>
