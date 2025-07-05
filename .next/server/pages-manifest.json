@@ -2,7 +2,7 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js",
-  "/facturacion": "pages/facturacion.js",
-  "/cotizar": "pages/cotizar.js"
+  "/api/consultar-ticket": "pages/api/consultar-ticket.js",
+  "/api/registrar-datos": "pages/api/registrar-datos.js",
+  "/facturacion2": "pages/facturacion2.js"
 }

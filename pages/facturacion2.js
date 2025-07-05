@@ -31,6 +31,15 @@ const usosCFDI = [
   { value: 'D02', label: 'D02 - Gastos médicos por incapacidad o discapacidad' },
   { value: 'P01', label: 'P01 - Por definir' },
 ];
+const LoadingIndicator = () => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    className="mt-10 text-center text-blue-700 text-lg font-medium"
+  >
+    Enviando datos, por favor espera...
+  </motion.div>
+);
 
 export default function Facturar() {
   const [ticket, setTicket] = useState('');
@@ -77,34 +86,43 @@ export default function Facturar() {
     setLoading(true);
     setError('');
     setFacturaGenerada(null);
-
+  
+    // Obtener nombres bonitos sin códigos
+    const regimenLabel = regimenes.find(r => r.value === datosFiscales.regimenFiscal)?.label.split(' - ')[1] || '';
+    const usoCfdiLabel = usosCFDI.find(u => u.value === datosFiscales.usoCfdi)?.label.split(' - ')[1] || '';
+  
     try {
-      const formData = new FormData();
-
-      formData.append('entry.370447580', datosFiscales.rfc);
-      formData.append('entry.1650500851', datosFiscales.razonSocial);
-      formData.append('entry.975294893', datosFiscales.codigoPostal);
-      formData.append('entry.607974051', '0000000000'); // puedes reemplazar con campo real de teléfono si luego lo usas
-      formData.append('entry.1817640960', datosFiscales.email);
-      formData.append('entry.1288438508', ticket);
-      formData.append('entry.939445375', datosFiscales.regimenFiscal);
-      formData.append('entry.1852642215', datosFiscales.usoCfdi);
-      formData.append('entry.2114675010', 'Sí'); // Confirmación de responsabilidad
-
-      await fetch('https://docs.google.com/forms/d/e/1FAIpQLSclHDoFDAUl--M53kvbbqQqkt8QOhqcpTl7rTrPSCHr7uI_yA/formResponse', {
+      const res = await fetch('/api/registrar-datos', {
         method: 'POST',
-        mode: 'no-cors',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticket,
+          productos,
+          total,
+          rfc: datosFiscales.rfc,
+          razonSocial: datosFiscales.razonSocial,
+          regimenFiscal: regimenLabel,
+          usoCfdi: usoCfdiLabel,
+          codigoPostal: datosFiscales.codigoPostal,
+          email: datosFiscales.email,
+        }),
       });
-
-      setFacturaGenerada({ pdf_url: null, xml_url: null });
+  
+      if (!res.ok) throw new Error('No se pudo registrar la información en Google Sheets');
+  
+      setFacturaGenerada({
+        pdf_url: null,
+        xml_url: null,
+      });
     } catch (err) {
-      setError('Hubo un problema al enviar los datos al formulario.');
+      console.error(err);
+      setError('Hubo un problema al registrar los datos. Intenta nuevamente.');
     }
-
+  
     setLoading(false);
   };
-
+  
+  
   const total = productos.reduce((acc, p) => acc + (p.cantidad * p.precio_unitario), 0);
 
   return (
@@ -160,9 +178,38 @@ export default function Facturar() {
               </select>
               <input name="codigoPostal" value={datosFiscales.codigoPostal} onChange={handleChange} required className="w-full border p-2 rounded" placeholder="Código Postal" />
               <input name="email" type="email" value={datosFiscales.email} onChange={handleChange} required className="w-full border p-2 rounded" placeholder="Correo electrónico" />
-              <button type="submit" className="w-full py-2 bg-green-600 text-white rounded hover:bg-green-700" disabled={loading}>
-                Enviar Datos para Factura
-              </button>
+              {!facturaGenerada ? (
+  <button
+    type="submit"
+    disabled={loading}
+    className={`w-full py-2 rounded text-white transition ${
+      loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+    }`}
+  >
+    {loading ? 'Enviando...' : 'Enviar Datos para Factura'}
+  </button>
+) : (
+  <button
+    type="button"
+    onClick={() => {
+      setFacturaGenerada(null);
+      setTicket('');
+      setProductos([]);
+      setDatosFiscales({
+        rfc: '',
+        razonSocial: '',
+        regimenFiscal: '',
+        usoCfdi: '',
+        codigoPostal: '',
+        email: '',
+      });
+    }}
+    className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+  >
+    Realizar otro registro
+  </button>
+)}
+
               {error && <p className="text-red-600">{error}</p>}
             </form>
 
@@ -184,19 +231,24 @@ export default function Facturar() {
           </motion.div>
         )}
 
-        {facturaGenerada && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
-            className="mt-10 text-center bg-green-50 border border-green-500 rounded p-6"
-          >
-            <h3 className="text-green-700 font-semibold text-xl mb-2">Datos enviados correctamente</h3>
-            <p className="text-green-700">
-              En breve recibirás tu factura si los datos son correctos y el ticket corresponde al mes actual.
-            </p>
-          </motion.div>
-        )}
+{loading && !facturaGenerada && <LoadingIndicator />}
+
+{facturaGenerada && (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.95 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.4 }}
+    className="mt-10 text-center bg-green-50 border border-green-500 rounded p-6"
+  >
+    <h3 className="text-green-700 font-semibold text-xl mb-2">Datos enviados correctamente</h3>
+    <p className="text-green-700 mb-4">
+      En breve recibirás tu factura si los datos son correctos y el ticket corresponde al mes actual.
+    </p>
+    
+  </motion.div>
+)}
+
+        
       </main>
       <Footer />
       <FloatingBubbles />

@@ -75,23 +75,50 @@ export default function Facturar() {
     e.preventDefault();
     setLoading(true);
     setError('');
-
+    setFacturaGenerada(null);
+  
     try {
-      const res = await fetch('/api/facturar', {
+      // 1. Enviar datos a la hoja de Google Sheets
+      const registroRes = await fetch('/api/registrar-datos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticket, productos, ...datosFiscales }),
+        body: JSON.stringify({
+          ticket,
+          productos,
+          total,
+          ...datosFiscales,
+        }),
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Error al generar factura');
-      setFacturaGenerada(data);
+  
+      if (!registroRes.ok) {
+        throw new Error('No se pudo registrar la información en Google Sheets');
+      }
+  
+      // 2. Enviar datos a tu endpoint de facturación (si lo usas)
+      const facturaRes = await fetch('/api/facturar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticket,
+          productos,
+          ...datosFiscales,
+        }),
+      });
+  
+      const facturaData = await facturaRes.json();
+  
+      if (!facturaRes.ok) {
+        throw new Error(facturaData.message || 'Error al generar factura');
+      }
+  
+      setFacturaGenerada(facturaData);
     } catch (err) {
       setError(err.message);
     }
-
+  
     setLoading(false);
   };
+  
 
   const total = productos.reduce((acc, p) => acc + (p.cantidad * p.precio_unitario), 0);
 
