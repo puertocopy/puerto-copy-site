@@ -242,7 +242,7 @@ export default function Facturar() {
   >
     <h3 className="text-green-700 font-semibold text-xl mb-2">Datos enviados correctamente</h3>
     <p className="text-green-700 mb-4">
-      En breve recibirás tu factura si los datos son correctos y el ticket corresponde al mes actual.
+      Recibirás tu factura si los datos son correctos y el ticket corresponde al mes actual.
     </p>
     
   </motion.div>
