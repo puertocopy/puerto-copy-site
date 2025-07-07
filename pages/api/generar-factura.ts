@@ -1,6 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
@@ -9,94 +7,69 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ticket,
     rfc,
     razonSocial,
-    correo,
-    cp,
-    usoCfdi,
     regimenFiscal,
+    usoCfdi,
+    codigoPostal,
+    email,
+    productos
   } = req.body;
 
-  if (!rfc || !razonSocial || !correo || !cp || !ticket || !usoCfdi || !regimenFiscal) {
-    return res.status(400).json({ error: '❌ Faltan campos requeridos' });
-  }
-
-  const facturaData = {
-    Receptor: {
-      Rfc: rfc,
-      Nombre: razonSocial,
-      DomicilioFiscalReceptor: cp,
-      RegimenFiscalReceptor: regimenFiscal,
-      UsoCFDI: usoCfdi,
-    },
-    TipoDeComprobante: "I",
-    Exportacion: "01",
-    MetodoPago: "PUE",
-    FormaPago: "01",
-    Serie: "A",
-    Folio: `${ticket}`,
-    LugarExpedicion: cp,
-    CfdiRelacionados: [],
-    Conceptos: [
-      {
-        ClaveProdServ: "01010101",
-        Cantidad: 1,
-        ClaveUnidad: "E48",
-        Unidad: "Servicio",
-        Descripcion: `Venta en mostrador Ticket ${ticket}`,
-        ValorUnitario: 100,
-        Importe: 100,
-        ObjetoImp: "02",
-        Impuestos: {
-          Traslados: [
-            {
-              Base: 100,
-              Impuesto: "002",
-              TipoFactor: "Tasa",
-              TasaOCuota: 0.16,
-              Importe: 16
-            }
-          ]
-        }
-      }
-    ],
-    Impuestos: {
-      TotalImpuestosTrasladados: 16,
-      Traslados: [
-        {
-          Impuesto: "002",
-          TipoFactor: "Tasa",
-          TasaOCuota: 0.16,
-          Importe: 16
-        }
-      ]
-    },
-    SubTotal: 100,
-    Total: 116
-  };
+  // Convertir productos en conceptos CFDI
+  const conceptos = productos.map(p => ({
+    ClaveProdServ: '01010101',
+    Cantidad: p.cantidad,
+    ClaveUnidad: 'H87',
+    Descripcion: p.nombre,
+    ValorUnitario: p.precio_unitario,
+    Importe: (p.cantidad * p.precio_unitario).toFixed(2),
+    ObjetoImp: '01'
+  }));
 
   try {
-    const url = process.env.FACTURA_COM_API_BASE_URL || "https://sandbox.factura.com/api/v4/cfdi40/create";
-
-    const response = await fetch(url, {
-      method: "POST",
+    const facturaRes = await fetch('https://sandbox.factura.com/api/v4/cfdi40/create', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "api-key": process.env.FACTURA_COM_API_KEY || '',
-        "api-secret": process.env.FACTURA_COM_API_SECRET || ''
+        'Content-Type': 'application/json',
+        'F-API-KEY': process.env.FACTURA_COM_API_KEY,
+        'F-SECRET-KEY': process.env.FACTURA_COM_API_SECRET,
       },
-      body: JSON.stringify(facturaData)
+      body: JSON.stringify({
+        Receptor: {
+          Rfc: rfc,
+          Nombre: razonSocial,
+          UsoCFDI: usoCfdi,
+          DomicilioFiscalReceptor: codigoPostal,
+          RegimenFiscalReceptor: regimenFiscal,
+        },
+        Emisor: {
+          Rfc: 'CACX7605101P8',
+          RegimenFiscal: '621',
+        },
+        Conceptos: conceptos,
+        TipoComprobante: 'I',
+        Exportacion: '01',
+        MetodoPago: 'PPD',
+        FormaPago: '99',
+        Serie: 'A',
+        LugarExpedicion: codigoPostal,
+      }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("❌ Error Factura.com:", errorText);
-      return res.status(response.status).json({ error: '❌ Error al conectar con Factura.com', detalle: errorText });
+    const facturaData = await facturaRes.json();
+
+    if (!facturaRes.ok) {
+      console.error('Error de facturación:', facturaData);
+      return res.status(500).json({ error: facturaData.message || 'Error al generar factura' });
     }
 
-    const result = await response.json();
-    return res.status(200).json({ success: true, factura: result });
+    return res.status(200).json({
+      mensaje: 'Factura generada correctamente',
+      pdf_url: facturaData.pdf_url,
+      xml_url: facturaData.xml_url,
+    });
 
-  } catch (error: any) {
-    console.error("❌ Error general:", error);
-    return res.status(500).json({ error: '❌ Error general', detalle: error.message });
+  } catch (err) {
+    console.error('Error general:', err);
+    return res.status(500).json({ error: 'Error al conectar con el PAC' });
   }
 }

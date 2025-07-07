@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/router';
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [herramientasOpen, setHerramientasOpen] = useState(false);
+  const [submenuOpen, setSubmenuOpen] = useState(null);
   const router = useRouter();
+  const ayudaRef = useRef();
 
   const scrollToSection = (id) => {
     const section = document.getElementById(id);
@@ -16,9 +17,20 @@ export default function Navbar() {
     setMenuOpen(false);
   };
 
-  const toggleHerramientas = () => {
-    setHerramientasOpen((prev) => !prev);
-  };
+  // Cerrar submenú si se hace clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        ayudaRef.current &&
+        !ayudaRef.current.contains(event.target)
+      ) {
+        setSubmenuOpen(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#004b71] bg-opacity-80 backdrop-blur-md shadow text-white">
@@ -35,10 +47,10 @@ export default function Navbar() {
           <li onClick={() => router.push('/factura')} className="hover:text-blue-300 cursor-pointer">Facturación</li>
           <li onClick={() => scrollToSection('contacto')} className="hover:text-blue-300 cursor-pointer">Contacto</li>
 
-          {/* Herramientas con submenú */}
+          {/* Submenú Cotización */}
           <div className="relative">
             <li
-              onClick={toggleHerramientas}
+              onClick={() => setSubmenuOpen(submenuOpen === 'herramientas' ? null : 'herramientas')}
               className="hover:text-blue-300 cursor-pointer flex items-center gap-1"
             >
               Herramientas
@@ -47,14 +59,11 @@ export default function Navbar() {
               </svg>
             </li>
 
-            {herramientasOpen && (
-              <ul
-                onMouseLeave={() => setHerramientasOpen(false)}
-                className="absolute right-0 mt-2 bg-white text-blue-700 rounded shadow-md py-2 w-48 z-50"
-              >
+            {submenuOpen === 'herramientas' && (
+              <ul className="absolute right-0 mt-2 bg-white text-blue-700 rounded shadow-md py-2 w-48 z-50">
                 <li
                   onClick={() => {
-                    setHerramientasOpen(false);
+                    setSubmenuOpen(null);
                     router.push('/cotizar');
                   }}
                   className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
@@ -64,56 +73,52 @@ export default function Navbar() {
               </ul>
             )}
           </div>
+
+          {/* Submenú Ayuda */}
+          <div className="relative" ref={ayudaRef}>
+            <li
+              onClick={() => setSubmenuOpen(submenuOpen === 'ayuda' ? null : 'ayuda')}
+              className="hover:text-blue-300 cursor-pointer flex items-center gap-1"
+            >
+              Ayuda
+              <svg className="w-4 h-4 mt-[1px]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </li>
+
+            {submenuOpen === 'ayuda' && (
+              <ul className="absolute right-0 mt-2 bg-white text-blue-700 rounded shadow-md py-2 w-64 z-50">
+                <li
+                  onClick={() => {
+                    setSubmenuOpen(null);
+                    router.push('/ayuda/como-preparar-archivos');
+                  }}
+                  className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
+                >
+                  Cómo entregar archivos
+                </li>
+                <li
+                  onClick={() => {
+                    setSubmenuOpen(null);
+                    router.push('/ayuda/formatos-aceptados');
+                  }}
+                  className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
+                >
+                  Formatos aceptados
+                </li>
+                <li
+                  onClick={() => {
+                    setSubmenuOpen(null);
+                    router.push('/ayuda/tiempo-entrega');
+                  }}
+                  className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
+                >
+                  Tiempo de entrega
+                </li>
+              </ul>
+            )}
+          </div>
         </ul>
-        {/* Ayuda con submenú */}
-<div className="relative">
-  <li
-    onClick={() => setHerramientasOpen('ayuda')}
-    className="hover:text-blue-300 cursor-pointer flex items-center gap-1"
-  >
-    Ayuda
-    <svg className="w-4 h-4 mt-[1px]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-    </svg>
-  </li>
-
-  {herramientasOpen === 'ayuda' && (
-    <ul
-      onMouseLeave={() => setHerramientasOpen(false)}
-      className="absolute right-0 mt-2 bg-white text-blue-700 rounded shadow-md py-2 w-64 z-50"
-    >
-      <li
-        onClick={() => {
-          setHerramientasOpen(false);
-          router.push('/ayuda/como-preparar-archivos');
-        }}
-        className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
-      >
-        Cómo entregar archivos
-      </li>
-      <li
-        onClick={() => {
-          setHerramientasOpen(false);
-          router.push('/ayuda/formatos-aceptados');
-        }}
-        className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
-      >
-        Formatos aceptados
-      </li>
-      <li
-        onClick={() => {
-          setHerramientasOpen(false);
-          router.push('/ayuda/tiempo-entrega');
-        }}
-        className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
-      >
-        Tiempo de entrega
-      </li>
-    </ul>
-  )}
-</div>
-
-
 
         {/* Menú Mobile Icono */}
         <div className="md:hidden">
@@ -131,9 +136,10 @@ export default function Navbar() {
           <ul className="flex flex-col gap-3">
             <li onClick={() => scrollToSection('inicio')} className="hover:text-blue-300 cursor-pointer">Inicio</li>
             <li onClick={() => scrollToSection('servicios')} className="hover:text-blue-300 cursor-pointer">Servicios</li>
-            <li onClick={() => router.push('/facturacion')} className="hover:text-blue-300 cursor-pointer">Facturación</li>
+            <li onClick={() => router.push('/factura')} className="hover:text-blue-300 cursor-pointer">Facturación</li>
             <li onClick={() => scrollToSection('contacto')} className="hover:text-blue-300 cursor-pointer">Contacto</li>
             <li onClick={() => router.push('/cotizar')} className="hover:text-blue-300 cursor-pointer">Realizar cotización</li>
+            
           </ul>
         </div>
       )}
