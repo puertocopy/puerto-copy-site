@@ -100,7 +100,7 @@ export default function Home() {
           Factura tu compra fácilmente ingresando tu número de ticket y tus datos fiscales. Servicio rápido, sin complicaciones.
         </p>
         <a
-          href="/facturacion"
+          href="/factura"
           className="inline-block bg-blue-700 hover:bg-blue-800 text-white font-semibold px-8 py-3 rounded-full text-base shadow-md transition"
         >
           Facturar compra
