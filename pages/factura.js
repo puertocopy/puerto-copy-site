@@ -41,6 +41,11 @@ const LoadingIndicator = () => (
     Enviando datos, por favor espera...
   </motion.div>
 );
+function validarRFC(rfc) {
+  const regex = /^([A-ZÑ&]{3,4})\d{6}[A-Z0-9]{3}$/;
+  return regex.test(rfc.toUpperCase());
+}
+
 
 export default function Facturar() {
   const [ticket, setTicket] = useState('');
@@ -87,6 +92,16 @@ export default function Facturar() {
     setLoading(true);
     setError('');
     setFacturaGenerada(null);
+    setError('');
+setFacturaGenerada(null);
+
+// Validar RFC antes de continuar
+if (!validarRFC(datosFiscales.rfc)) {
+  setError('El RFC ingresado no tiene un formato válido.');
+  setLoading(false);
+  return;
+}
+
   
     // Obtener nombres bonitos sin códigos
     const regimenLabel = regimenes.find(r => r.value === datosFiscales.regimenFiscal)?.label.split(' - ')[1] || '';
