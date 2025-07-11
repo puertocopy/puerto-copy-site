@@ -18,6 +18,7 @@ const regimenes = [
   { value: '616', label: '616 - Sin obligaciones fiscales' },
   { value: '621', label: '621 - Incorporación Fiscal' },
   { value: '622', label: '622 - Actividades Agrícolas, Ganaderas, Silvícolas y Pesqueras' },
+  { value: '623', label: '623 - Opcional para Grupos de Sociedades' },
   { value: '626', label: '626 - Régimen Simplificado de Confianza' },
 ];
 
