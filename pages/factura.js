@@ -124,7 +124,7 @@ if (!validarRFC(datosFiscales.rfc)) {
         }),
       });
   
-      if (!res.ok) throw new Error('No se pudo registrar la información en Google Sheets');
+      if (!res.ok) throw new Error('No se pudo registrar la información');
   
       setFacturaGenerada({
         pdf_url: null,

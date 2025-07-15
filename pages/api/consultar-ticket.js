@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   
       if (!response.ok) {
         const errorData = await response.json();
-        return res.status(response.status).json({ message: errorData.message || 'Error al consultar ticket en Loyverse' });
+        return res.status(response.status).json({ message: errorData.message || 'Error al consultar ticket' });
       }
   
       const data = await response.json();
