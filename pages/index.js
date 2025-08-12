@@ -9,192 +9,174 @@ import Contacto from '../components/Contacto'; // Asegúrate de tener este compo
 export default function Home() {
   const slides = ['1', '2', '3'];
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [fade, setFade] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
+  const [fading, setFading] = useState(true);
 
   useEffect(() => {
-    AOS.init({ duration: 1000 });
-
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
+    AOS.init({ duration: 900, once: true });
 
     const interval = setInterval(() => {
-      setFade(false);
+      setFading(false);
       setTimeout(() => {
         setCurrentSlide((prev) => (prev + 1) % slides.length);
-        setFade(true);
-      }, 300);
-    }, 5000);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('resize', checkMobile);
-    };
-  }, []);
+        setFading(true);
+      }, 280); // fade-out rápido antes del siguiente
+    }, 5200); // cada ~5.2s
+    return () => clearInterval(interval);
+  }, [slides.length]);
 
   return (
     <div className="bg-white text-gray-900 overflow-x-hidden">
       <Navbar />
 
+      {/* SEO oculto para encabezado principal */}
       <section aria-hidden="true" className="sr-only">
-  <h1>Copias, Impresiones de Planos y Documentos en Puerto Vallarta</h1>
-  <p>Calidad profesional, servicio rápido y atención personalizada en Puerto Copy.</p>
-</section>
+        <h1>Copias, Impresiones de Planos y Documentos en Puerto Vallarta</h1>
+        <p>Calidad profesional, servicio rápido y atención personalizada en Puerto Copy.</p>
+      </section>
 
+      {/* SLIDER HERO */}
+      <section id="inicio" className="relative w-full">
+        <div className="relative w-full h-[58vh] md:h-[70vh] overflow-hidden">
+          {slides.map((slide, index) => {
+            const active = currentSlide === index && fading;
+            return (
+              <div
+                key={index}
+                className={`absolute inset-0 w-full h-full transition-opacity duration-[1400ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${active ? 'opacity-100' : 'opacity-0'}`}
+              >
+                {/* Usamos picture para servir mobile/desktop automáticamente */}
+                <picture>
+                  <source media="(max-width: 767px)" srcSet={`/slides/slide${slide}-mobile.jpg`} />
+                  <img
+                    src={`/slides/slide${slide}-desktop.jpg`}
+                    alt={`Slide ${slide}`}
+                    className={`inset-0 w-full h-full object-cover will-change-transform ${active ? 'animate-[kenburns_7s_ease-in-out_forwards]' : ''}`}
+                  />
+                </picture>
 
-      {/* SLIDER */}
-<section id="inicio" className="relative w-full">
-  <div className="relative w-full h-[50vh] md:h-[60vh] overflow-hidden">
-    {slides.map((slide, index) => {
-      const imageUrl = isMobile
-        ? `/slides/slide${slide}-mobile.jpg`
-        : `/slides/slide${slide}-desktop.jpg`;
+                {/* Degradé superior para legibilidad de texto futuro (si lo agregas) */}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
+              </div>
+            );
+          })}
 
-      return (
-        <img
-          key={index}
-          src={imageUrl}
-          alt={`Slide ${slide}`}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[3500] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-            currentSlide === index && fade ? 'opacity-100' : 'opacity-0'
-          }`}
-        />
-      );
-    })}
-  </div>
-</section>
+          {/* Dots de progreso */}
+          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2.5">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                aria-label={`Ir al slide ${i + 1}`}
+                onClick={() => setCurrentSlide(i)}
+                className={`h-2.5 rounded-full transition-all duration-300 ${
+                  i === currentSlide ? 'w-8 bg-[#0B63B2]' : 'w-2.5 bg-white/70 hover:bg-white'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
 
-      {/* DESTACADO DE COTIZACIÓN */}
-      <section className="bg-blue-50 py-20 px-6 md:px-12" data-aos="fade-up">
-  <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+      {/* DESTACADOS (Cotización / Facturación) */}
+      <section className="bg-[#F3F7FC] py-16 md:py-20 px-6 md:px-12" data-aos="fade-up">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
+          {/* COTIZACIÓN */}
+          <div className="flex flex-col justify-between rounded-3xl p-8 md:p-10 border border-[#D8E6F6] bg-gradient-to-br from-white to-[#F3F7FC] shadow-sm hover:shadow-md transition">
+            <div className="text-center">
+              <h2 className="text-[clamp(1.6rem,3.2vw,2rem)] font-extrabold text-[#003082] mb-3">
+                ¿Necesitas una cotización?
+              </h2>
+              <p className="text-[clamp(0.95rem,1.2vw,1.1rem)] text-gray-700 mb-8">
+                Cotiza planos u otros servicios de impresión en línea, rápido y claro. Ideal para trámites, proyectos y presupuestos.
+              </p>
+              <a
+                href="/cotizar"
+                className="inline-block bg-[#0B63B2] hover:brightness-110 text-white font-semibold px-7 py-3 rounded-full shadow-md transition focus:outline-none focus:ring-4 focus:ring-[#0B63B2]/30"
+              >
+                Generar cotización
+              </a>
+            </div>
+          </div>
 
-    {/* DESTACADO COTIZACIÓN */}
-    <div className="flex flex-col justify-between bg-gradient-to-br from-white to-blue-50 shadow-lg rounded-3xl p-10 border border-blue-100 hover:shadow-2xl transition duration-300 ease-in-out">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-blue-700 mb-4">
-          ¿Necesitas una cotización?
-        </h2>
-        <p className="text-lg text-gray-700 mb-10">
-          Cotiza planos u otros servicios de impresión en línea, de forma rápida, clara y sin compromiso. Ideal para trámites, proyectos y presupuestos empresariales.
-        </p>
-        <a
-          href="/cotizar"
-          className="inline-block bg-blue-700 hover:bg-blue-800 text-white font-semibold px-8 py-3 rounded-full text-base shadow-md transition"
-        >
-          Generar cotización
-        </a>
-      </div>
-    </div>
-
-    {/* DESTACADO FACTURACIÓN */}
-    <div className="flex flex-col justify-between bg-gradient-to-br from-white to-blue-50 shadow-lg rounded-3xl p-10 border border-blue-100 hover:shadow-2xl transition duration-300 ease-in-out">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-blue-700 mb-4">
-          Factura tu compra
-        </h2>
-        <p className="text-lg text-gray-700 mb-10">
-          Factura tu compra fácilmente ingresando tu número de ticket y tus datos fiscales. Servicio rápido, sin complicaciones.
-        </p>
-        <a
-          href="/factura"
-          className="inline-block bg-blue-700 hover:bg-blue-800 text-white font-semibold px-8 py-3 rounded-full text-base shadow-md transition"
-        >
-          Facturar compra
-        </a>
-      </div>
-    </div>
-
-  </div>
-</section>
-
+          {/* FACTURACIÓN */}
+          <div className="flex flex-col justify-between rounded-3xl p-8 md:p-10 border border-[#D8E6F6] bg-gradient-to-br from-white to-[#F3F7FC] shadow-sm hover:shadow-md transition">
+            <div className="text-center">
+              <h2 className="text-[clamp(1.6rem,3.2vw,2rem)] font-extrabold text-[#003082] mb-3">
+                Factura tu compra
+              </h2>
+              <p className="text-[clamp(0.95rem,1.2vw,1.1rem)] text-gray-700 mb-8">
+                Ingresa tu número de ticket y tus datos fiscales. Servicio rápido, sin complicaciones.
+              </p>
+              <a
+                href="/factura"
+                className="inline-block bg-[#0B63B2] hover:brightness-110 text-white font-semibold px-7 py-3 rounded-full shadow-md transition focus:outline-none focus:ring-4 focus:ring-[#0B63B2]/30"
+              >
+                Facturar compra
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* SERVICIOS */}
-      <section id="servicios" className="relative bg-white text-gray-800 py-20 px-6 md:px-12 z-10">
+      <section id="servicios" className="relative bg-white text-gray-800 py-16 md:py-20 px-6 md:px-12 z-10">
         <div className="max-w-6xl mx-auto text-center" data-aos="fade-up">
-          <h2 className="text-3xl md:text-4xl font-bold mb-12 text-[#004b71]">
+          <h2 className="text-[clamp(1.6rem,3.2vw,2rem)] md:text-[clamp(1.8rem,2.6vw,2.4rem)] font-extrabold mb-10 text-[#003082]">
             Servicios de Impresión, Copiado y Escaneo en Puerto Vallarta
           </h2>
-          <div className="grid md:grid-cols-3 gap-10">
 
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
             {/* Impresión de Planos */}
-            <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg" data-aos="zoom-in">
-              <div className="text-blue-700 text-4xl mb-4">📐</div>
-              <h3 className="text-xl font-semibold mb-2">Impresión de Planos en Puerto Vallarta</h3>
-              <p className="text-gray-600">Imprime tus planos arquitectónicos y de ingeniería en gran formato sobre papel Bond, fotográfico o lona. Entregas rápidas y alta calidad garantizada.</p>
-            </div>
+            <Card icon="📐" title="Impresión de Planos en Puerto Vallarta">
+              Imprime planos arquitectónicos y de ingeniería en gran formato: Bond, fotográfico o lona. Entrega rápida y calidad garantizada.
+            </Card>
 
             {/* Copias e Impresiones */}
-            <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg" data-aos="zoom-in" data-aos-delay="100">
-              <div className="text-blue-700 text-4xl mb-4">🖨️</div>
-              <h3 className="text-xl font-semibold mb-2">Copias a Color y Blanco y Negro</h3>
-              <p className="text-gray-600">Copias de documentos en tamaños carta, oficio y doble carta. Calidad de impresión excelente, ideal para trámites y presentaciones.</p>
-            </div>
+            <Card icon="🖨️" title="Copias a Color y Blanco y Negro" delay="100">
+              Copias en carta, oficio y tabloide. Calidad excelente, ideal para trámites y presentaciones.
+            </Card>
 
             {/* Engargolados */}
-            <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg" data-aos="zoom-in" data-aos-delay="200">
-              <div className="text-blue-700 text-4xl mb-4">📚</div>
-              <h3 className="text-xl font-semibold mb-2">Engargolados Profesionales</h3>
-              <p className="text-gray-600">Organiza y protege tus documentos importantes con nuestros servicios de engargolado en diferentes estilos y tamaños.</p>
-            </div>
+            <Card icon="📚" title="Engargolados Profesionales" delay="200">
+              Organiza y protege tus documentos con distintos estilos y tamaños.
+            </Card>
 
             {/* Enmicados */}
-            <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg" data-aos="zoom-in">
-              <div className="text-blue-700 text-4xl mb-4">🔒</div>
-              <h3 className="text-xl font-semibold mb-2">Enmicado de Documentos</h3>
-              <p className="text-gray-600">Protege tus certificados, fotografías o documentos importantes contra el desgaste diario con enmicados de alta calidad.</p>
-            </div>
+            <Card icon="🔒" title="Enmicado de Documentos">
+              Protege certificados, fotos o documentos contra el desgaste diario.
+            </Card>
 
             {/* Escaneo */}
-            <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg" data-aos="zoom-in" data-aos-delay="100">
-              <div className="text-blue-700 text-4xl mb-4">📁</div>
-              <h3 className="text-xl font-semibold mb-2">Escaneo de Documentos</h3>
-              <p className="text-gray-600">Digitaliza tus documentos físicos en alta resolución. Ideal para respaldar información y simplificar trámites.</p>
-            </div>
+            <Card icon="📁" title="Escaneo de Documentos" delay="100">
+              Digitaliza documentos en alta resolución. Respalda y simplifica trámites.
+            </Card>
 
             {/* Facturación */}
-            <div className="bg-blue-50 hover:bg-blue-100 transition rounded-lg p-6 shadow-lg" data-aos="zoom-in" data-aos-delay="200">
-              <div className="text-blue-700 text-4xl mb-4">🧾</div>
-              <h3 className="text-xl font-semibold mb-2">Facturación Electrónica Rápida</h3>
-              <p className="text-gray-600">Genera tu factura electrónica al momento ingresando tu ticket y datos fiscales. ¡Fácil, rápido y sin complicaciones!</p>
-            </div>
-
+            <Card icon="🧾" title="Facturación Electrónica Rápida" delay="200">
+              Genera tu factura ingresando ticket y datos fiscales. Fácil y sin complicaciones.
+            </Card>
           </div>
         </div>
       </section>
 
       {/* VENTAJAS */}
-      <section id="ventajas" className="bg-blue-50 py-20 px-6 md:px-12">
+      <section id="ventajas" className="bg-[#F3F7FC] py-16 md:py-20 px-6 md:px-12">
         <div className="max-w-6xl mx-auto text-center" data-aos="fade-up">
-          <h2 className="text-3xl md:text-4xl font-bold text-[#004b71] mb-12">
-            ¿Por Qué Elegir Puerto Copy para Tus Servicios de Impresión en Puerto Vallarta?
+          <h2 className="text-[clamp(1.6rem,3.2vw,2rem)] md:text-[clamp(1.8rem,2.6vw,2.4rem)] font-extrabold text-[#003082] mb-10">
+            ¿Por qué elegir Puerto Copy?
           </h2>
-          <div className="grid md:grid-cols-3 gap-10">
 
-            {/* Rápido */}
-            <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition transform hover:-translate-y-1 duration-300" data-aos="fade-right">
-              <div className="text-blue-700 text-5xl mb-4">⚡</div>
-              <h3 className="text-xl font-semibold mb-2">Entrega Rápida y Puntual</h3>
-              <p className="text-gray-600">Recibe tus copias, impresiones o planos en el menor tiempo posible, sin comprometer la calidad. Ideal para proyectos urgentes y trámites express.</p>
-            </div>
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+            <AdvCard icon="⚡" title="Entrega Rápida y Puntual">
+              Recibe tus impresiones o planos en el menor tiempo y con gran calidad. Ideal para proyectos urgentes.
+            </AdvCard>
 
-            {/* Calidad */}
-            <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition transform hover:-translate-y-1 duration-300" data-aos="fade-up">
-              <div className="text-blue-700 text-5xl mb-4">🎯</div>
-              <h3 className="text-xl font-semibold mb-2">Calidad Profesional Garantizada</h3>
-              <p className="text-gray-600">Utilizamos equipos de impresión de alta definición para asegurar copias nítidas, colores vivos y documentos listos para cualquier presentación profesional.</p>
-            </div>
+            <AdvCard icon="🎯" title="Calidad Profesional Garantizada">
+              Equipos de alta definición para copias nítidas y colores vivos.
+            </AdvCard>
 
-            {/* Atención */}
-            <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition transform hover:-translate-y-1 duration-300" data-aos="fade-left">
-              <div className="text-blue-700 text-5xl mb-4">🤝</div>
-              <h3 className="text-xl font-semibold mb-2">Atención Cercana y Personalizada</h3>
-              <p className="text-gray-600">En <strong>Puerto Copy</strong> cada cliente es importante. Asesoramos personalmente para ofrecerte exactamente el servicio de impresión o copiado que necesitas.</p>
-            </div>
-
+            <AdvCard icon="🤝" title="Atención Cercana y Personalizada">
+              Te asesoramos para ofrecerte exactamente el servicio que necesitas.
+            </AdvCard>
           </div>
         </div>
       </section>
@@ -202,9 +184,47 @@ export default function Home() {
       {/* CONTACTO */}
       <Contacto />
 
-      {/* FOOTER */}
+      {/* FOOTER + Burbujas */}
       <Footer />
       <FloatingBubbles />
+
+      {/* Animación Ken Burns (keyframes) */}
+      <style jsx global>{`
+        @keyframes kenburns {
+          0%   { transform: scale(1.03) translateZ(0); }
+          50%  { transform: scale(1.08) translateZ(0); }
+          100% { transform: scale(1.03) translateZ(0); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/* === Componentes reutilizables === */
+function Card({ icon, title, children, delay = '0' }) {
+  return (
+    <div
+      className="group bg-[#F7FAFE] hover:bg-white transition rounded-2xl p-6 shadow-sm hover:shadow-md border border-[#E2EEFB] text-left"
+      data-aos="zoom-in"
+      data-aos-delay={delay}
+    >
+      <div className="text-[#0B63B2] text-4xl mb-4">{icon}</div>
+      <h3 className="text-lg font-semibold mb-2 text-[#0D2A4E]">{title}</h3>
+      <p className="text-gray-600">{children}</p>
+      <div className="mt-4 h-1 w-0 bg-[#0B63B2] rounded-full transition-all duration-300 group-hover:w-16" />
+    </div>
+  );
+}
+
+function AdvCard({ icon, title, children }) {
+  return (
+    <div
+      className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition transform hover:-translate-y-1 duration-300 border border-[#E5EEF9]"
+      data-aos="fade-up"
+    >
+      <div className="text-[#0B63B2] text-5xl mb-4">{icon}</div>
+      <h3 className="text-lg font-semibold mb-2 text-[#0D2A4E]">{title}</h3>
+      <p className="text-gray-600">{children}</p>
     </div>
   );
 }

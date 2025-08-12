@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import FloatingBubbles from "../components/FloatingBubbles";
 
+/* === Catálogos === */
 const regimenes = [
   { value: '601', label: '601 - General de Ley Personas Morales' },
   { value: '603', label: '603 - Personas Morales con Fines no Lucrativos' },
@@ -32,6 +33,8 @@ const usosCFDI = [
   { value: 'D02', label: 'D02 - Gastos médicos por incapacidad o discapacidad' },
   { value: 'P01', label: 'P01 - Por definir' },
 ];
+
+/* === Utilidades === */
 const LoadingIndicator = () => (
   <motion.div
     initial={{ opacity: 0 }}
@@ -41,12 +44,13 @@ const LoadingIndicator = () => (
     Enviando datos, por favor espera...
   </motion.div>
 );
+
 function validarRFC(rfc) {
   const regex = /^([A-ZÑ&]{3,4})\d{6}[A-Z0-9]{3}$/;
-  return regex.test(rfc.toUpperCase());
+  return regex.test((rfc || '').toUpperCase());
 }
 
-
+/* === Página === */
 export default function Facturar() {
   const [ticket, setTicket] = useState('');
   const [productos, setProductos] = useState([]);
@@ -62,24 +66,32 @@ export default function Facturar() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [facturaGenerada, setFacturaGenerada] = useState(null);
+  const [success, setSuccess] = useState('');
 
+  const total = productos.reduce((acc, p) => acc + (p.cantidad * p.precio_unitario), 0);
+
+  /* === Acciones === */
   const handleBuscarTicket = async () => {
     setLoading(true);
     setError('');
+    setSuccess('');
     setProductos([]);
 
     try {
-      const res = await fetch(`/api/consultar-ticket?ticket=${ticket}`);
-
+      const res = await fetch(`/api/consultar-ticket?ticket=${encodeURIComponent(ticket)}`);
       const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || 'Error al consultar ticket');
-      setProductos(data.productos);
+      if (!res.ok) throw new Error(data?.message || 'Error al consultar ticket');
+      setProductos(Array.isArray(data.productos) ? data.productos : []);
+      if (!data.productos?.length) {
+        setError('No se encontraron productos para este ticket o no corresponde al mes en curso.');
+      } else {
+        setSuccess('Ticket válido. Revisa el resumen y completa tus datos fiscales.');
+      }
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'No se pudo validar el ticket.');
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleChange = (e) => {
@@ -91,22 +103,19 @@ export default function Facturar() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
     setFacturaGenerada(null);
-    setError('');
-setFacturaGenerada(null);
 
-// Validar RFC antes de continuar
-if (!validarRFC(datosFiscales.rfc)) {
-  setError('El RFC ingresado no tiene un formato válido.');
-  setLoading(false);
-  return;
-}
+    // Validación mínima antes de enviar
+    if (!validarRFC(datosFiscales.rfc)) {
+      setError('El RFC ingresado no tiene un formato válido.');
+      setLoading(false);
+      return;
+    }
 
-  
-    // Obtener nombres bonitos sin códigos
     const regimenLabel = regimenes.find(r => r.value === datosFiscales.regimenFiscal)?.label.split(' - ')[1] || '';
     const usoCfdiLabel = usosCFDI.find(u => u.value === datosFiscales.usoCfdi)?.label.split(' - ')[1] || '';
-  
+
     try {
       const res = await fetch('/api/registrar-datos', {
         method: 'POST',
@@ -117,120 +126,202 @@ if (!validarRFC(datosFiscales.rfc)) {
           total,
           rfc: datosFiscales.rfc,
           razonSocial: datosFiscales.razonSocial,
-          regimenFiscal: regimenLabel,
-          usoCfdi: usoCfdiLabel,
+          regimenFiscal: regimenLabel,   // <= conservamos tu comportamiento (enviando label “bonito”)
+          usoCfdi: usoCfdiLabel,         // <= idem
           codigoPostal: datosFiscales.codigoPostal,
           email: datosFiscales.email,
         }),
       });
-  
-      if (!res.ok) throw new Error('No se pudo registrar la información');
-  
-      setFacturaGenerada({
-        pdf_url: null,
-        xml_url: null,
-      });
-    } catch (err) {
-      console.error(err);
-      setError('Hubo un problema al registrar los datos. Intenta nuevamente.');
-    }
-  
-    setLoading(false);
-  };
-  
-  
-  const total = productos.reduce((acc, p) => acc + (p.cantidad * p.precio_unitario), 0);
 
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d?.message || 'No se pudo registrar la información');
+      }
+
+      setFacturaGenerada({ pdf_url: null, xml_url: null });
+      setSuccess('Datos enviados correctamente. Recibirás tu factura si el ticket corresponde al mes actual.');
+    } catch (err) {
+      setError(err.message || 'Hubo un problema al registrar los datos. Intenta nuevamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetTodo = () => {
+    setFacturaGenerada(null);
+    setTicket('');
+    setProductos([]);
+    setDatosFiscales({
+      rfc: '',
+      razonSocial: '',
+      regimenFiscal: '',
+      usoCfdi: '',
+      codigoPostal: '',
+      email: '',
+    });
+    setError('');
+    setSuccess('');
+  };
+
+  /* === UI === */
   return (
     <>
       <Navbar />
       <main className="max-w-6xl mx-auto px-4 pt-28 pb-16 min-h-screen">
-        <h1 className="text-3xl font-bold text-center text-blue-800 mb-10">Generar Factura</h1>
+        <h1 className="text-3xl font-bold text-center text-blue-800 mb-6">
+          Generar Factura
+        </h1>
 
-        {!productos.length && (
-          <div className="max-w-md mx-auto bg-white shadow-md rounded-lg p-6 border border-gray-200">
-            <label className="block mb-2 font-semibold text-gray-700">Número de Ticket</label>
+        {/* Paso a paso */}
+        <ol className="grid grid-cols-3 gap-3 mb-6 text-sm">
+          <li className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${productos.length ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-600'}`}>
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-current opacity-70" /> Validar ticket
+          </li>
+          <li className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${(productos.length) ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-400'}`}>
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-current opacity-70" /> Datos fiscales
+          </li>
+          <li className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${facturaGenerada ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-400'}`}>
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-current opacity-70" /> Confirmación
+          </li>
+        </ol>
+
+        {/* Alertas */}
+        {error && (
+          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-3 text-sm">
+            {success}
+          </div>
+        )}
+
+        {/* Bloque: Buscar Ticket */}
+        {!productos.length && !facturaGenerada && (
+          <div className="max-w-md mx-auto bg-white shadow-md rounded-2xl p-6 border border-gray-200">
+            <label className="block mb-2 font-semibold text-gray-700">Número de ticket</label>
             <input
               type="text"
               value={ticket}
               onChange={(e) => {
                 let raw = e.target.value.replace(/[^0-9]/g, '');
                 if (raw.length > 1) raw = `${raw[0]}-${raw.slice(1)}`;
-
                 setTicket(raw);
               }}
               placeholder="Ej. 59773"
-              className="w-full border border-gray-300 rounded p-2 mb-4"
+              className="w-full border border-gray-300 rounded-xl p-2.5 focus:outline-none focus:ring-4 focus:ring-blue-300 focus:border-blue-600"
             />
             <button
               onClick={handleBuscarTicket}
-              className="w-full py-2 bg-blue-700 text-white rounded hover:bg-blue-800"
+              className="w-full mt-4 py-2.5 bg-blue-700 text-white rounded-xl hover:brightness-110 active:scale-[.99] disabled:opacity-60 transition"
               disabled={!ticket || loading}
             >
-              Buscar Ticket
+              {loading ? 'Buscando...' : 'Buscar ticket'}
             </button>
-            {error && <p className="mt-4 text-red-600">{error}</p>}
           </div>
         )}
 
+        {/* Bloque: Datos y Resumen */}
         {productos.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="grid md:grid-cols-2 gap-8 mt-10"
+            transition={{ duration: 0.4 }}
+            className="grid md:grid-cols-2 gap-8 mt-8"
           >
-            <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded shadow border border-gray-100">
-              <h2 className="text-xl font-semibold mb-4 text-gray-700">Datos Fiscales</h2>
-              <input name="rfc" value={datosFiscales.rfc} onChange={handleChange} required className="w-full border p-2 rounded" placeholder="RFC" />
-              <input name="razonSocial" value={datosFiscales.razonSocial} onChange={handleChange} required className="w-full border p-2 rounded" placeholder="Razón Social" />
-              <select name="regimenFiscal" value={datosFiscales.regimenFiscal} onChange={handleChange} required className="w-full border p-2 rounded">
-                <option value="">Selecciona Régimen Fiscal</option>
-                {regimenes.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
-              </select>
-              <select name="usoCfdi" value={datosFiscales.usoCfdi} onChange={handleChange} required className="w-full border p-2 rounded">
-                <option value="">Selecciona Uso de CFDI</option>
-                {usosCFDI.map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
-              </select>
-              <input name="codigoPostal" value={datosFiscales.codigoPostal} onChange={handleChange} required className="w-full border p-2 rounded" placeholder="Código Postal" />
-              <input name="email" type="email" value={datosFiscales.email} onChange={handleChange} required className="w-full border p-2 rounded" placeholder="Correo electrónico" />
-              {!facturaGenerada ? (
-  <button
-    type="submit"
-    disabled={loading}
-    className={`w-full py-2 rounded text-white transition ${
-      loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
-    }`}
-  >
-    {loading ? 'Enviando...' : 'Enviar Datos para Factura'}
-  </button>
-) : (
-  <button
-    type="button"
-    onClick={() => {
-      setFacturaGenerada(null);
-      setTicket('');
-      setProductos([]);
-      setDatosFiscales({
-        rfc: '',
-        razonSocial: '',
-        regimenFiscal: '',
-        usoCfdi: '',
-        codigoPostal: '',
-        email: '',
-      });
-    }}
-    className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-  >
-    Realizar otro registro
-  </button>
-)}
+            {/* Formulario Datos Fiscales */}
+            <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-2xl shadow border border-gray-100">
+              <h2 className="text-xl font-semibold mb-2 text-gray-800">Datos fiscales</h2>
 
-              {error && <p className="text-red-600">{error}</p>}
+              <input
+                name="rfc"
+                value={datosFiscales.rfc}
+                onChange={handleChange}
+                required
+                className="w-full border p-2.5 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-300 focus:border-blue-600"
+                placeholder="RFC (Ej. ABCD800101AA1)"
+                autoCapitalize="characters"
+              />
+              <input
+                name="razonSocial"
+                value={datosFiscales.razonSocial}
+                onChange={handleChange}
+                required
+                className="w-full border p-2.5 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-300 focus:border-blue-600"
+                placeholder="Razón social / Nombre"
+              />
+              <select
+                name="regimenFiscal"
+                value={datosFiscales.regimenFiscal}
+                onChange={handleChange}
+                required
+                className="w-full border p-2.5 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-blue-300 focus:border-blue-600"
+              >
+                <option value="">Selecciona Régimen Fiscal</option>
+                {regimenes.map((r) => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
+              <select
+                name="usoCfdi"
+                value={datosFiscales.usoCfdi}
+                onChange={handleChange}
+                required
+                className="w-full border p-2.5 rounded-xl bg-white focus:outline-none focus:ring-4 focus:ring-blue-300 focus:border-blue-600"
+              >
+                <option value="">Selecciona Uso de CFDI</option>
+                {usosCFDI.map((u) => (
+                  <option key={u.value} value={u.value}>{u.label}</option>
+                ))}
+              </select>
+              <input
+                name="codigoPostal"
+                value={datosFiscales.codigoPostal}
+                onChange={handleChange}
+                required
+                className="w-full border p-2.5 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-300 focus:border-blue-600"
+                placeholder="Código postal (5 dígitos)"
+                inputMode="numeric"
+                pattern="[0-9]{5}"
+              />
+              <input
+                name="email"
+                type="email"
+                value={datosFiscales.email}
+                onChange={handleChange}
+                required
+                className="w-full border p-2.5 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-300 focus:border-blue-600"
+                placeholder="Correo electrónico"
+              />
+
+              {!facturaGenerada ? (
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className={`w-full py-3 rounded-2xl text-white font-semibold transition ${
+                    loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:brightness-110 active:scale-[.99]'
+                  }`}
+                >
+                  {loading ? 'Enviando...' : 'Enviar datos para factura'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={resetTodo}
+                  className="w-full py-3 bg-blue-700 text-white rounded-2xl hover:brightness-110 active:scale-[.99]"
+                >
+                  Realizar otro registro
+                </button>
+              )}
+
+              {/* Error dentro del formulario (además del global) */}
+              {!success && error && <p className="text-red-600 text-sm">{error}</p>}
             </form>
 
-            <div className="bg-gray-50 p-6 rounded shadow border border-gray-100">
-              <h3 className="text-lg font-semibold mb-4 text-gray-700">Resumen del Ticket</h3>
+            {/* Resumen del Ticket */}
+            <div className="bg-gray-50 p-6 rounded-2xl shadow border border-gray-100">
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">Resumen del ticket</h3>
               <ul className="space-y-2 text-sm text-gray-700">
                 {productos.map((p, i) => (
                   <li key={i} className="flex justify-between border-b pb-1">
@@ -247,25 +338,26 @@ if (!validarRFC(datosFiscales.rfc)) {
           </motion.div>
         )}
 
-{loading && !facturaGenerada && <LoadingIndicator />}
+        {loading && !facturaGenerada && <LoadingIndicator />}
 
-{facturaGenerada && (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.95 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 0.4 }}
-    className="mt-10 text-center bg-green-50 border border-green-500 rounded p-6"
-  >
-    <h3 className="text-green-700 font-semibold text-xl mb-2">Datos enviados correctamente</h3>
-    <p className="text-green-700 mb-4">
-      Recibirás tu factura si los datos son correctos y el ticket corresponde al mes actual.
-    </p>
-    
-  </motion.div>
-)}
-
-        
+        {facturaGenerada && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.35 }}
+            className="mt-10 text-center bg-green-50 border border-green-500 rounded-2xl p-6"
+          >
+            <h3 className="text-green-700 font-semibold text-xl mb-2">Datos enviados correctamente</h3>
+            <p className="text-green-700 mb-1">
+              Recibirás tu factura si los datos son correctos y el ticket corresponde al mes actual.
+            </p>
+            <p className="text-green-700 text-sm">
+              (Si ya tienes PDF/XML, te llegarán por correo.)
+            </p>
+          </motion.div>
+        )}
       </main>
+
       <Footer />
       <FloatingBubbles />
     </>
