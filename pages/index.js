@@ -1,26 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import FloatingBubbles from "../components/FloatingBubbles";
-import Contacto from '../components/Contacto'; // Asegúrate de tener este componente
+import Contacto from '../components/Contacto';
 
 export default function Home() {
   const slides = ['1', '2', '3'];
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fading, setFading] = useState(true);
 
+  // Usamos un efecto de "máquina de escribir" para el título principal.
+  const typewriterText = useRef(null);
+
   useEffect(() => {
     AOS.init({ duration: 900, once: true });
 
+    // Lógica para el slider, con transición suave
     const interval = setInterval(() => {
       setFading(false);
       setTimeout(() => {
         setCurrentSlide((prev) => (prev + 1) % slides.length);
         setFading(true);
-      }, 280); // fade-out rápido antes del siguiente
-    }, 5200); // cada ~5.2s
+      }, 280);
+    }, 5200);
     return () => clearInterval(interval);
   }, [slides.length]);
 
@@ -44,7 +48,6 @@ export default function Home() {
                 key={index}
                 className={`absolute inset-0 w-full h-full transition-opacity duration-[1400ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${active ? 'opacity-100' : 'opacity-0'}`}
               >
-                {/* Usamos picture para servir mobile/desktop automáticamente */}
                 <picture>
                   <source media="(max-width: 767px)" srcSet={`/slides/slide${slide}-mobile.jpg`} />
                   <img
@@ -53,14 +56,12 @@ export default function Home() {
                     className={`inset-0 w-full h-full object-cover will-change-transform ${active ? 'animate-[kenburns_7s_ease-in-out_forwards]' : ''}`}
                   />
                 </picture>
-
-                {/* Degradé superior para legibilidad de texto futuro (si lo agregas) */}
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
               </div>
             );
           })}
 
-          {/* Dots de progreso */}
+          {/* Dots de progreso del slider */}
           <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2.5">
             {slides.map((_, i) => (
               <button
@@ -80,7 +81,7 @@ export default function Home() {
       <section className="bg-[#F3F7FC] py-16 md:py-20 px-6 md:px-12" data-aos="fade-up">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
           {/* COTIZACIÓN */}
-          <div className="flex flex-col justify-between rounded-3xl p-8 md:p-10 border border-[#D8E6F6] bg-gradient-to-br from-white to-[#F3F7FC] shadow-sm hover:shadow-md transition">
+          <div className="flex flex-col justify-between rounded-3xl p-8 md:p-10 border border-[#D8E6F6] bg-gradient-to-br from-white to-[#F3F7FC] shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
             <div className="text-center">
               <h2 className="text-[clamp(1.6rem,3.2vw,2rem)] font-extrabold text-[#003082] mb-3">
                 ¿Necesitas una cotización?
@@ -88,17 +89,14 @@ export default function Home() {
               <p className="text-[clamp(0.95rem,1.2vw,1.1rem)] text-gray-700 mb-8">
                 Cotiza planos u otros servicios de impresión en línea, rápido y claro. Ideal para trámites, proyectos y presupuestos.
               </p>
-              <a
-                href="/cotizar"
-                className="inline-block bg-[#0B63B2] hover:brightness-110 text-white font-semibold px-7 py-3 rounded-full shadow-md transition focus:outline-none focus:ring-4 focus:ring-[#0B63B2]/30"
-              >
+              <a href="/cotizar" className="inline-block bg-[#0B63B2] hover:brightness-110 text-white font-semibold px-7 py-3 rounded-full shadow-md transition focus:outline-none focus:ring-4 focus:ring-[#0B63B2]/30">
                 Generar cotización
               </a>
             </div>
           </div>
 
           {/* FACTURACIÓN */}
-          <div className="flex flex-col justify-between rounded-3xl p-8 md:p-10 border border-[#D8E6F6] bg-gradient-to-br from-white to-[#F3F7FC] shadow-sm hover:shadow-md transition">
+          <div className="flex flex-col justify-between rounded-3xl p-8 md:p-10 border border-[#D8E6F6] bg-gradient-to-br from-white to-[#F3F7FC] shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
             <div className="text-center">
               <h2 className="text-[clamp(1.6rem,3.2vw,2rem)] font-extrabold text-[#003082] mb-3">
                 Factura tu compra
@@ -106,10 +104,7 @@ export default function Home() {
               <p className="text-[clamp(0.95rem,1.2vw,1.1rem)] text-gray-700 mb-8">
                 Ingresa tu número de ticket y tus datos fiscales. Servicio rápido, sin complicaciones.
               </p>
-              <a
-                href="/factura"
-                className="inline-block bg-[#0B63B2] hover:brightness-110 text-white font-semibold px-7 py-3 rounded-full shadow-md transition focus:outline-none focus:ring-4 focus:ring-[#0B63B2]/30"
-              >
+              <a href="/factura" className="inline-block bg-[#0B63B2] hover:brightness-110 text-white font-semibold px-7 py-3 rounded-full shadow-md transition focus:outline-none focus:ring-4 focus:ring-[#0B63B2]/30">
                 Facturar compra
               </a>
             </div>
@@ -204,11 +199,11 @@ export default function Home() {
 function Card({ icon, title, children, delay = '0' }) {
   return (
     <div
-      className="group bg-[#F7FAFE] hover:bg-white transition rounded-2xl p-6 shadow-sm hover:shadow-md border border-[#E2EEFB] text-left"
+      className="group bg-[#F7FAFE] hover:bg-white transition rounded-2xl p-6 shadow-sm hover:shadow-md border border-[#E2EEFB] text-left transform hover:-translate-y-1 duration-300"
       data-aos="zoom-in"
       data-aos-delay={delay}
     >
-      <div className="text-[#0B63B2] text-4xl mb-4">{icon}</div>
+      <div className="text-[#0B63B2] text-4xl mb-4 transition-all duration-300 group-hover:scale-110">{icon}</div>
       <h3 className="text-lg font-semibold mb-2 text-[#0D2A4E]">{title}</h3>
       <p className="text-gray-600">{children}</p>
       <div className="mt-4 h-1 w-0 bg-[#0B63B2] rounded-full transition-all duration-300 group-hover:w-16" />
@@ -222,7 +217,7 @@ function AdvCard({ icon, title, children }) {
       className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition transform hover:-translate-y-1 duration-300 border border-[#E5EEF9]"
       data-aos="fade-up"
     >
-      <div className="text-[#0B63B2] text-5xl mb-4">{icon}</div>
+      <div className="text-[#0B63B2] text-5xl mb-4 transition-all duration-300 group-hover:scale-110">{icon}</div>
       <h3 className="text-lg font-semibold mb-2 text-[#0D2A4E]">{title}</h3>
       <p className="text-gray-600">{children}</p>
     </div>
