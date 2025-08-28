@@ -50,6 +50,18 @@ function validarRFC(rfc) {
   return regex.test((rfc || '').toUpperCase());
 }
 
+// Normalizadores de códigos
+function extraerRegimen(valor = '') {
+  const v = String(valor).trim().toUpperCase();
+  const m = v.match(/^(\d{3})/); // 601, 612, 626...
+  return m ? m[1] : '';
+}
+function extraerUso(valor = '') {
+  const v = String(valor).trim().toUpperCase();
+  const m = v.match(/^([A-Z]\d{2}|[A-Z]{3})/); // G03, I01, P01...
+  return m ? m[1] : '';
+}
+
 /* === Página === */
 export default function Facturar() {
   const [ticket, setTicket] = useState('');
@@ -67,15 +79,78 @@ export default function Facturar() {
   const [error, setError] = useState('');
   const [facturaGenerada, setFacturaGenerada] = useState(null);
   const [success, setSuccess] = useState('');
+  const [codigoCliente, setCodigoCliente] = useState('');
+  const [showClientCodeInput, setShowClientCodeInput] = useState(false);
 
   const total = productos.reduce((acc, p) => acc + (p.cantidad * p.precio_unitario), 0);
 
   /* === Acciones === */
+
+  const handleCargarDatosCliente = async () => {
+    setLoading(true);
+    setError('');
+
+    // REEMPLAZA ESTA URL con la que obtuviste de tu Script de Google Apps
+    const urlScript = 'https://script.google.com/macros/s/AKfycbybBXxsXpJSF-sp-PeTsFd5LVzS86Lf4MVJ7J2r7AtwkuLpdG3he2KHU7jngfCz2L_k/exec';
+
+    try {
+      const res = await fetch(`${urlScript}?codigo=${encodeURIComponent(codigoCliente.toUpperCase())}`);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data?.error || 'No se encontraron datos de cliente con ese código.');
+      }
+
+      const cliente = data.data;
+
+      // Normalizamos lo que viene de la hoja
+      const regIn = String(cliente.regimenFiscal || '').toUpperCase().trim();
+      const usoIn = String(cliente.usoCfdi || '').toUpperCase().trim();
+
+      let regimenCode = extraerRegimen(regIn);
+      let usoCode = extraerUso(usoIn);
+
+      // Si vienen cruzados, los corregimos
+      if (!regimenCode && extraerUso(regIn)) {
+        usoCode = extraerUso(regIn);
+      }
+      if (!usoCode && extraerRegimen(usoIn)) {
+        regimenCode = extraerRegimen(usoIn);
+      }
+
+      setDatosFiscales({
+        rfc: cliente.rfc || '',
+        razonSocial: cliente.razonSocial || '',
+        regimenFiscal: regimenCode || '',
+        usoCfdi: usoCode || '',
+        codigoPostal: cliente.codigoPostal || '',
+        email: cliente.email || '',
+      });
+
+      setSuccess('Código de cliente correcto. ¡Listo para facturar!');
+    } catch (err) {
+      setSuccess('');
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleBuscarTicket = async () => {
     setLoading(true);
     setError('');
     setSuccess('');
     setProductos([]);
+    setShowClientCodeInput(false);
+    setCodigoCliente('');
+    setDatosFiscales({
+      rfc: '',
+      razonSocial: '',
+      regimenFiscal: '',
+      usoCfdi: '',
+      codigoPostal: '',
+      email: '',
+    });
 
     try {
       const res = await fetch(`/api/consultar-ticket?ticket=${encodeURIComponent(ticket)}`);
@@ -106,7 +181,6 @@ export default function Facturar() {
     setSuccess('');
     setFacturaGenerada(null);
 
-    // Validación mínima antes de enviar
     if (!validarRFC(datosFiscales.rfc)) {
       setError('El RFC ingresado no tiene un formato válido.');
       setLoading(false);
@@ -126,8 +200,8 @@ export default function Facturar() {
           total,
           rfc: datosFiscales.rfc,
           razonSocial: datosFiscales.razonSocial,
-          regimenFiscal: regimenLabel,   // <= conservamos tu comportamiento (enviando label “bonito”)
-          usoCfdi: usoCfdiLabel,         // <= idem
+          regimenFiscal: regimenLabel, // <- etiqueta ya derivada del código (601 -> "General de Ley...")
+          usoCfdi: usoCfdiLabel,
           codigoPostal: datosFiscales.codigoPostal,
           email: datosFiscales.email,
         }),
@@ -161,6 +235,8 @@ export default function Facturar() {
     });
     setError('');
     setSuccess('');
+    setCodigoCliente('');
+    setShowClientCodeInput(false);
   };
 
   /* === UI === */
@@ -177,7 +253,7 @@ export default function Facturar() {
           <li className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${productos.length ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-600'}`}>
             <span className="inline-block h-2.5 w-2.5 rounded-full bg-current opacity-70" /> Validar ticket
           </li>
-          <li className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${(productos.length) ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-400'}`}>
+          <li className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${productos.length ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-400'}`}>
             <span className="inline-block h-2.5 w-2.5 rounded-full bg-current opacity-70" /> Datos fiscales
           </li>
           <li className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${facturaGenerada ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-400'}`}>
@@ -233,6 +309,43 @@ export default function Facturar() {
             {/* Formulario Datos Fiscales */}
             <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-2xl shadow border border-gray-100">
               <h2 className="text-xl font-semibold mb-2 text-gray-800">Datos fiscales</h2>
+
+              {/* Checkbox y carga de cliente */}
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="yaSoyClienteCheckbox"
+                  checked={showClientCodeInput}
+                  onChange={(e) => setShowClientCodeInput(e.target.checked)}
+                  className="form-checkbox h-4 w-4 text-blue-600 rounded"
+                />
+                <label htmlFor="yaSoyClienteCheckbox" className="text-sm font-medium text-gray-700">Ya soy cliente, cargar mis datos</label>
+              </div>
+
+              {showClientCodeInput && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex gap-2 mb-4"
+                >
+                  <input
+                    type="text"
+                    value={codigoCliente}
+                    onChange={(e) => setCodigoCliente(e.target.value.toUpperCase())}
+                    placeholder="Ej. CLI172"
+                    className="w-full border border-gray-300 rounded-xl p-2.5 focus:outline-none focus:ring-4 focus:ring-blue-300 focus:border-blue-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCargarDatosCliente}
+                    className="py-2.5 px-6 bg-blue-700 text-white rounded-xl hover:brightness-110 active:scale-[.99] disabled:opacity-60 transition"
+                    disabled={!codigoCliente || loading}
+                  >
+                    Cargar
+                  </button>
+                </motion.div>
+              )}
 
               <input
                 name="rfc"
@@ -299,9 +412,7 @@ export default function Facturar() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`w-full py-3 rounded-2xl text-white font-semibold transition ${
-                    loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:brightness-110 active:scale-[.99]'
-                  }`}
+                  className={`w-full py-3 rounded-2xl text-white font-semibold transition ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:brightness-110 active:scale-[.99]'}`}
                 >
                   {loading ? 'Enviando...' : 'Enviar datos para factura'}
                 </button>
