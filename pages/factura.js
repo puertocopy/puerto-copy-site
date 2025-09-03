@@ -4,8 +4,8 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import FloatingBubbles from "../components/FloatingBubbles";
 
-/* === Componentes de anuncios === */
-const AdBanner = ({ href = "#", src, src2xl, alt = "Publicidad" }) => (
+/* === Panel lateral (neutro) === */
+const SidePanel = ({ href = "#", side = "left", alt = "Imagen lateral" }) => (
   <a
     href={href}
     target="_blank"
@@ -13,18 +13,16 @@ const AdBanner = ({ href = "#", src, src2xl, alt = "Publicidad" }) => (
     className="block overflow-hidden rounded-2xl border border-gray-200 shadow bg-white"
     aria-label={alt}
   >
-    <picture>
-      {/* En pantallas ≥1536px usa src2xl si lo envías */}
-      {src2xl && <source media="(min-width:1536px)" srcSet={src2xl} />}
-      <img
-        src={src}
-        alt={alt}
-        className="w-full h-auto object-contain"
-        loading="lazy"
-      />
-    </picture>
+    <img
+      src={`/api/panel?side=${side}`}
+      alt={alt}
+      className="w-full h-auto object-contain"
+      loading="lazy"
+    />
   </a>
 );
+
+
 
 /* === Catálogos === */
 const regimenes = [
@@ -278,16 +276,11 @@ export default function Facturar() {
           "
         >
           {/* Lateral izquierdo */}
-          <aside className="hidden xl:block sticky top-28 self-start">
-            <div className="w-[160px] 2xl:w-[300px]">
-              <AdBanner
-                src="/ads/lateral-izq-300x600.jpg"
-                src2xl="/ads/lateral-izq-300x600.jpg"
-                alt="Publicidad lateral izquierda"
-              />
-            </div>
-          </aside>
-
+<div className="hidden xl:block sticky top-28 self-start">
+  <div className="w-[164px] 2xl:w-[304px]">
+    <SidePanel side="left" alt="Imagen lateral izquierda" />
+  </div>
+</div>
           {/* Contenido principal */}
           <main className="min-w-0">
             <h1 className="text-3xl font-bold text-center text-blue-800 mb-6">
@@ -516,15 +509,11 @@ export default function Facturar() {
           </main>
 
           {/* Lateral derecho */}
-          <aside className="hidden xl:block sticky top-28 self-start">
-            <div className="w-[160px] 2xl:w-[300px]">
-              <AdBanner
-                src="/ads/lateral-de-300x600.jpg"
-                src2xl="/ads/lateral-de-300x600.jpg"
-                alt="Publicidad lateral derecha"
-              />
-            </div>
-          </aside>
+<div className="hidden xl:block sticky top-28 self-start">
+  <div className="w-[164px] 2xl:w-[304px]">
+    <SidePanel side="right" alt="Imagen lateral derecha" />
+  </div>
+</div>
         </div>
       </div>
 
