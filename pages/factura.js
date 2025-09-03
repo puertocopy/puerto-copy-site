@@ -4,8 +4,8 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import FloatingBubbles from "../components/FloatingBubbles";
 
-/* === Componente de anuncios. (con fallback) === */
-const AdBanner = ({ href = "#", src, src2xl, alt = "Publicidad", fallback = "/ads/lateral-izq-300x600.jpg" }) => (
+/* === Componentes de anuncios === */
+const AdBanner = ({ href = "#", src, src2xl, alt = "Publicidad" }) => (
   <a
     href={href}
     target="_blank"
@@ -14,18 +14,13 @@ const AdBanner = ({ href = "#", src, src2xl, alt = "Publicidad", fallback = "/ad
     aria-label={alt}
   >
     <picture>
+      {/* En pantallas ≥1536px usa src2xl si lo envías */}
       {src2xl && <source media="(min-width:1536px)" srcSet={src2xl} />}
       <img
         src={src}
         alt={alt}
         className="w-full h-auto object-contain"
         loading="lazy"
-        onError={(e) => {
-          // si falla,, muestra el fallback para confirmar que el contenedor sí renderiza
-          if (e.currentTarget.src !== window.location.origin + fallback) {
-            e.currentTarget.src = fallback;
-          }
-        }}
       />
     </picture>
   </a>
