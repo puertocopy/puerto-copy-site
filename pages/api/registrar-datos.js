@@ -1,44 +1,29 @@
+// pages/api/registrar-datos.js
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
+    return res.status(405).json({ status: 'error', message: 'Method not allowed' });
   }
 
-  const {
-    ticket,
-    rfc,
-    razonSocial,
-    regimenFiscal,
-    usoCfdi,
-    codigoPostal,
-    email,
-    productos,
-    total
-  } = req.body;
-
   try {
-    const response = await fetch('https://script.google.com/macros/s/AKfycbybBXxsXpJSF-sp-PeTsFd5LVzS86Lf4MVJ7J2r7AtwkuLpdG3he2KHU7jngfCz2L_k/exec', {
+    // ⚠️ Pega aquí tu URL /exec del Apps Script que tiene el doPost:
+    const GAS_POST_URL = 'https://script.google.com/macros/s/AKfycbzf_-GMn9ZGNrNWZOFcDSHfX_Kc4DdXsXQjACOr4AVj8SjPGJSsOFasApCeZMQeOW9r/exec';
+
+    const r = await fetch(GAS_POST_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ticket,
-        rfc,
-        razonSocial,
-        regimenFiscal,
-        usoCfdi,
-        codigoPostal,
-        email,
-        productos,
-        total,
-      }),
+      headers: { 'Content-Type': 'application/json' }, // importante
+      body: JSON.stringify(req.body),
     });
 
-    if (!response.ok) {
-      throw new Error('No se pudo registrar en la hoja de Google');
+    const text = await r.text(); // Apps Script siempre responde texto
+    let json;
+    try { json = JSON.parse(text); } catch { json = { raw: text }; }
+
+    if (!r.ok) {
+      return res.status(502).json({ status: 'error', message: 'Upstream error', upstream: json });
     }
 
-    res.status(200).json({ ok: true });
+    return res.status(200).json(json);
   } catch (err) {
-    console.error('Error al enviar datos al Apps Script:', err);
-    res.status(500).json({ error: 'Error al registrar en Google Sheets' });
+    return res.status(500).json({ status: 'error', message: String(err) });
   }
 }
