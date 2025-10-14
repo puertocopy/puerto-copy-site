@@ -22,8 +22,6 @@ const SidePanel = ({ href = "#", side = "left", alt = "Imagen lateral" }) => (
   </a>
 );
 
-
-
 /* === Catálogos === */
 const regimenes = [
   { value: '601', label: '601 - General de Ley Personas Morales' },
@@ -111,7 +109,7 @@ export default function Facturar() {
     setError('');
 
     // REEMPLAZA ESTA URL con la que obtuviste de tu Script de Google Apps
-    const urlScript = 'https://script.google.com/macros/s/AKfycbybBXxsXpJSF-sp-PeTsFd5LVzS86Lf4MVJ7J2r7AtwkuLpdG3he2KHU7jngfCz2L_k/exec';
+    const urlScript = 'https://script.google.com/macros/s/AKfycbzf_-GMn9ZGNrNWZOFcDSHfX_Kc4DdXsXQjACOr4AVj8SjPGJSsOFasApCeZMQeOW9r/exec';
 
     try {
       const res = await fetch(`${urlScript}?codigo=${encodeURIComponent(codigoCliente.toUpperCase())}`);
@@ -176,6 +174,7 @@ export default function Facturar() {
       const res = await fetch(`/api/consultar-ticket?ticket=${encodeURIComponent(ticket)}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || 'Error al consultar ticket');
+
       setProductos(Array.isArray(data.productos) ? data.productos : []);
       if (!data.productos?.length) {
         setError('No se encontraron productos para este ticket o no corresponde al mes en curso.');
@@ -276,11 +275,12 @@ export default function Facturar() {
           "
         >
           {/* Lateral izquierdo */}
-<div className="hidden xl:block sticky top-28 self-start">
-  <div className="w-[164px] 2xl:w-[304px]">
-    <SidePanel side="left" alt="Imagen lateral izquierda" />
-  </div>
-</div>
+          <div className="hidden xl:block sticky top-28 self-start">
+            <div className="w-[164px] 2xl:w-[304px]">
+              <SidePanel side="left" alt="Imagen lateral izquierda" />
+            </div>
+          </div>
+
           {/* Contenido principal */}
           <main className="min-w-0">
             <h1 className="text-3xl font-bold text-center text-blue-800 mb-6">
@@ -289,13 +289,31 @@ export default function Facturar() {
 
             {/* Paso a paso */}
             <ol className="grid grid-cols-3 gap-3 mb-6 text-sm">
-              <li className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${productos.length ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-600'}`}>
+              <li
+                className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${
+                  productos.length
+                    ? 'bg-blue-50 border-blue-200 text-blue-700'
+                    : 'bg-white border-gray-200 text-gray-600'
+                }`}
+              >
                 <span className="inline-block h-2.5 w-2.5 rounded-full bg-current opacity-70" /> Validar ticket
               </li>
-              <li className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${productos.length ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-400'}`}>
+              <li
+                className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${
+                  productos.length
+                    ? 'bg-blue-50 border-blue-200 text-blue-700'
+                    : 'bg-white border-gray-200 text-gray-400'
+                }`}
+              >
                 <span className="inline-block h-2.5 w-2.5 rounded-full bg-current opacity-70" /> Datos fiscales
               </li>
-              <li className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${facturaGenerada ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-400'}`}>
+              <li
+                className={`px-3 py-2 rounded-xl border flex items-center gap-2 ${
+                  facturaGenerada
+                    ? 'bg-blue-50 border-blue-200 text-blue-700'
+                    : 'bg-white border-gray-200 text-gray-400'
+                }`}
+              >
                 <span className="inline-block h-2.5 w-2.5 rounded-full bg-current opacity-70" /> Confirmación
               </li>
             </ol>
@@ -451,7 +469,9 @@ export default function Facturar() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className={`w-full py-3 rounded-2xl text-white font-semibold transition ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:brightness-110 active:scale-[.99]'}`}
+                      className={`w-full py-3 rounded-2xl text-white font-semibold transition ${
+                        loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:brightness-110 active:scale-[.99]'
+                      }`}
                     >
                       {loading ? 'Enviando...' : 'Enviar datos para factura'}
                     </button>
@@ -509,11 +529,11 @@ export default function Facturar() {
           </main>
 
           {/* Lateral derecho */}
-<div className="hidden xl:block sticky top-28 self-start">
-  <div className="w-[164px] 2xl:w-[304px]">
-    <SidePanel side="right" alt="Imagen lateral derecha" />
-  </div>
-</div>
+          <div className="hidden xl:block sticky top-28 self-start">
+            <div className="w-[164px] 2xl:w-[304px]">
+              <SidePanel side="right" alt="Imagen lateral derecha" />
+            </div>
+          </div>
         </div>
       </div>
 
