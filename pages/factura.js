@@ -522,7 +522,7 @@ export default function Facturar() {
                   Recibirás tu factura si los datos son correctos y el ticket corresponde al mes actual.
                 </p>
                 <p className="text-green-700 text-sm">
-                  (Si ya tienes PDF/XML, te llegarán por correo.)
+                  (Duda o Aclaracion facturacion@puertocopy.com)
                 </p>
               </motion.div>
             )}
