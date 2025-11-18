@@ -5,7 +5,7 @@ export default function FloatingBubbles() {
     <div className="fixed bottom-6 right-6 flex flex-col items-end gap-3 z-50">
       {/* WhatsApp */}
       <a
-        href="https://wa.me/523223499334"
+        href="https://wa.me/523221916038"
         target="_blank"
         rel="noopener noreferrer"
         className="bg-green-500 hover:bg-green-600 text-white p-3 rounded-full shadow-lg transition-all duration-300"
@@ -25,7 +25,7 @@ export default function FloatingBubbles() {
 
       {/* Instagram */}
       <a
-        href="https://instagram.com/puerto.copy"
+        href="https://instagram.com/puertocopy"
         target="_blank"
         rel="noopener noreferrer"
         className="bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 hover:brightness-110 text-white p-3 rounded-full shadow-lg transition-all duration-300"
