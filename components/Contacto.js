@@ -11,8 +11,8 @@ export default function Contacto() {
           
           <div className="flex flex-col items-center space-y-4 text-gray-700 text-lg">
             <div>📍 Villa Colonial 573, Los Portales, Puerto Vallarta, Jalisco</div>
-            <div>📞 <a href="tel:+523223499334" className="text-[#004b71] hover:underline">322 349 9334</a></div>
-            <div>📧 <a href="mailto:contacto@puertocopy.com" className="text-[#004b71] hover:underline">contacto@puertocopy.com</a></div>
+            <div>📞 <a href="tel:+523221916038" className="text-[#004b71] hover:underline">322 191 6038</a></div>
+            <div>📧 <a href="mailto:impresiones@puertocopy.com" className="text-[#004b71] hover:underline">impresiones@puertocopy.com</a></div>
             <div>🕒 Lunes a Viernes: 8:00 AM – 6:00 PM Sabado 10:00 AM - 2:00 PM</div>
           </div>
   
