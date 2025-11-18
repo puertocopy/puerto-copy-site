@@ -519,8 +519,9 @@ export default function Facturar() {
               >
                 <h3 className="text-green-700 font-semibold text-xl mb-2">Datos enviados correctamente</h3>
                 <p className="text-green-700 mb-1">
-                  Recibirás tu factura si los datos son correctos y el ticket corresponde al mes actual.
+                  Recibirás tu factura en 72 hrs si los datos son correctos y el ticket corresponde al mes actual.
                 </p>
+                  No Realices multiples Registros con el mismo No. de ticket, comunicate al correo electronico
                 <p className="text-green-700 text-sm">
                   (Duda o Aclaracion facturacion@puertocopy.com)
                 </p>
