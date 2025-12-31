@@ -120,7 +120,7 @@ const FloatingBubbles = () => (
   </div>
 );
 
-/* === Panel lateral (neutro) === */
+/* === Panel lateral (Producción) === */
 const SidePanel = ({ href = "#", side = "left", alt = "Imagen lateral" }) => (
   <a
     href={href}
@@ -130,11 +130,17 @@ const SidePanel = ({ href = "#", side = "left", alt = "Imagen lateral" }) => (
     aria-label={alt}
   >
     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10" />
+    {/* Regresamos al endpoint real de la API */}
     <img
-      src={`https://placehold.co/300x600/F3F7FC/0B63B2?text=Anuncio+${side === 'left' ? 'Izq' : 'Der'}`} // Placeholder para evitar error de API local
+      src={`/api/panel?side=${side}`}
       alt={alt}
       className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
       loading="lazy"
+      onError={(e) => {
+        // Fallback visual por si falla la API en desarrollo, pero intentará cargar la real
+        e.target.style.display = 'none'; 
+        e.target.parentElement.style.backgroundColor = '#F3F7FC';
+      }}
     />
   </a>
 );
@@ -218,13 +224,6 @@ export default function Facturar() {
   const [codigoCliente, setCodigoCliente] = useState('');
   const [showClientCodeInput, setShowClientCodeInput] = useState(false);
 
-  // Simulación de productos para visualización en preview
-  // En producción, esto se vacía y se llena con handleBuscarTicket
-  const productosSimulados = [
-    { nombre: 'Impresión Plano 90x60 Bond', cantidad: 2, precio_unitario: 45.00 },
-    { nombre: 'Juego de Copias Tesis', cantidad: 1, precio_unitario: 250.00 }
-  ];
-
   const total = productos.reduce((acc, p) => acc + (p.cantidad * p.precio_unitario), 0);
 
   /* === Acciones === */
@@ -233,27 +232,10 @@ export default function Facturar() {
     setLoading(true);
     setError('');
 
-    // REEMPLAZA ESTA URL con la que obtuviste de tu Script de Google Apps
+    // URL real de tu Google Script
     const urlScript = 'https://script.google.com/macros/s/AKfycbzf_-GMn9ZGNrNWZOFcDSHfX_Kc4DdXsXQjACOr4AVj8SjPGJSsOFasApCeZMQeOW9r/exec';
 
     try {
-      // Simulación para preview
-      if (codigoCliente === 'DEMO') {
-        setTimeout(() => {
-             setDatosFiscales({
-                rfc: 'XAXX010101000',
-                razonSocial: 'Cliente Demo SA de CV',
-                regimenFiscal: '601',
-                usoCfdi: 'G03',
-                codigoPostal: '48300',
-                email: 'demo@cliente.com',
-            });
-            setSuccess('Datos cargados (Modo Demo)');
-            setLoading(false);
-        }, 1000);
-        return;
-      }
-
       const res = await fetch(`${urlScript}?codigo=${encodeURIComponent(codigoCliente.toUpperCase())}`);
       const data = await res.json();
 
@@ -313,16 +295,7 @@ export default function Facturar() {
     });
 
     try {
-      // Simulación para preview si el ticket es "12345"
-      if (ticket === '12345' || ticket === '1234-5') {
-          setTimeout(() => {
-              setProductos(productosSimulados);
-              setSuccess('Ticket válido. Revisa el resumen y completa tus datos fiscales.');
-              setLoading(false);
-          }, 800);
-          return;
-      }
-
+      // Petición REAL a tu API
       const res = await fetch(`/api/consultar-ticket?ticket=${encodeURIComponent(ticket)}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.message || 'Error al consultar ticket');
@@ -334,7 +307,7 @@ export default function Facturar() {
         setSuccess('Ticket válido. Revisa el resumen y completa tus datos fiscales.');
       }
     } catch (err) {
-      setError(err.message || 'No se pudo validar el ticket. (Prueba con 12345 para demo)');
+      setError(err.message || 'No se pudo validar el ticket. Verifica tu conexión.');
     } finally {
       setLoading(false);
     }
@@ -362,15 +335,7 @@ export default function Facturar() {
     const usoCfdiLabel = usosCFDI.find(u => u.value === datosFiscales.usoCfdi)?.label.split(' - ')[1] || '';
 
     try {
-      // Simulación de éxito para preview
-      setTimeout(() => {
-        setFacturaGenerada({ pdf_url: null, xml_url: null });
-        setSuccess('Datos enviados correctamente.');
-        setLoading(false);
-      }, 1500);
-      return;
-
-      /* Código real para producción:
+      // Petición REAL de registro
       const res = await fetch('/api/registrar-datos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -394,7 +359,7 @@ export default function Facturar() {
 
       setFacturaGenerada({ pdf_url: null, xml_url: null });
       setSuccess('Datos enviados correctamente. Recibirás tu factura si el ticket corresponde al mes actual.');
-      */
+      
     } catch (err) {
       setError(err.message || 'Hubo un problema al registrar los datos. Intenta nuevamente.');
     } finally {
@@ -531,7 +496,6 @@ export default function Facturar() {
                       />
                       <Search className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                     </div>
-                    <p className="text-xs text-gray-400 mt-2 ml-2">Prueba "12345" para ver la demo de diseño.</p>
                   </div>
                   
                   <button
@@ -584,7 +548,7 @@ export default function Facturar() {
                           type="text"
                           value={codigoCliente}
                           onChange={(e) => setCodigoCliente(e.target.value.toUpperCase())}
-                          placeholder="Ej. DEMO"
+                          placeholder="Ej. CLI172"
                           className="flex-1 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[#0B63B2] focus:ring-2 focus:ring-blue-100"
                         />
                         <button
