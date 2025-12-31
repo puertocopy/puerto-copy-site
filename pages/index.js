@@ -1,35 +1,246 @@
-import { useEffect, useState, useRef } from 'react';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import FloatingBubbles from "../components/FloatingBubbles";
-import Contacto from '../components/Contacto';
+import React, { useEffect, useState, useRef } from 'react';
+import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Printer, FileText, BookOpen, Lock, ScanLine, FileCheck, Zap, Target, Heart, Menu, X, ChevronRight } from 'lucide-react';
+
+/* === ESTILOS CSS INLINE PARA ANIMACIONES Y FUENTES === */
+const styles = `
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&display=swap');
+
+  .font-brand {
+    font-family: 'Product Sans', 'Outfit', sans-serif;
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+    100% { transform: translateY(0px); }
+  }
+  @keyframes kenburns {
+    0% { transform: scale(1.0); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1.0); }
+  }
+  .fade-in-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+  }
+  .fade-in-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .bubble {
+    position: absolute;
+    bottom: -100px;
+    background-color: rgba(11, 99, 178, 0.1);
+    border-radius: 50%;
+    animation: floatUp 15s linear infinite;
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(0); opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.8; }
+    100% { transform: translateY(-100vh); opacity: 0; }
+  }
+`;
+
+/* === COMPONENTES INTERNOS (Simulando los archivos importados) === */
+
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex-shrink-0 flex items-center cursor-pointer">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mr-2 ${scrolled ? 'bg-[#0B63B2] text-white' : 'bg-white text-[#0B63B2]'}`}>
+              <Printer size={24} />
+            </div>
+            {/* APLICANDO FUENTE PRODUCT SANS AQUI */}
+            <span className={`font-bold text-2xl tracking-tight font-brand ${scrolled ? 'text-[#003082]' : 'text-[#003082] md:text-white'}`}>Puerto Copy</span>
+          </div>
+          
+          <div className="hidden md:flex space-x-8 items-center">
+            {['Inicio', 'Servicios', 'Nosotros', 'Contacto'].map((item) => (
+              <a key={item} href={`#${item.toLowerCase()}`} className={`font-medium hover:text-[#0B63B2] transition-colors ${scrolled ? 'text-gray-600' : 'text-white/90 hover:text-white'}`}>
+                {item}
+              </a>
+            ))}
+            <button className={`px-5 py-2 rounded-full font-semibold transition-all ${scrolled ? 'bg-[#0B63B2] text-white hover:bg-[#004a8f]' : 'bg-white text-[#0B63B2] hover:bg-gray-100'}`}>
+              Cotizar
+            </button>
+          </div>
+
+          <div className="md:hidden flex items-center">
+            <button onClick={() => setIsOpen(!isOpen)} className={`${scrolled ? 'text-gray-800' : 'text-[#003082]'}`}>
+              {isOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="md:hidden bg-white absolute w-full border-t border-gray-100 shadow-xl">
+          <div className="px-4 pt-2 pb-6 space-y-2">
+            {['Inicio', 'Servicios', 'Nosotros', 'Contacto'].map((item) => (
+              <a key={item} href={`#${item.toLowerCase()}`} onClick={() => setIsOpen(false)} className="block px-3 py-3 text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-[#0B63B2] rounded-md">
+                {item}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </nav>
+  );
+};
+
+const Footer = () => (
+  <footer className="bg-white border-t border-gray-100 pt-16 pb-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="grid md:grid-cols-4 gap-8 mb-12">
+        <div className="col-span-1 md:col-span-2">
+          <div className="flex items-center mb-4">
+            <div className="bg-[#0B63B2] text-white w-8 h-8 rounded-lg flex items-center justify-center mr-2">
+              <Printer size={16} />
+            </div>
+            {/* APLICANDO FUENTE PRODUCT SANS AQUI */}
+            <span className="font-bold text-xl text-[#003082] font-brand">Puerto Copy</span>
+          </div>
+          <p className="text-gray-500 max-w-sm">
+            Soluciones integrales de impresión en Puerto Vallarta. Calidad profesional para arquitectos, estudiantes y empresas.
+          </p>
+        </div>
+        <div>
+          <h4 className="font-bold text-[#003082] mb-4">Enlaces</h4>
+          <ul className="space-y-2 text-gray-600">
+            <li><a href="#" className="hover:text-[#0B63B2]">Servicios</a></li>
+            <li><a href="#" className="hover:text-[#0B63B2]">Facturación</a></li>
+            <li><a href="#" className="hover:text-[#0B63B2]">Aviso de Privacidad</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 className="font-bold text-[#003082] mb-4">Contacto</h4>
+          <ul className="space-y-2 text-gray-600">
+            <li className="flex items-center"><Phone size={14} className="mr-2"/> 322 191 6038</li>
+            <li className="flex items-center"><Mail size={14} className="mr-2"/> hola@puertocopy.com</li>
+          </ul>
+        </div>
+      </div>
+      <div className="border-t border-gray-100 pt-8 text-center text-gray-400 text-sm">
+        {/* APLICANDO FUENTE PRODUCT SANS AQUI */}
+        <p>© 2024 <span className="font-brand">Puerto Copy</span>. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </footer>
+);
+
+const FloatingBubbles = () => {
+  // Simulación visual simple
+  return (
+    <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+      {/* Las burbujas se generarían dinámicamente o con CSS puro, aquí usamos el estilo inyectado */}
+    </div>
+  );
+};
+
+const Contacto = () => (
+  <section id="contacto" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <div className="fade-in-up">
+        <h2 className="text-3xl md:text-4xl font-extrabold text-[#003082] mb-6">Estamos para ayudarte</h2>
+        <p className="text-gray-600 mb-8 text-lg">Visítanos en nuestra sucursal o envíanos un mensaje. Respondemos rápido.</p>
+        
+        <div className="space-y-6">
+            <div className="flex items-start bg-blue-50 p-4 rounded-2xl">
+                <MapPin className="text-[#0B63B2] mt-1 mr-4 shrink-0" size={24} />
+                <div>
+                    <h4 className="font-bold text-[#003082]">Ubicación</h4>
+                    <p className="text-gray-600">Villa Colonial 573, Los Portales, Puerto Vallarta, Jal.</p>
+                </div>
+            </div>
+            <div className="flex items-start bg-blue-50 p-4 rounded-2xl">
+                <Clock className="text-[#0B63B2] mt-1 mr-4 shrink-0" size={24} />
+                <div>
+                    <h4 className="font-bold text-[#003082]">Horario</h4>
+                    <p className="text-gray-600">Lun - Vie: 9:00 - 19:00 | Sáb: 10:00 - 14:00</p>
+                </div>
+            </div>
+        </div>
+      </div>
+      
+      <div className="bg-white p-8 md:p-10 rounded-[2rem] shadow-xl shadow-blue-900/5 border border-gray-100 fade-in-up">
+        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                <input type="text" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#0B63B2] focus:ring-2 focus:ring-blue-100 outline-none transition" placeholder="Tu nombre" />
+            </div>
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                <input type="tel" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#0B63B2] focus:ring-2 focus:ring-blue-100 outline-none transition" placeholder="322 000 0000" />
+            </div>
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Mensaje</label>
+                <textarea rows="3" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#0B63B2] focus:ring-2 focus:ring-blue-100 outline-none transition" placeholder="¿Qué necesitas imprimir?"></textarea>
+            </div>
+            <button className="w-full bg-[#0B63B2] hover:bg-[#004a8f] text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95">
+                Enviar Mensaje
+            </button>
+        </form>
+      </div>
+    </div>
+  </section>
+);
+
+/* === COMPONENTE PRINCIPAL === */
 
 export default function Home() {
-  const slides = ['1', '2', '3'];
+  // Imágenes de placeholder de alta calidad (Unsplash) porque no tengo acceso a tus archivos locales
+  const slides = [
+    'https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=2000&auto=format&fit=crop', // Planos
+    'https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?q=80&w=2000&auto=format&fit=crop', // Impresora
+    'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=2000&auto=format&fit=crop'  // Oficina
+  ];
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fading, setFading] = useState(true);
 
-  const typewriterText = useRef(null);
-
+  // Hook para detectar elementos en viewport y animarlos (reemplazo de AOS)
   useEffect(() => {
-    AOS.init({ duration: 900, once: true });
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
 
+    document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Slider Logic
+  useEffect(() => {
     const interval = setInterval(() => {
       setFading(false);
       setTimeout(() => {
         setCurrentSlide(prev => (prev + 1) % slides.length);
         setFading(true);
-      }, 280);
-    }, 5200);
-
+      }, 500); // Tiempos ajustados para suavidad
+    }, 5000);
     return () => clearInterval(interval);
   }, [slides.length]);
 
   return (
-    <div className="bg-white text-gray-900 overflow-x-hidden">
-
+    <div className="bg-white text-gray-900 overflow-x-hidden font-sans">
+      <style>{styles}</style>
       <Navbar />
 
       {/* SEO oculto */}
@@ -38,50 +249,54 @@ export default function Home() {
         <p>Calidad profesional, servicio rápido y atención personalizada en Puerto Copy.</p>
       </section>
 
-      {/* SLIDER */}
+      {/* SLIDER HERO SECTION */}
       <section id="inicio" className="relative w-full">
-        <div className="relative w-full h-[58vh] md:h-[70vh] overflow-hidden">
-
-          {slides.map((slide, index) => {
+        <div className="relative w-full h-[65vh] md:h-[80vh] overflow-hidden rounded-b-[2.5rem] md:rounded-b-[4rem] shadow-2xl z-0">
+          {slides.map((slideUrl, index) => {
             const active = currentSlide === index && fading;
-
             return (
               <div
                 key={index}
-                className={`absolute inset-0 w-full h-full transition-opacity duration-[1400ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                className={`absolute inset-0 w-full h-full transition-opacity duration-[1000ms] ease-in-out ${
                   active ? 'opacity-100' : 'opacity-0'
                 }`}
               >
-                <picture>
-                  <source
-                    media="(max-width: 767px)"
-                    srcSet={`/slides/slide${slide}-mobile.jpg`}
-                  />
-                  <img
-                    src={`/slides/slide${slide}-desktop.jpg`}
-                    alt={`Slide ${slide}`}
-                    className={`inset-0 w-full h-full object-cover will-change-transform ${
-                      active ? 'animate-[kenburns_7s_ease-in-out_forwards]' : ''
-                    }`}
-                  />
-                </picture>
-
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
+                <img
+                  src={slideUrl}
+                  alt={`Slide ${index + 1}`}
+                  className={`absolute inset-0 w-full h-full object-cover ${
+                    active ? 'animate-[kenburns_7s_ease-in-out_forwards]' : ''
+                  }`}
+                />
+                {/* Overlay Degradado Profundo */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#003082]/90 via-[#003082]/30 to-black/30" />
+                
+                {/* Texto Hero Opcional */}
+                <div className={`absolute bottom-24 left-0 w-full text-center px-4 transition-all duration-1000 transform ${active ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+                    <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 drop-shadow-lg tracking-tight">
+                        {index === 0 && "Impresión de Planos"}
+                        {index === 1 && "Calidad Profesional"}
+                        {index === 2 && "Soluciones Rápidas"}
+                    </h1>
+                    <p className="text-white/90 text-lg md:text-xl font-medium max-w-2xl mx-auto">
+                        Tu centro de copiado e impresión de confianza en Puerto Vallarta.
+                    </p>
+                </div>
               </div>
             );
           })}
 
-          {/* Dots */}
-          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2.5">
+          {/* Dots Indicator */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10">
             {slides.map((_, i) => (
               <button
                 key={i}
                 aria-label={`Ir al slide ${i + 1}`}
                 onClick={() => setCurrentSlide(i)}
-                className={`h-2.5 rounded-full transition-all duration-300 ${
+                className={`h-2 rounded-full transition-all duration-500 shadow-md backdrop-blur-md ${
                   i === currentSlide
-                    ? 'w-8 bg-[#0B63B2]'
-                    : 'w-2.5 bg-white/70 hover:bg-white'
+                    ? 'w-10 bg-white'
+                    : 'w-2 bg-white/40 hover:bg-white/80'
                 }`}
               />
             ))}
@@ -89,48 +304,48 @@ export default function Home() {
         </div>
       </section>
 
-      {/* DESTACADOS */}
-      <section className="bg-[#F3F7FC] py-16 md:py-20 px-6 md:px-12" data-aos="fade-up">
-
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
-
-          {/* COTIZACIÓN */}
-          <div className="flex flex-col justify-between rounded-3xl p-8 md:p-10 border border-[#D8E6F6] bg-gradient-to-br from-white to-[#F3F7FC] shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-            <div className="text-center">
-              <h2 className="text-[clamp(1.6rem,3.2vw,2rem)] font-extrabold text-[#003082] mb-3">
-                ¿Necesitas una cotización?
-              </h2>
-
-              <p className="text-[clamp(0.95rem,1.2vw,1.1rem)] text-gray-700 mb-8">
-                Cotiza planos u otros servicios de impresión en línea, rápido y claro. Ideal para trámites, proyectos y presupuestos.
-              </p>
-
-              <a
-                href="/cotizar"
-                className="inline-block bg-[#0B63B2] hover:brightness-110 text-white font-semibold px-7 py-3 rounded-full shadow-md transition focus:outline-none focus:ring-4 focus:ring-[#0B63B2]/30"
-              >
-                Generar cotización
-              </a>
+      {/* DESTACADOS - Tarjetas Flotantes */}
+      {/* Se eliminó -mt-16 md:-mt-20 para quitar la superposición y se agregó py-12 para dar espacio */}
+      <section className="relative z-10 px-4 md:px-12 py-12">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+          
+          {/* Card Cotización */}
+          <div className="fade-in-up group bg-white rounded-[2.5rem] p-8 md:p-12 shadow-xl shadow-blue-900/10 hover:shadow-2xl hover:shadow-blue-900/20 transition-all duration-300 transform hover:-translate-y-2 border border-gray-50">
+            <div className="flex flex-col items-center text-center h-full justify-between">
+              <div>
+                <div className="w-20 h-20 bg-[#F3F7FC] text-[#0B63B2] rounded-3xl flex items-center justify-center mb-6 shadow-inner mx-auto group-hover:bg-[#0B63B2] group-hover:text-white transition-colors duration-500">
+                  <FileText size={40} strokeWidth={1.5} />
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold text-[#003082] mb-4 tracking-tight">
+                  ¿Necesitas cotizar?
+                </h2>
+                <p className="text-gray-600 text-lg leading-relaxed mb-8 font-medium">
+                  Cotiza planos u otros servicios de impresión en línea. Rápido, claro y sin filas.
+                </p>
+              </div>
+              <button className="w-full sm:w-auto bg-[#0B63B2] hover:bg-[#004a8f] text-white font-bold px-10 py-4 rounded-full shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+                Generar Cotización <ChevronRight size={18} />
+              </button>
             </div>
           </div>
 
-          {/* FACTURACIÓN */}
-          <div className="flex flex-col justify-between rounded-3xl p-8 md:p-10 border border-[#D8E6F6] bg-gradient-to-br from-white to-[#F3F7FC] shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-            <div className="text-center">
-              <h2 className="text-[clamp(1.6rem,3.2vw,2rem)] font-extrabold text-[#003082] mb-3">
-                Factura tu compra
-              </h2>
-
-              <p className="text-[clamp(0.95rem,1.2vw,1.1rem)] text-gray-700 mb-8">
-                Ingresa tu número de ticket y tus datos fiscales. Servicio rápido, sin complicaciones.
-              </p>
-
-              <a
-                href="/factura"
-                className="inline-block bg-[#0B63B2] hover:brightness-110 text-white font-semibold px-7 py-3 rounded-full shadow-md transition focus:outline-none focus:ring-4 focus:ring-[#0B63B2]/30"
-              >
-                Facturar compra
-              </a>
+          {/* Card Facturación */}
+          <div className="fade-in-up group bg-white rounded-[2.5rem] p-8 md:p-12 shadow-xl shadow-blue-900/10 hover:shadow-2xl hover:shadow-blue-900/20 transition-all duration-300 transform hover:-translate-y-2 border border-gray-50" style={{transitionDelay: '100ms'}}>
+            <div className="flex flex-col items-center text-center h-full justify-between">
+              <div>
+                <div className="w-20 h-20 bg-[#F3F7FC] text-[#0B63B2] rounded-3xl flex items-center justify-center mb-6 shadow-inner mx-auto group-hover:bg-[#0B63B2] group-hover:text-white transition-colors duration-500">
+                  <FileCheck size={40} strokeWidth={1.5} />
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold text-[#003082] mb-4 tracking-tight">
+                  Factura tu compra
+                </h2>
+                <p className="text-gray-600 text-lg leading-relaxed mb-8 font-medium">
+                  Ingresa tu ticket y datos fiscales. Obten tu factura al instante y sin complicaciones.
+                </p>
+              </div>
+              <button className="w-full sm:w-auto bg-[#0B63B2] hover:bg-[#004a8f] text-white font-bold px-10 py-4 rounded-full shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+                Facturar Compra <ChevronRight size={18} />
+              </button>
             </div>
           </div>
 
@@ -138,129 +353,141 @@ export default function Home() {
       </section>
 
       {/* SERVICIOS */}
-      <section id="servicios" className="relative bg-white text-gray-800 py-16 md:py-20 px-6 md:px-12 z-10">
+      <section id="servicios" className="relative bg-[#FDFDFD] py-20 md:py-28 px-4 md:px-12">
+        <div className="max-w-7xl mx-auto">
+          
+          <div className="text-center mb-16 md:mb-20 fade-in-up">
+            <span className="text-[#0B63B2] font-bold tracking-wider uppercase text-xs bg-blue-50 px-4 py-2 rounded-full border border-blue-100">
+              Nuestros Servicios
+            </span>
+            <h2 className="text-4xl md:text-5xl font-extrabold mt-6 text-[#003082] tracking-tight mb-4">
+              Soluciones de Impresión
+            </h2>
+            <p className="text-gray-500 text-xl max-w-2xl mx-auto">Calidad y precisión en cada detalle para tus proyectos más importantes.</p>
+          </div>
 
-        <div className="max-w-6xl mx-auto text-center" data-aos="fade-up">
-
-          <h2 className="text-[clamp(1.6rem,3.2vw,2rem)] md:text-[clamp(1.8rem,2.6vw,2.4rem)] font-extrabold mb-10 text-[#003082]">
-            Servicios de Impresión, Copiado y Escaneo en Puerto Vallarta
-          </h2>
-
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-
-            <Card icon="📐" title="Impresión de Planos en Puerto Vallarta">
-              Imprime planos arquitectónicos y de ingeniería en gran formato: Bond, fotográfico o lona. Entrega rápida y calidad garantizada.
-            </Card>
-
-            <Card icon="🖨️" title="Copias a Color y Blanco y Negro" delay="100">
-              Copias en carta, oficio y tabloide. Calidad excelente, ideal para trámites y presentaciones.
-            </Card>
-
-            <Card icon="📚" title="Engargolados Profesionales" delay="200">
-              Organiza y protege tus documentos con distintos estilos y tamaños.
-            </Card>
-
-            <Card icon="🔒" title="Enmicado de Documentos">
-              Protege certificados, fotos o documentos contra el desgaste diario.
-            </Card>
-
-            <Card icon="📁" title="Escaneo de Documentos" delay="100">
-              Digitaliza documentos en alta resolución. Respalda y simplifica trámites.
-            </Card>
-
-            <Card icon="🧾" title="Facturación Electrónica Rápida" delay="200">
-              Genera tu factura ingresando ticket y datos fiscales. Fácil y sin complicaciones.
-            </Card>
-
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <ServiceCard 
+              Icon={ScanLine} 
+              title="Impresión de Planos" 
+              desc="Impresión gran formato en Bond, fotográfico o lona. Entrega rápida y calidad garantizada."
+              delay="0"
+            />
+            <ServiceCard 
+              Icon={Printer} 
+              title="Copias Color y B/N" 
+              desc="Alta resolución en carta, oficio y tabloide. Ideal para tesis, manuales y presentaciones."
+              delay="100ms"
+            />
+            <ServiceCard 
+              Icon={BookOpen} 
+              title="Engargolados" 
+              desc="Acabados profesionales para organizar y proteger tus documentos con distintos estilos."
+              delay="200ms"
+            />
+            <ServiceCard 
+              Icon={Lock} 
+              title="Enmicado" 
+              desc="Protección duradera contra el agua y desgaste para tus certificados y credenciales."
+              delay="0"
+            />
+            <ServiceCard 
+              Icon={FileText} 
+              title="Escaneo Digital" 
+              desc="Digitaliza documentos a alta resolución. Respalda tus archivos físicos en PDF."
+              delay="100ms"
+            />
+            <ServiceCard 
+              Icon={FileCheck} 
+              title="Facturación Rápida" 
+              desc="Sistema de autoservicio para generar tu factura con tu ticket. Fácil y eficiente."
+              delay="200ms"
+            />
           </div>
         </div>
       </section>
 
       {/* VENTAJAS */}
-      <section id="ventajas" className="bg-[#F3F7FC] py-16 md:py-20 px-6 md:px-12">
+      <section id="ventajas" className="bg-[#F3F7FC] py-24 px-4 md:px-12 rounded-t-[4rem] -mt-10 relative z-0">
+        <div className="max-w-6xl mx-auto text-center">
 
-        <div className="max-w-6xl mx-auto text-center" data-aos="fade-up">
-
-          <h2 className="text-[clamp(1.6rem,3.2vw,2rem)] md:text-[clamp(1.8rem,2.6vw,2.4rem)] font-extrabold text-[#003082] mb-10">
-            ¿Por qué elegir Puerto Copy?
+          <h2 className="text-3xl md:text-5xl font-extrabold text-[#003082] mb-20 tracking-tight fade-in-up">
+            {/* APLICANDO FUENTE PRODUCT SANS AQUI */}
+            ¿Por qué elegir <span className="font-brand">Puerto Copy</span>?
           </h2>
 
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-
-            <AdvCard icon="⚡" title="Entrega Rápida y Puntual">
-              Recibe tus impresiones o planos en el menor tiempo y con gran calidad. Ideal para proyectos urgentes.
-            </AdvCard>
-
-            <AdvCard icon="🎯" title="Calidad Profesional Garantizada">
-              Equipos de alta definición para copias nítidas y colores vivos.
-            </AdvCard>
-
-            <AdvCard icon="🤝" title="Atención Cercana y Personalizada">
-              Te asesoramos para ofrecerte exactamente el servicio que necesitas.
-            </AdvCard>
-
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-10">
+            <AdvantageCard 
+              Icon={Zap} 
+              title="Rapidez Total" 
+              desc="Entendemos la urgencia. Entregas puntuales para tus proyectos críticos." 
+              delay="0"
+            />
+            <AdvantageCard 
+              Icon={Target} 
+              title="Precisión y Calidad" 
+              desc="Equipos de última generación para líneas nítidas y colores fieles." 
+              delay="200ms"
+            />
+            <AdvantageCard 
+              Icon={Heart} 
+              title="Atención Humana" 
+              desc="Más que impresiones, te ofrecemos asesoría experta y trato amable." 
+              delay="400ms"
+            />
           </div>
         </div>
       </section>
 
       {/* CONTACTO */}
-      <Contacto />
+      <div className="bg-white pt-10">
+          <Contacto />
+      </div>
 
-      {/* FOOTER */}
       <Footer />
       <FloatingBubbles />
-
-      {/* Ken Burns */}
-      <style jsx global>{`
-        @keyframes kenburns {
-          0% { transform: scale(1.03) translateZ(0); }
-          50% { transform: scale(1.08) translateZ(0); }
-          100% { transform: scale(1.03) translateZ(0); }
-        }
-      `}</style>
     </div>
   );
 }
 
-/* === COMPONENTES REUTILIZABLES === */
+/* === COMPONENTES DE UI REUTILIZABLES === */
 
-function Card({ icon, title, children, delay = '0' }) {
+function ServiceCard({ Icon, title, desc, delay }) {
   return (
     <div
-      className="group bg-[#F7FAFE] hover:bg-white transition rounded-2xl p-6 shadow-sm hover:shadow-md border border-[#E2EEFB] text-left transform hover:-translate-y-1 duration-300"
-      data-aos="zoom-in"
-      data-aos-delay={delay}
+      className="fade-in-up group bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl border border-gray-100 hover:border-blue-100 transition-all duration-300 ease-out hover:-translate-y-2"
+      style={{transitionDelay: delay}}
     >
-      <div className="text-[#0B63B2] text-4xl mb-4 transition-all duration-300 group-hover:scale-110">
-        {icon}
+      <div className="flex items-center mb-6">
+        <div className="w-16 h-16 rounded-2xl bg-[#F3F7FC] flex items-center justify-center text-[#0B63B2] group-hover:bg-[#0B63B2] group-hover:text-white transition-colors duration-300 shadow-inner">
+          <Icon size={32} strokeWidth={1.5} />
+        </div>
       </div>
-
-      <h3 className="text-lg font-semibold mb-2 text-[#0D2A4E]">
+      <h3 className="text-xl font-bold mb-3 text-[#003082] tracking-tight">
         {title}
       </h3>
-
-      <p className="text-gray-600">{children}</p>
-
-      <div className="mt-4 h-1 w-0 bg-[#0B63B2] rounded-full transition-all duration-300 group-hover:w-16" />
+      <p className="text-gray-500 leading-relaxed text-base font-medium">
+        {desc}
+      </p>
     </div>
   );
 }
 
-function AdvCard({ icon, title, children }) {
+function AdvantageCard({ Icon, title, desc, delay }) {
   return (
     <div
-      className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition transform hover:-translate-y-1 duration-300 border border-[#E5EEF9]"
-      data-aos="fade-up"
+      className="fade-in-up bg-white p-10 rounded-[2.5rem] shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 border border-[#E5EEF9] flex flex-col items-center text-center group"
+      style={{transitionDelay: delay}}
     >
-      <div className="text-[#0B63B2] text-5xl mb-4 transition-all duration-300 group-hover:scale-110">
-        {icon}
+      <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center text-[#0B63B2] mb-8 group-hover:scale-110 transition-transform duration-300">
+        <Icon size={40} strokeWidth={1.5} />
       </div>
-
-      <h3 className="text-lg font-semibold mb-2 text-[#0D2A4E]">
+      <h3 className="text-2xl font-bold mb-4 text-[#0D2A4E]">
         {title}
       </h3>
-
-      <p className="text-gray-600">{children}</p>
+      <p className="text-gray-600 leading-relaxed font-medium">
+        {desc}
+      </p>
     </div>
   );
 }
