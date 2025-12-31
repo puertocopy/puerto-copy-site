@@ -488,6 +488,6 @@ function AdvantageCard({ Icon, title, desc, delay }) {
       <p className="text-gray-600 leading-relaxed font-medium">
         {desc}
       </p>
-    </div>
+    </div>//act
   );
 }
