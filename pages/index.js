@@ -5,6 +5,10 @@ import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Printer, FileText, Boo
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&display=swap');
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   .font-brand {
     font-family: 'Product Sans', 'Outfit', sans-serif;
   }
@@ -55,27 +59,36 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Mapeo de navegación para que coincida con los IDs de las secciones
+  const navLinks = [
+    { name: 'Inicio', href: '#inicio' },
+    { name: 'Servicios', href: '#servicios' },
+    { name: 'Nosotros', href: '#ventajas' }, // "Nosotros" dirige a la sección de Ventajas/Por qué elegirnos
+    { name: 'Contacto', href: '#contacto' }
+  ];
+
   return (
     <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex-shrink-0 flex items-center cursor-pointer">
+          <a href="/" className="flex-shrink-0 flex items-center cursor-pointer decoration-transparent">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mr-2 ${scrolled ? 'bg-[#0B63B2] text-white' : 'bg-white text-[#0B63B2]'}`}>
               <Printer size={24} />
             </div>
             {/* APLICANDO FUENTE PRODUCT SANS AQUI */}
             <span className={`font-bold text-2xl tracking-tight font-brand ${scrolled ? 'text-[#003082]' : 'text-[#003082] md:text-white'}`}>Puerto Copy</span>
-          </div>
+          </a>
           
           <div className="hidden md:flex space-x-8 items-center">
-            {['Inicio', 'Servicios', 'Nosotros', 'Contacto'].map((item) => (
-              <a key={item} href={`#${item.toLowerCase()}`} className={`font-medium hover:text-[#0B63B2] transition-colors ${scrolled ? 'text-gray-600' : 'text-white/90 hover:text-white'}`}>
-                {item}
+            {navLinks.map((item) => (
+              <a key={item.name} href={item.href} className={`font-medium hover:text-[#0B63B2] transition-colors ${scrolled ? 'text-gray-600' : 'text-white/90 hover:text-white'}`}>
+                {item.name}
               </a>
             ))}
-            <button className={`px-5 py-2 rounded-full font-semibold transition-all ${scrolled ? 'bg-[#0B63B2] text-white hover:bg-[#004a8f]' : 'bg-white text-[#0B63B2] hover:bg-gray-100'}`}>
+            {/* Botón funcional hacia /cotizar */}
+            <a href="/cotizar" className={`px-5 py-2 rounded-full font-semibold transition-all inline-block ${scrolled ? 'bg-[#0B63B2] text-white hover:bg-[#004a8f]' : 'bg-white text-[#0B63B2] hover:bg-gray-100'}`}>
               Cotizar
-            </button>
+            </a>
           </div>
 
           <div className="md:hidden flex items-center">
@@ -90,11 +103,14 @@ const Navbar = () => {
       {isOpen && (
         <div className="md:hidden bg-white absolute w-full border-t border-gray-100 shadow-xl">
           <div className="px-4 pt-2 pb-6 space-y-2">
-            {['Inicio', 'Servicios', 'Nosotros', 'Contacto'].map((item) => (
-              <a key={item} href={`#${item.toLowerCase()}`} onClick={() => setIsOpen(false)} className="block px-3 py-3 text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-[#0B63B2] rounded-md">
-                {item}
+            {navLinks.map((item) => (
+              <a key={item.name} href={item.href} onClick={() => setIsOpen(false)} className="block px-3 py-3 text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-[#0B63B2] rounded-md">
+                {item.name}
               </a>
             ))}
+            <a href="/cotizar" className="block px-3 py-3 text-base font-bold text-[#0B63B2] bg-blue-50 rounded-md text-center mt-2">
+                Cotizar Ahora
+            </a>
           </div>
         </div>
       )}
@@ -121,8 +137,8 @@ const Footer = () => (
         <div>
           <h4 className="font-bold text-[#003082] mb-4">Enlaces</h4>
           <ul className="space-y-2 text-gray-600">
-            <li><a href="#" className="hover:text-[#0B63B2]">Servicios</a></li>
-            <li><a href="#" className="hover:text-[#0B63B2]">Facturación</a></li>
+            <li><a href="#servicios" className="hover:text-[#0B63B2]">Servicios</a></li>
+            <li><a href="/factura" className="hover:text-[#0B63B2]">Facturación</a></li>
             <li><a href="#" className="hover:text-[#0B63B2]">Aviso de Privacidad</a></li>
           </ul>
         </div>
@@ -177,7 +193,7 @@ const Contacto = () => (
       </div>
       
       <div className="bg-white p-8 md:p-10 rounded-[2rem] shadow-xl shadow-blue-900/5 border border-gray-100 fade-in-up">
-        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert('Mensaje enviado (simulación)'); }}>
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
                 <input type="text" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#0B63B2] focus:ring-2 focus:ring-blue-100 outline-none transition" placeholder="Tu nombre" />
@@ -309,7 +325,7 @@ export default function Home() {
       <section className="relative z-10 px-4 md:px-12 py-12">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
           
-          {/* Card Cotización */}
+          {/* Card Cotización - AHORA CON LINK REAL */}
           <div className="fade-in-up group bg-white rounded-[2.5rem] p-8 md:p-12 shadow-xl shadow-blue-900/10 hover:shadow-2xl hover:shadow-blue-900/20 transition-all duration-300 transform hover:-translate-y-2 border border-gray-50">
             <div className="flex flex-col items-center text-center h-full justify-between">
               <div>
@@ -323,13 +339,13 @@ export default function Home() {
                   Cotiza planos u otros servicios de impresión en línea. Rápido, claro y sin filas.
                 </p>
               </div>
-              <button className="w-full sm:w-auto bg-[#0B63B2] hover:bg-[#004a8f] text-white font-bold px-10 py-4 rounded-full shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+              <a href="/cotizar" className="w-full sm:w-auto bg-[#0B63B2] hover:bg-[#004a8f] text-white font-bold px-10 py-4 rounded-full shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
                 Generar Cotización <ChevronRight size={18} />
-              </button>
+              </a>
             </div>
           </div>
 
-          {/* Card Facturación */}
+          {/* Card Facturación - AHORA CON LINK REAL */}
           <div className="fade-in-up group bg-white rounded-[2.5rem] p-8 md:p-12 shadow-xl shadow-blue-900/10 hover:shadow-2xl hover:shadow-blue-900/20 transition-all duration-300 transform hover:-translate-y-2 border border-gray-50" style={{transitionDelay: '100ms'}}>
             <div className="flex flex-col items-center text-center h-full justify-between">
               <div>
@@ -343,9 +359,9 @@ export default function Home() {
                   Ingresa tu ticket y datos fiscales. Obten tu factura al instante y sin complicaciones.
                 </p>
               </div>
-              <button className="w-full sm:w-auto bg-[#0B63B2] hover:bg-[#004a8f] text-white font-bold px-10 py-4 rounded-full shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+              <a href="/factura" className="w-full sm:w-auto bg-[#0B63B2] hover:bg-[#004a8f] text-white font-bold px-10 py-4 rounded-full shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
                 Facturar Compra <ChevronRight size={18} />
-              </button>
+              </a>
             </div>
           </div>
 
@@ -488,6 +504,6 @@ function AdvantageCard({ Icon, title, desc, delay }) {
       <p className="text-gray-600 leading-relaxed font-medium">
         {desc}
       </p>
-    </div>//act
+    </div>
   );
 }
