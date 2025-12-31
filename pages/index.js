@@ -288,7 +288,7 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#003082]/90 via-[#003082]/30 to-black/30" />
                 
                 {/* Texto Hero Opcional */}
-                <div className={`absolute bottom-24 left-0 w-full text-center px-4 transition-all duration-1000 transform ${active ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+                <div className={`absolute bottom-32 left-0 w-full text-center px-4 transition-all duration-1000 transform ${active ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
                     <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 drop-shadow-lg tracking-tight">
                         {index === 0 && "Impresión de Planos"}
                         {index === 1 && "Calidad Profesional"}
@@ -303,7 +303,7 @@ export default function Home() {
           })}
 
           {/* Dots Indicator */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10">
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10">
             {slides.map((_, i) => (
               <button
                 key={i}
@@ -320,51 +320,48 @@ export default function Home() {
         </div>
       </section>
 
-      {/* DESTACADOS - Tarjetas Flotantes */}
-      {/* Se eliminó -mt-16 md:-mt-20 para quitar la superposición y se agregó py-12 para dar espacio */}
-      <section className="relative z-10 px-4 md:px-12 py-12">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
-          
-          {/* Card Cotización - AHORA CON LINK REAL */}
-          <div className="fade-in-up group bg-white rounded-[2.5rem] p-8 md:p-12 shadow-xl shadow-blue-900/10 hover:shadow-2xl hover:shadow-blue-900/20 transition-all duration-300 transform hover:-translate-y-2 border border-gray-50">
-            <div className="flex flex-col items-center text-center h-full justify-between">
-              <div>
-                <div className="w-20 h-20 bg-[#F3F7FC] text-[#0B63B2] rounded-3xl flex items-center justify-center mb-6 shadow-inner mx-auto group-hover:bg-[#0B63B2] group-hover:text-white transition-colors duration-500">
-                  <FileText size={40} strokeWidth={1.5} />
+      {/* MENU DE HERRAMIENTAS RÁPIDAS (Cotizar y Facturar) */}
+      <section className="relative z-20 px-4 md:px-12 -mt-20 mb-12">
+        <div className="max-w-5xl mx-auto">
+          <div className="fade-in-up bg-white rounded-[2rem] shadow-2xl shadow-blue-900/15 p-3 md:p-4 flex flex-col md:flex-row gap-3 md:gap-4 border border-white/50 backdrop-blur-sm">
+            
+            {/* Botón Cotizar */}
+            <a href="/cotizar" className="flex-1 group relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-white to-blue-50/50 hover:to-blue-50 border border-gray-100 p-6 md:p-8 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 decoration-transparent">
+              <div className="flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-4 md:gap-6">
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#0B63B2] text-white flex items-center justify-center shadow-lg shadow-blue-900/20 group-hover:scale-110 transition-transform duration-300">
+                     <FileText size={28} />
+                  </div>
+                  <div>
+                     <h3 className="text-xl md:text-2xl font-bold text-[#003082] font-brand">Cotizar</h3>
+                     <p className="text-gray-500 font-medium text-sm md:text-base">Calcula costos al instante</p>
+                  </div>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-[#003082] mb-4 tracking-tight">
-                  ¿Necesitas cotizar?
-                </h2>
-                <p className="text-gray-600 text-lg leading-relaxed mb-8 font-medium">
-                  Cotiza planos u otros servicios de impresión en línea. Rápido, claro y sin filas.
-                </p>
-              </div>
-              <a href="/cotizar" className="w-full sm:w-auto bg-[#0B63B2] hover:bg-[#004a8f] text-white font-bold px-10 py-4 rounded-full shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
-                Generar Cotización <ChevronRight size={18} />
-              </a>
-            </div>
-          </div>
-
-          {/* Card Facturación - AHORA CON LINK REAL */}
-          <div className="fade-in-up group bg-white rounded-[2.5rem] p-8 md:p-12 shadow-xl shadow-blue-900/10 hover:shadow-2xl hover:shadow-blue-900/20 transition-all duration-300 transform hover:-translate-y-2 border border-gray-50" style={{transitionDelay: '100ms'}}>
-            <div className="flex flex-col items-center text-center h-full justify-between">
-              <div>
-                <div className="w-20 h-20 bg-[#F3F7FC] text-[#0B63B2] rounded-3xl flex items-center justify-center mb-6 shadow-inner mx-auto group-hover:bg-[#0B63B2] group-hover:text-white transition-colors duration-500">
-                  <FileCheck size={40} strokeWidth={1.5} />
+                <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 group-hover:bg-[#0B63B2] group-hover:text-white group-hover:border-transparent transition-all duration-300">
+                   <ChevronRight size={20} />
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-[#003082] mb-4 tracking-tight">
-                  Factura tu compra
-                </h2>
-                <p className="text-gray-600 text-lg leading-relaxed mb-8 font-medium">
-                  Ingresa tu ticket y datos fiscales. Obten tu factura al instante y sin complicaciones.
-                </p>
               </div>
-              <a href="/factura" className="w-full sm:w-auto bg-[#0B63B2] hover:bg-[#004a8f] text-white font-bold px-10 py-4 rounded-full shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
-                Facturar Compra <ChevronRight size={18} />
-              </a>
-            </div>
-          </div>
+            </a>
 
+            {/* Botón Facturar */}
+            <a href="/factura" className="flex-1 group relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-white to-blue-50/50 hover:to-blue-50 border border-gray-100 p-6 md:p-8 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 decoration-transparent">
+              <div className="flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-4 md:gap-6">
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#F3F7FC] text-[#0B63B2] flex items-center justify-center shadow-sm border border-blue-100 group-hover:scale-110 transition-transform duration-300">
+                     <FileCheck size={28} />
+                  </div>
+                  <div>
+                     <h3 className="text-xl md:text-2xl font-bold text-[#003082] font-brand">Facturar</h3>
+                     <p className="text-gray-500 font-medium text-sm md:text-base">Genera tu factura aquí</p>
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 group-hover:bg-[#0B63B2] group-hover:text-white group-hover:border-transparent transition-all duration-300">
+                   <ChevronRight size={20} />
+                </div>
+              </div>
+            </a>
+
+          </div>
         </div>
       </section>
 
