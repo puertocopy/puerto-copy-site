@@ -13,8 +13,6 @@ export default function Footer() {
   <div className="flex items-center mb-4">
     <span className="font-bold text-xl text-[#003082] font-brand">Puerto Copy</span>
   </div>
-  {/* El resto del contenido de la columna iría aquí */}
-</div>
             <p className="text-gray-500 max-w-sm">
               Soluciones integrales de impresión en Puerto Vallarta. Calidad profesional para arquitectos, estudiantes y empresas.
             </p>
