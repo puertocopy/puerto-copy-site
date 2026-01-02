@@ -45,13 +45,12 @@ export default function Navbar({ forceWhite = false }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           
-          {/* Logo */}
-          <a href="/" className="flex-shrink-0 flex items-center cursor-pointer decoration-transparent group">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mr-2 transition-transform group-hover:scale-105 ${iconBgClass}`}>
-              <Printer size={24} />
-            </div>
-            <span className={`font-bold text-2xl tracking-tight font-brand ${brandClass}`}>Puerto Copy</span>
-          </a>
+         {/* Logo: Solo Texto */}
+<a href="/" className="flex-shrink-0 flex items-center cursor-pointer decoration-transparent group">
+  <span className={`font-bold text-2xl tracking-tight font-brand ${brandClass}`}>
+    Puerto Copy
+  </span>
+</a>
           
           {/* Desktop Menu */}
           <div className="hidden md:flex space-x-8 items-center">
