@@ -59,7 +59,7 @@ export default function Navbar({ forceWhite = false }) {
                 {item.name}
               </a>
             ))}
-            <a href="/Factura" className={`px-5 py-2 rounded-full font-semibold transition-all inline-block ${forceWhite || scrolled ? 'bg-[#0B63B2] text-white hover:bg-[#004a8f]' : 'bg-white text-[#0B63B2] hover:bg-gray-100'}`}>
+            <a href="/factura" className={`px-5 py-2 rounded-full font-semibold transition-all inline-block ${forceWhite || scrolled ? 'bg-[#0B63B2] text-white hover:bg-[#004a8f]' : 'bg-white text-[#0B63B2] hover:bg-gray-100'}`}>
               Facturar
             </a>
           </div>
@@ -82,7 +82,7 @@ export default function Navbar({ forceWhite = false }) {
                 {item.name}
               </a>
             ))}
-            <a href="/Factura" className="block px-3 py-3 text-base font-bold text-[#0B63B2] bg-blue-50 rounded-md text-center mt-2">
+            <a href="/factura" className="block px-3 py-3 text-base font-bold text-[#0B63B2] bg-blue-50 rounded-md text-center mt-2">
                 Facturar
             </a>
           </div>
