@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Construction, MessageCircle } from 'lucide-react';
 import { MapPin, Phone, Mail, Clock, Printer, FileText, BookOpen, Lock, ScanLine, FileCheck, Zap, Target, Heart, ChevronRight, Sparkles, Check, ChevronDown, Wrench, Menu, X } from 'lucide-react';
 
 // === PARA TU PROYECTO LOCAL: DESCOMENTA ESTAS LINEAS ===
@@ -48,25 +49,37 @@ const Contacto = () => (
         </div>
       </div>
       
-      <div className="bg-white p-8 md:p-10 rounded-[2rem] shadow-xl shadow-blue-900/5 border border-gray-100 fade-in-up">
-        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert('Mensaje enviado (simulación)'); }}>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                <input type="text" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#0B63B2] focus:ring-2 focus:ring-blue-100 outline-none transition" placeholder="Tu nombre" />
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-                <input type="tel" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#0B63B2] focus:ring-2 focus:ring-blue-100 outline-none transition" placeholder="322 000 0000" />
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mensaje</label>
-                <textarea rows="3" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#0B63B2] focus:ring-2 focus:ring-blue-100 outline-none transition" placeholder="¿Qué necesitas imprimir?"></textarea>
-            </div>
-            <button className="w-full bg-[#0B63B2] hover:bg-[#004a8f] text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95">
-                Enviar Mensaje
-            </button>
-        </form>
-      </div>
+      <div className="bg-white p-8 md:p-10 rounded-[2rem] shadow-xl shadow-blue-900/5 border border-gray-100 fade-in-up flex flex-col items-center justify-center text-center h-full min-h-[400px]">
+  
+  {/* Círculo decorativo con icono */}
+  <div className="bg-blue-50 text-[#0B63B2] w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-sm">
+    <Construction size={40} strokeWidth={1.5} />
+  </div>
+
+  {/* Título y Texto */}
+  <h3 className="text-2xl font-bold text-gray-800 mb-3 font-brand">
+    ¡Estamos mejorando!
+  </h3>
+  
+  <p className="text-gray-500 mb-8 max-w-sm mx-auto leading-relaxed">
+    Estamos actualizando nuestro sistema de pedidos web para darte un mejor servicio. Por el momento, atendemos todas tus cotizaciones directamente por WhatsApp.
+  </p>
+
+  {/* Botón de WhatsApp */}
+  <a 
+    href="https://wa.me/5213221916038?text=Hola%20Puerto%20Copy,%20quisiera%20hacer%20una%20cotización..." 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold py-4 rounded-xl shadow-lg shadow-green-500/20 transition transform active:scale-95 flex items-center justify-center gap-3"
+  >
+    <MessageCircle size={24} />
+    <span>Enviar WhatsApp</span>
+  </a>
+
+  <p className="mt-4 text-sm text-gray-400">
+    Respuesta rápida garantizada
+  </p>
+</div>
     </div>
   </section>
 );
