@@ -1,171 +1,27 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Printer, FileText, BookOpen, Lock, ScanLine, FileCheck, Zap, Target, Heart, Menu, X, ChevronRight } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { MapPin, Phone, Mail, Clock, Printer, FileText, BookOpen, Lock, ScanLine, FileCheck, Zap, Target, Heart, ChevronRight, Sparkles, Check, ChevronDown, Wrench, Menu, X } from 'lucide-react';
 
-/* === ESTILOS CSS INLINE PARA ANIMACIONES Y FUENTES === */
+// === PARA TU PROYECTO LOCAL: DESCOMENTA ESTAS LINEAS ===
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import FloatingBubbles from '../components/FloatingBubbles';
+
+/* === ESTILOS CSS INLINE === */
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&display=swap');
 
-  html {
-    scroll-behavior: smooth;
-  }
-
-  .font-brand {
-    font-family: 'Product Sans', 'Outfit', sans-serif;
-  }
-
-  @keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
-    100% { transform: translateY(0px); }
-  }
-  @keyframes kenburns {
-    0% { transform: scale(1.0); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1.0); }
-  }
-  .fade-in-up {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-  }
-  .fade-in-up.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  .bubble {
-    position: absolute;
-    bottom: -100px;
-    background-color: rgba(11, 99, 178, 0.1);
-    border-radius: 50%;
-    animation: floatUp 15s linear infinite;
-  }
-  @keyframes floatUp {
-    0% { transform: translateY(0); opacity: 0; }
-    10% { opacity: 0.8; }
-    90% { opacity: 0.8; }
-    100% { transform: translateY(-100vh); opacity: 0; }
-  }
+  html { scroll-behavior: smooth; }
+  .font-brand { font-family: 'Product Sans', 'Outfit', sans-serif; }
+  
+  @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+  .animate-shimmer { background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%); background-size: 200% 100%; animation: shimmer 2s infinite; }
+  
+  .fade-in-up { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease-out, transform 0.8s ease-out; }
+  .fade-in-up.visible { opacity: 1; transform: translateY(0); }
 `;
 
-/* === COMPONENTES INTERNOS (Simulando los archivos importados) === */
 
-const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Mapeo de navegación para que coincida con los IDs de las secciones
-  const navLinks = [
-    { name: 'Inicio', href: '#inicio' },
-    { name: 'Servicios', href: '#servicios' },
-    { name: 'Nosotros', href: '#ventajas' }, // "Nosotros" dirige a la sección de Ventajas/Por qué elegirnos
-    { name: 'Contacto', href: '#contacto' }
-  ];
-
-  return (
-    <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <a href="/" className="flex-shrink-0 flex items-center cursor-pointer decoration-transparent">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mr-2 ${scrolled ? 'bg-[#0B63B2] text-white' : 'bg-white text-[#0B63B2]'}`}>
-              <Printer size={24} />
-            </div>
-            {/* APLICANDO FUENTE PRODUCT SANS AQUI */}
-            <span className={`font-bold text-2xl tracking-tight font-brand ${scrolled ? 'text-[#003082]' : 'text-[#003082] md:text-white'}`}>Puerto Copy</span>
-          </a>
-          
-          <div className="hidden md:flex space-x-8 items-center">
-            {navLinks.map((item) => (
-              <a key={item.name} href={item.href} className={`font-medium hover:text-[#0B63B2] transition-colors ${scrolled ? 'text-gray-600' : 'text-white/90 hover:text-white'}`}>
-                {item.name}
-              </a>
-            ))}
-            {/* Botón funcional hacia /cotizar */}
-            <a href="/cotizar" className={`px-5 py-2 rounded-full font-semibold transition-all inline-block ${scrolled ? 'bg-[#0B63B2] text-white hover:bg-[#004a8f]' : 'bg-white text-[#0B63B2] hover:bg-gray-100'}`}>
-              Cotizar
-            </a>
-          </div>
-
-          <div className="md:hidden flex items-center">
-            <button onClick={() => setIsOpen(!isOpen)} className={`${scrolled ? 'text-gray-800' : 'text-[#003082]'}`}>
-              {isOpen ? <X size={28} /> : <Menu size={28} />}
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div className="md:hidden bg-white absolute w-full border-t border-gray-100 shadow-xl">
-          <div className="px-4 pt-2 pb-6 space-y-2">
-            {navLinks.map((item) => (
-              <a key={item.name} href={item.href} onClick={() => setIsOpen(false)} className="block px-3 py-3 text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-[#0B63B2] rounded-md">
-                {item.name}
-              </a>
-            ))}
-            <a href="/cotizar" className="block px-3 py-3 text-base font-bold text-[#0B63B2] bg-blue-50 rounded-md text-center mt-2">
-                Cotizar Ahora
-            </a>
-          </div>
-        </div>
-      )}
-    </nav>
-  );
-};
-
-const Footer = () => (
-  <footer className="bg-white border-t border-gray-100 pt-16 pb-8">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="grid md:grid-cols-4 gap-8 mb-12">
-        <div className="col-span-1 md:col-span-2">
-          <div className="flex items-center mb-4">
-            <div className="bg-[#0B63B2] text-white w-8 h-8 rounded-lg flex items-center justify-center mr-2">
-              <Printer size={16} />
-            </div>
-            {/* APLICANDO FUENTE PRODUCT SANS AQUI */}
-            <span className="font-bold text-xl text-[#003082] font-brand">Puerto Copy</span>
-          </div>
-          <p className="text-gray-500 max-w-sm">
-            Soluciones integrales de impresión en Puerto Vallarta. Calidad profesional para arquitectos, estudiantes y empresas.
-          </p>
-        </div>
-        <div>
-          <h4 className="font-bold text-[#003082] mb-4">Enlaces</h4>
-          <ul className="space-y-2 text-gray-600">
-            <li><a href="#servicios" className="hover:text-[#0B63B2]">Servicios</a></li>
-            <li><a href="/factura" className="hover:text-[#0B63B2]">Facturación</a></li>
-            <li><a href="#" className="hover:text-[#0B63B2]">Aviso de Privacidad</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4 className="font-bold text-[#003082] mb-4">Contacto</h4>
-          <ul className="space-y-2 text-gray-600">
-            <li className="flex items-center"><Phone size={14} className="mr-2"/> 322 191 6038</li>
-            <li className="flex items-center"><Mail size={14} className="mr-2"/> hola@puertocopy.com</li>
-          </ul>
-        </div>
-      </div>
-      <div className="border-t border-gray-100 pt-8 text-center text-gray-400 text-sm">
-        {/* APLICANDO FUENTE PRODUCT SANS AQUI */}
-        <p>© 2024 <span className="font-brand">Puerto Copy</span>. Todos los derechos reservados.</p>
-      </div>
-    </div>
-  </footer>
-);
-
-const FloatingBubbles = () => {
-  // Simulación visual simple
-  return (
-    <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-      {/* Las burbujas se generarían dinámicamente o con CSS puro, aquí usamos el estilo inyectado */}
-    </div>
-  );
-};
+/* === COMPONENTES INTERNOS DE LA HOME (Secciones específicas) === */
 
 const Contacto = () => (
   <section id="contacto" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -215,10 +71,9 @@ const Contacto = () => (
   </section>
 );
 
-/* === COMPONENTE PRINCIPAL === */
+/* === COMPONENTE PRINCIPAL (PÁGINA HOME) === */
 
 export default function Home() {
-  // Imágenes de placeholder de alta calidad (Unsplash) porque no tengo acceso a tus archivos locales
   const slides = [
     'https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=2000&auto=format&fit=crop', // Planos
     'https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?q=80&w=2000&auto=format&fit=crop', // Impresora
@@ -226,8 +81,9 @@ export default function Home() {
   ];
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fading, setFading] = useState(true);
+  const [isToolsOpen, setIsToolsOpen] = useState(false); // Estado para el menú desplegable
 
-  // Hook para detectar elementos en viewport y animarlos (reemplazo de AOS)
+  // Intersection Observer para animaciones al hacer scroll
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -242,14 +98,14 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
 
-  // Slider Logic
+  // Lógica del Slider
   useEffect(() => {
     const interval = setInterval(() => {
       setFading(false);
       setTimeout(() => {
         setCurrentSlide(prev => (prev + 1) % slides.length);
         setFading(true);
-      }, 500); // Tiempos ajustados para suavidad
+      }, 500);
     }, 5000);
     return () => clearInterval(interval);
   }, [slides.length]);
@@ -257,7 +113,9 @@ export default function Home() {
   return (
     <div className="bg-white text-gray-900 overflow-x-hidden font-sans">
       <style>{styles}</style>
-      <Navbar />
+      
+      {/* Componentes reutilizables importados */}
+      <Navbar /> 
 
       {/* SEO oculto */}
       <section aria-hidden="true" className="sr-only">
@@ -284,10 +142,10 @@ export default function Home() {
                     active ? 'animate-[kenburns_7s_ease-in-out_forwards]' : ''
                   }`}
                 />
-                {/* Overlay Degradado Profundo */}
+                {/* Overlay Degradado */}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#003082]/90 via-[#003082]/30 to-black/30" />
                 
-                {/* Texto Hero Opcional */}
+                {/* Texto Hero */}
                 <div className={`absolute bottom-32 left-0 w-full text-center px-4 transition-all duration-1000 transform ${active ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
                     <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 drop-shadow-lg tracking-tight">
                         {index === 0 && "Impresión de Planos"}
@@ -320,46 +178,72 @@ export default function Home() {
         </div>
       </section>
 
-      {/* MENU DE HERRAMIENTAS RÁPIDAS (Cotizar y Facturar) */}
-      <section className="relative z-20 px-4 md:px-12 -mt-20 mb-12">
-        <div className="max-w-5xl mx-auto">
-          <div className="fade-in-up bg-white rounded-[2rem] shadow-2xl shadow-blue-900/15 p-3 md:p-4 flex flex-col md:flex-row gap-3 md:gap-4 border border-white/50 backdrop-blur-sm">
+      {/* MENU DE HERRAMIENTAS RÁPIDAS (Dropdown style) */}
+      <section className="relative z-20 px-4 md:px-12 -mt-20 mb-8">
+        <div className="max-w-xl mx-auto">
+          <div className="fade-in-up bg-white rounded-[2rem] shadow-2xl shadow-blue-900/15 border border-white/50 backdrop-blur-sm relative overflow-hidden">
             
-            {/* Botón Cotizar */}
-            <a href="/cotizar" className="flex-1 group relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-white to-blue-50/50 hover:to-blue-50 border border-gray-100 p-6 md:p-8 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 decoration-transparent">
-              <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-4 md:gap-6">
-                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#0B63B2] text-white flex items-center justify-center shadow-lg shadow-blue-900/20 group-hover:scale-110 transition-transform duration-300">
-                     <FileText size={28} />
-                  </div>
-                  <div>
-                     <h3 className="text-xl md:text-2xl font-bold text-[#003082] font-brand">Cotizar</h3>
-                     <p className="text-gray-500 font-medium text-sm md:text-base">Calcula costos al instante</p>
-                  </div>
+            {/* Botón Principal (Trigger) */}
+            <button 
+                onClick={() => setIsToolsOpen(!isToolsOpen)}
+                className="w-full flex items-center justify-between p-6 md:p-8 bg-white hover:bg-gray-50 transition-colors duration-300 outline-none"
+            >
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-[#0B63B2] text-white flex items-center justify-center shadow-lg shadow-blue-900/20">
+                        <Wrench size={24} />
+                    </div>
+                    <div className="text-left">
+                        <h3 className="text-xl font-bold text-[#003082] font-brand">Herramientas</h3>
+                        <p className="text-gray-500 text-sm">Selecciona una opción</p>
+                    </div>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 group-hover:bg-[#0B63B2] group-hover:text-white group-hover:border-transparent transition-all duration-300">
-                   <ChevronRight size={20} />
+                <div className={`w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 transition-transform duration-300 ${isToolsOpen ? 'rotate-180 bg-blue-100 text-[#0B63B2]' : ''}`}>
+                    <ChevronDown size={20} />
                 </div>
-              </div>
-            </a>
+            </button>
 
-            {/* Botón Facturar */}
-            <a href="/factura" className="flex-1 group relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-white to-blue-50/50 hover:to-blue-50 border border-gray-100 p-6 md:p-8 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 decoration-transparent">
-              <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-4 md:gap-6">
-                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#F3F7FC] text-[#0B63B2] flex items-center justify-center shadow-sm border border-blue-100 group-hover:scale-110 transition-transform duration-300">
-                     <FileCheck size={28} />
-                  </div>
-                  <div>
-                     <h3 className="text-xl md:text-2xl font-bold text-[#003082] font-brand">Facturar</h3>
-                     <p className="text-gray-500 font-medium text-sm md:text-base">Genera tu factura aquí</p>
-                  </div>
+            {/* Contenido Desplegable */}
+            <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isToolsOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="p-4 pt-0 border-t border-gray-100 bg-gray-50/50 flex flex-col gap-3">
+                    
+                    {/* Opción Cotizar */}
+                    <a href="/cotizar" className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-200 hover:shadow-md transition-all duration-300 group">
+                        <div className="w-10 h-10 rounded-full bg-blue-50 text-[#0B63B2] flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <FileText size={20} />
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="font-bold text-gray-800 group-hover:text-[#0B63B2] transition-colors">Cotizar</h4>
+                            <p className="text-xs text-gray-500">Calcula costos al instante</p>
+                        </div>
+                        <ChevronRight size={16} className="text-gray-400 group-hover:text-[#0B63B2]" />
+                    </a>
+
+                    {/* Opción Facturar */}
+                    <a href="/factura" className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-200 hover:shadow-md transition-all duration-300 group">
+                        <div className="w-10 h-10 rounded-full bg-blue-50 text-[#0B63B2] flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <FileCheck size={20} />
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="font-bold text-gray-800 group-hover:text-[#0B63B2] transition-colors">Facturar</h4>
+                            <p className="text-xs text-gray-500">Genera tu factura aquí</p>
+                        </div>
+                        <ChevronRight size={16} className="text-gray-400 group-hover:text-[#0B63B2]" />
+                    </a>
+
+                    {/* Opción IA */}
+                    <a href="/ia" className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-200 hover:shadow-md transition-all duration-300 group">
+                        <div className="w-10 h-10 rounded-full bg-blue-50 text-[#0B63B2] flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Sparkles size={20} />
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="font-bold text-gray-800 group-hover:text-[#0B63B2] transition-colors">Puerto Copy AI</h4>
+                            <p className="text-xs text-gray-500">Mejora y corrige tus textos</p>
+                        </div>
+                        <ChevronRight size={16} className="text-gray-400 group-hover:text-[#0B63B2]" />
+                    </a>
+
                 </div>
-                <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 group-hover:bg-[#0B63B2] group-hover:text-white group-hover:border-transparent transition-all duration-300">
-                   <ChevronRight size={20} />
-                </div>
-              </div>
-            </a>
+            </div>
 
           </div>
         </div>
@@ -425,7 +309,6 @@ export default function Home() {
         <div className="max-w-6xl mx-auto text-center">
 
           <h2 className="text-3xl md:text-5xl font-extrabold text-[#003082] mb-20 tracking-tight fade-in-up">
-            {/* APLICANDO FUENTE PRODUCT SANS AQUI */}
             ¿Por qué elegir <span className="font-brand">Puerto Copy</span>?
           </h2>
 
@@ -463,7 +346,7 @@ export default function Home() {
   );
 }
 
-/* === COMPONENTES DE UI REUTILIZABLES === */
+/* === COMPONENTES DE UI REUTILIZABLES (INTERNOS PARA TARJETAS) === */
 
 function ServiceCard({ Icon, title, desc, delay }) {
   return (
