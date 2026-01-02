@@ -1,55 +1,48 @@
+import React from 'react';
+import { Phone, Mail, Printer } from 'lucide-react';
+
 export default function Footer() {
   return (
-    <footer className="bg-[#003082] text-white pt-10 pb-6 px-6 md:px-12 mt-12">
-      <div className="max-w-6xl mx-auto space-y-6 text-sm md:text-base">
-        
-        {/* Navegación interna */}
-        <nav aria-label="Enlaces rápidos">
-          <ul className="flex flex-wrap justify-center gap-x-6 gap-y-3 font-medium">
-            <li>
-              <a href="#inicio" className="hover:text-[#A7C9F2] transition-colors">
-                Inicio
-              </a>
-            </li>
-            <li>
-              <a href="#servicios" className="hover:text-[#A7C9F2] transition-colors">
-                Servicios
-              </a>
-            </li>
-            <li>
-              <a href="#contacto" className="hover:text-[#A7C9F2] transition-colors">
-                Contacto
-              </a>
-            </li>
-            <li>
-              <a href="/factura" className="hover:text-[#A7C9F2] transition-colors">
-                Facturación
-              </a>
-            </li>
-            <li>
-              <a href="/cotizar" className="hover:text-[#A7C9F2] transition-colors">
-                Cotizar
-              </a>
-            </li>
-          </ul>
-        </nav>
+    <footer className="bg-white border-t border-gray-100 pt-16 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid md:grid-cols-4 gap-8 mb-12">
+          
+          {/* Brand Col */}
+          <div className="col-span-1 md:col-span-2">
+            <div className="flex items-center mb-4">
+              <div className="bg-[#0B63B2] text-white w-8 h-8 rounded-lg flex items-center justify-center mr-2">
+                <Printer size={16} />
+              </div>
+              <span className="font-bold text-xl text-[#003082] font-brand">Puerto Copy</span>
+            </div>
+            <p className="text-gray-500 max-w-sm">
+              Soluciones integrales de impresión en Puerto Vallarta. Calidad profesional para arquitectos, estudiantes y empresas.
+            </p>
+          </div>
 
-        {/* Línea divisoria */}
-        <hr className="border-white/20 max-w-xs mx-auto" />
+          {/* Links Col */}
+          <div>
+            <h4 className="font-bold text-[#003082] mb-4">Enlaces</h4>
+            <ul className="space-y-2 text-gray-600">
+              <li><a href="/#servicios" className="hover:text-[#0B63B2]">Servicios</a></li>
+              <li><a href="/factura" className="hover:text-[#0B63B2]">Facturación</a></li>
+              <li><a href="#" className="hover:text-[#0B63B2]">Aviso de Privacidad</a></li>
+            </ul>
+          </div>
 
-        {/* Dirección y contacto */}
-        <address className="not-italic text-center leading-relaxed">
-          📍 Villa Colonial #573, Los Portales, Puerto Vallarta, Jalisco <br />
-          📞 <a href="tel:+523223499334" className="hover:text-[#A7C9F2]">322 349 9334</a> 
-          {" "}| 📧{" "}
-          <a href="mailto:contacto@puertocopy.com" className="hover:text-[#A7C9F2]">
-            contacto@puertocopy.com
-          </a>
-        </address>
+          {/* Contact Col */}
+          <div>
+            <h4 className="font-bold text-[#003082] mb-4">Contacto</h4>
+            <ul className="space-y-2 text-gray-600">
+              <li className="flex items-center"><Phone size={14} className="mr-2"/> 322 191 6038</li>
+              <li className="flex items-center"><Mail size={14} className="mr-2"/> hola@puertocopy.com</li>
+            </ul>
+          </div>
+        </div>
 
-        {/* Nombre y año automático */}
-        <div className="text-center text-white/80 text-xs md:text-sm pt-2">
-          © {new Date().getFullYear()} <span className="font-semibold">Puerto Copy</span> — Copias e Impresión de Planos en Puerto Vallarta
+        {/* Bottom Bar */}
+        <div className="border-t border-gray-100 pt-8 text-center text-gray-400 text-sm">
+          <p>© 2024 <span className="font-brand">Puerto Copy</span>. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>

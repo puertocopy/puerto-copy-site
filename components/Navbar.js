@@ -1,375 +1,94 @@
-import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import React, { useState, useEffect } from 'react';
+import { Menu, X, Printer } from 'lucide-react';
 
-export default function Navbar() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [submenuOpen, setSubmenuOpen] = useState(null); // 'herramientas' | 'ayuda' | null
+export default function Navbar({ forceWhite = false }) {
+  const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const router = useRouter();
 
-  const ayudaRef = useRef(null);
-  const herramientasRef = useRef(null);
-  const navRef = useRef(null);
-
-  const scrollToSection = (id) => {
-    const section = document.getElementById(id);
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      router.push(`/#${id}`);
-    }
-    setMenuOpen(false);
-    setSubmenuOpen(null);
-  };
-
-  // Fondo sólido al hacer scroll
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Cerrar submenús al hacer clic fuera
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (
-        navRef.current &&
-        !navRef.current.contains(e.target)
-      ) {
-        setSubmenuOpen(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  // Clases dinámicas según el estado
+  const navBgClass = forceWhite || scrolled 
+    ? 'bg-white shadow-md py-2' 
+    : 'bg-transparent py-4';
+    
+  const textClass = forceWhite || scrolled
+    ? 'text-gray-600 hover:text-[#0B63B2]'
+    : 'text-white/90 hover:text-white';
 
-  // Cerrar submenús con Escape
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === 'Escape') {
-        setSubmenuOpen(null);
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, []);
+  const brandClass = forceWhite || scrolled
+    ? 'text-[#003082]'
+    : 'text-[#003082] md:text-white';
 
-  const baseNav =
-    'fixed top-0 w-full z-50 text-white transition-colors duration-300';
-  const bg =
-    scrolled || menuOpen
-      ? 'bg-[#003082]/95 shadow-lg backdrop-blur'
-      : 'bg-[#003082]/75 backdrop-blur-md shadow';
+  const iconBgClass = forceWhite || scrolled
+    ? 'bg-[#0B63B2] text-white'
+    : 'bg-white text-[#0B63B2]';
 
-  const linkBase =
-    'cursor-pointer hover:text-[#A7C9F2] focus:outline-none focus-visible:ring-4 focus-visible:ring-white/30 rounded-lg px-1 py-1';
+  const menuButtonClass = forceWhite || scrolled
+    ? 'text-gray-800'
+    : 'text-[#003082] md:text-white';
+
+  // Enlaces de navegación con rutas absolutas
+  const navLinks = [
+    { name: 'Inicio', href: '/' },
+    { name: 'Servicios', href: '/#servicios' },
+    { name: 'Nosotros', href: '/#ventajas' },
+    { name: 'Contacto', href: '/#contacto' }
+  ];
 
   return (
-    <nav ref={navRef} className={`${baseNav} ${bg}`}>
-      <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-        {/* Logo */}
-        <a href="/" className="flex items-center gap-2 group">
-          <img
-            src="/logoweb.png"
-            alt="Puerto Copy Logo"
-            className="h-10 w-auto drop-shadow-sm"
-          />
-          <span className="sr-only">Puerto Copy</span>
-        </a>
+    <nav className={`fixed w-full z-50 transition-all duration-300 ${navBgClass}`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          
+          {/* Logo */}
+          <a href="/" className="flex-shrink-0 flex items-center cursor-pointer decoration-transparent group">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mr-2 transition-transform group-hover:scale-105 ${iconBgClass}`}>
+              <Printer size={24} />
+            </div>
+            <span className={`font-bold text-2xl tracking-tight font-brand ${brandClass}`}>Puerto Copy</span>
+          </a>
+          
+          {/* Desktop Menu */}
+          <div className="hidden md:flex space-x-8 items-center">
+            {navLinks.map((item) => (
+              <a key={item.name} href={item.href} className={`font-medium transition-colors ${textClass}`}>
+                {item.name}
+              </a>
+            ))}
+            <a href="/cotizar" className={`px-5 py-2 rounded-full font-semibold transition-all inline-block ${forceWhite || scrolled ? 'bg-[#0B63B2] text-white hover:bg-[#004a8f]' : 'bg-white text-[#0B63B2] hover:bg-gray-100'}`}>
+              Cotizar
+            </a>
+          </div>
 
-        {/* Menú Desktop */}
-        <ul className="hidden md:flex gap-6 text-sm font-medium items-center relative">
-          <li onClick={() => scrollToSection('inicio')} className={linkBase}>
-            Inicio
-          </li>
-          <li onClick={() => scrollToSection('servicios')} className={linkBase}>
-            Servicios
-          </li>
-          <li onClick={() => router.push('/factura')} className={linkBase}>
-            Facturación
-          </li>
-          <li onClick={() => scrollToSection('contacto')} className={linkBase}>
-            Contacto
-          </li>
-
-          {/* Herramientas */}
-          <li className="relative" ref={herramientasRef}>
-            <button
-              type="button"
-              aria-haspopup="menu"
-              aria-expanded={submenuOpen === 'herramientas'}
-              onClick={() =>
-                setSubmenuOpen(
-                  submenuOpen === 'herramientas' ? null : 'herramientas'
-                )
-              }
-              className={`${linkBase} flex items-center gap-1`}
-            >
-              Herramientas
-              <ChevronDown open={submenuOpen === 'herramientas'} />
+          {/* Mobile Button */}
+          <div className="md:hidden flex items-center">
+            <button onClick={() => setIsOpen(!isOpen)} className={menuButtonClass}>
+              {isOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
-
-            {submenuOpen === 'herramientas' && (
-              <Dropdown align="right">
-                <DropdownItem
-                  onClick={() => {
-                    setSubmenuOpen(null);
-                    router.push('/cotizar');
-                  }}
-                >
-                  Realizar cotización
-                </DropdownItem>
-              </Dropdown>
-            )}
-          </li>
-
-          {/* Ayuda */}
-          <li className="relative" ref={ayudaRef}>
-            <button
-              type="button"
-              aria-haspopup="menu"
-              aria-expanded={submenuOpen === 'ayuda'}
-              onClick={() =>
-                setSubmenuOpen(submenuOpen === 'ayuda' ? null : 'ayuda')
-              }
-              className={`${linkBase} flex items-center gap-1`}
-            >
-              Ayuda
-              <ChevronDown open={submenuOpen === 'ayuda'} />
-            </button>
-
-            {submenuOpen === 'ayuda' && (
-              <Dropdown align="right" width="w-64">
-                <DropdownItem
-                  onClick={() => {
-                    setSubmenuOpen(null);
-                    router.push('/ayuda/como-preparar-archivos');
-                  }}
-                >
-                  Cómo entregar archivos
-                </DropdownItem>
-                <DropdownItem
-                  onClick={() => {
-                    setSubmenuOpen(null);
-                    router.push('/ayuda/formatos-aceptados');
-                  }}
-                >
-                  Formatos aceptados
-                </DropdownItem>
-                <DropdownItem
-                  onClick={() => {
-                    setSubmenuOpen(null);
-                    router.push('/ayuda/tiempo-entrega');
-                  }}
-                >
-                  Tiempo de entrega
-                </DropdownItem>
-              </Dropdown>
-            )}
-          </li>
-        </ul>
-
-        {/* Menú Mobile Icono */}
-        <div className="md:hidden">
-          <button
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Abrir menú"
-            className="p-2 rounded-lg focus:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
-          >
-            <Hamburger open={menuOpen} />
-          </button>
+          </div>
         </div>
       </div>
-
-      {/* Menú Mobile */}
-      <div
-        className={`md:hidden overflow-hidden transition-[max-height,opacity] duration-300 ${
-          menuOpen ? 'max-h-[420px] opacity-100' : 'max-h-0 opacity-0'
-        }`}
-      >
-        <ul className="px-4 pb-4 pt-1 flex flex-col gap-2 text-[15px] font-medium">
-          <li
-            onClick={() => scrollToSection('inicio')}
-            className="px-3 py-2 rounded-lg hover:bg-white/10 active:bg-white/15"
-          >
-            Inicio
-          </li>
-          <li
-            onClick={() => scrollToSection('servicios')}
-            className="px-3 py-2 rounded-lg hover:bg-white/10 active:bg-white/15"
-          >
-            Servicios
-          </li>
-          <li
-            onClick={() => router.push('/factura')}
-            className="px-3 py-2 rounded-lg hover:bg-white/10 active:bg-white/15"
-          >
-            Facturación
-          </li>
-          <li
-            onClick={() => scrollToSection('contacto')}
-            className="px-3 py-2 rounded-lg hover:bg-white/10 active:bg-white/15"
-          >
-            Contacto
-          </li>
-
-          {/* Herramientas (mobile) */}
-          <MobileAccordion
-            label="Herramientas"
-            open={submenuOpen === 'herramientas'}
-            onToggle={() =>
-              setSubmenuOpen(
-                submenuOpen === 'herramientas' ? null : 'herramientas'
-              )
-            }
-          >
-            <li
-              onClick={() => {
-                setMenuOpen(false);
-                setSubmenuOpen(null);
-                router.push('/cotizar');
-              }}
-              className="px-3 py-2 rounded-md hover:bg-white/10 active:bg-white/15"
-            >
-              Realizar cotización
-            </li>
-          </MobileAccordion>
-
-          {/* Ayuda (mobile) */}
-          <MobileAccordion
-            label="Ayuda"
-            open={submenuOpen === 'ayuda'}
-            onToggle={() =>
-              setSubmenuOpen(submenuOpen === 'ayuda' ? null : 'ayuda')
-            }
-          >
-            <li
-              onClick={() => {
-                setMenuOpen(false);
-                setSubmenuOpen(null);
-                router.push('/ayuda/como-preparar-archivos');
-              }}
-              className="px-3 py-2 rounded-md hover:bg-white/10 active:bg-white/15"
-            >
-              Cómo entregar archivos
-            </li>
-            <li
-              onClick={() => {
-                setMenuOpen(false);
-                setSubmenuOpen(null);
-                router.push('/ayuda/formatos-aceptados');
-              }}
-              className="px-3 py-2 rounded-md hover:bg-white/10 active:bg-white/15"
-            >
-              Formatos aceptados
-            </li>
-            <li
-              onClick={() => {
-                setMenuOpen(false);
-                setSubmenuOpen(null);
-                router.push('/ayuda/tiempo-entrega');
-              }}
-              className="px-3 py-2 rounded-md hover:bg-white/10 active:bg-white/15"
-            >
-              Tiempo de entrega
-            </li>
-          </MobileAccordion>
-        </ul>
-      </div>
-    </nav>
-  );
-}
-
-/* ====== Subcomponentes ====== */
-
-function Dropdown({ children, align = 'left', width = 'w-48' }) {
-  const alignment = align === 'right' ? 'right-0' : 'left-0';
-  return (
-    <ul
-      role="menu"
-      className={`absolute ${alignment} mt-2 ${width} bg-white text-[#0B63B2] rounded-xl shadow-lg py-2 z-50 border border-[#D8E6F6]`}
-    >
-      {children}
-    </ul>
-  );
-}
-
-function DropdownItem({ children, onClick }) {
-  return (
-    <li
-      role="menuitem"
-      onClick={onClick}
-      className="px-4 py-2 hover:bg-[#F3F7FC] cursor-pointer text-[15px]"
-    >
-      {children}
-    </li>
-  );
-}
-
-function ChevronDown({ open }) {
-  return (
-    <svg
-      className={`w-4 h-4 mt-[1px] transition-transform ${open ? 'rotate-180' : ''}`}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-    </svg>
-  );
-}
-
-function Hamburger({ open }) {
-  return (
-    <svg
-      className="w-7 h-7"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.3"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      {open ? (
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-      ) : (
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+      
+      {/* Mobile Menu Panel */}
+      {isOpen && (
+        <div className="md:hidden bg-white absolute w-full border-t border-gray-100 shadow-xl">
+          <div className="px-4 pt-2 pb-6 space-y-2">
+            {navLinks.map((item) => (
+              <a key={item.name} href={item.href} onClick={() => setIsOpen(false)} className="block px-3 py-3 text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-[#0B63B2] rounded-md">
+                {item.name}
+              </a>
+            ))}
+            <a href="/cotizar" className="block px-3 py-3 text-base font-bold text-[#0B63B2] bg-blue-50 rounded-md text-center mt-2">
+                Cotizar Ahora
+            </a>
+          </div>
+        </div>
       )}
-    </svg>
-  );
-}
-
-function MobileAccordion({ label, children, open, onToggle }) {
-  return (
-    <li className="rounded-lg">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/10 active:bg-white/15 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/30"
-        aria-expanded={open}
-      >
-        <span>{label}</span>
-        <svg
-          className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      <div
-        className={`overflow-hidden transition-[max-height,opacity] duration-300 ${
-          open ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
-        }`}
-      >
-        <ul className="pl-2 pt-1 flex flex-col gap-1">{children}</ul>
-      </div>
-    </li>
+    </nav>
   );
 }
