@@ -1,20 +1,39 @@
 import { useEffect, useState } from 'react';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import { Check, CheckCircle } from 'lucide-react'; // Asegúrate de tener lucide-react instalado, o elimina esta línea si no lo usas.
+
+// Componentes originales
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import FloatingBubbles from "../components/FloatingBubbles";
 import PasoSeleccionCategoria from '../components/PasoSeleccionCategoria';
 import FlujoPlanos from '../components/FlujoPlanos';
 import ResumenCotizacion from '../components/ResumenCotizacion';
-import productosData from '../data/productosPorTipoPrincipal_conPlanos.json';
 import PasoSubirArchivos from '../components/PasoSubirArchivos';
+
+// Datos
+import productosData from '../data/productosPorTipoPrincipal_conPlanos.json';
+
+/* === ESTILOS CSS INLINE PARA FUENTES Y SCROLL === */
+const styles = `
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&display=swap');
+  html { scroll-behavior: smooth; }
+  .font-brand { font-family: 'Product Sans', 'Outfit', sans-serif; }
+  
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: #f1f1f1; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+`;
 
 export default function Cotizar() {
   const [categoria, setCategoria] = useState('');
   const [carrito, setCarrito] = useState([]);
   const [mostrarCargaArchivos, setMostrarCargaArchivos] = useState(false);
   const [archivosAsignados, setArchivosAsignados] = useState([]);
+  const [completado, setCompletado] = useState(false); // Estado para mostrar mensaje final si es necesario
 
   // Inicializamos AOS
   useEffect(() => {
@@ -23,10 +42,7 @@ export default function Cotizar() {
 
   const categorias = productosData.map((cat) => cat.TipoPrincipal);
 
-  const productosSeleccionados = productosData.find(
-    (p) => p.TipoPrincipal === categoria
-  )?.Productos || [];
-
+  // Funciones de lógica original
   const agregarAlCarrito = (producto) => {
     setCarrito((prev) => [...prev, producto]);
     setCategoria('');
@@ -45,69 +61,129 @@ export default function Cotizar() {
     setCarrito(nuevos);
   };
 
+  const finalizarCotizacion = () => {
+    // Aquí iría tu lógica de envío final si la tienes en PasoSubirArchivos, 
+    // o simplemente cambiamos el estado visual
+    setCompletado(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <>
-      <Navbar />
+    <div className="bg-[#FDFDFD] min-h-screen flex flex-col font-sans text-gray-900">
+      <style>{styles}</style>
       
-      {/* Sección principal con un estilo más profesional y centrado */}
-      <main className="min-h-screen bg-[#F3F7FC] text-gray-900 p-6 flex flex-col items-center pt-24 md:py-20">
+      {/* Navbar forzando fondo blanco para consistencia con el diseño nuevo */}
+      <Navbar /> 
+      <FloatingBubbles />
+
+      <main className="flex-grow pt-28 pb-20 px-4 md:px-8 relative z-10">
         
-        <div className="w-full max-w-7xl px-4 md:px-8">
-          <h1 
-            className="text-[clamp(2rem,3.5vw,2.8rem)] font-extrabold text-[#003082] text-center mb-12"
-            data-aos="fade-up"
-          >
-            Generar tu Cotización
-          </h1>
-
-          <div 
-            className="w-full max-w-5xl mx-auto flex flex-col md:flex-row md:items-start gap-10 p-6 md:p-10 bg-white rounded-3xl shadow-xl border border-[#E2EEFB]"
-            data-aos="fade-up"
-            data-aos-delay="200"
-          >
-            {/* Contenedor principal para los pasos del formulario */}
-            <div className="flex-1">
-              {!categoria && !mostrarCargaArchivos && (
-                <PasoSeleccionCategoria
-                  categorias={categorias}
-                  onSelect={(cat) => {
-                    setCategoria(cat);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                />
-              )}
-
-              {categoria === 'Planos' && !mostrarCargaArchivos && (
-                <FlujoPlanos onAgregar={agregarAlCarrito} />
-              )}
-
-              {mostrarCargaArchivos && (
-                <PasoSubirArchivos
-                  productos={carrito}
-                  archivosAsignados={archivosAsignados}
-                  setArchivosAsignados={setArchivosAsignados}
-                />
-              )}
+        {!completado ? (
+          <div className="max-w-7xl mx-auto">
+            
+            {/* Encabezado con Diseño Nuevo */}
+            <div className="text-center mb-12" data-aos="fade-up">
+              <span className="text-[#0B63B2] font-bold tracking-wider uppercase text-xs bg-blue-50 px-4 py-2 rounded-full border border-blue-100">
+                Cotizador en Línea
+              </span>
+              <h1 className="text-4xl md:text-5xl font-extrabold mt-6 text-[#003082] tracking-tight font-brand">
+                {mostrarCargaArchivos ? 'Adjuntar Archivos' : 'Generar Cotización'}
+              </h1>
+              <p className="text-gray-500 mt-4 text-lg max-w-2xl mx-auto">
+                {mostrarCargaArchivos 
+                  ? 'Sube los archivos necesarios para completar tu pedido.' 
+                  : 'Selecciona una categoría y configura tus productos.'}
+              </p>
             </div>
 
-            {/* Resumen de la cotización con estilo mejorado */}
-            <div className="md:w-[350px] w-full border-t md:border-t-0 md:border-l border-gray-200 pt-6 md:pt-0 md:pl-8">
-              <ResumenCotizacion
-                productos={carrito}
-                onEliminar={eliminarDelCarrito}
-                onActualizarCantidad={actualizarCantidad}
-                onContinuar={() => setMostrarCargaArchivos(true)}
-              />
+            {/* Estructura Flex: Izquierda (Formulario) - Derecha (Resumen Sticky) */}
+            <div className="flex flex-col lg:flex-row gap-8 items-start relative">
+              
+              {/* COLUMNA IZQUIERDA: Flujo de selección */}
+              <div className="flex-1 w-full min-w-0" data-aos="fade-up" data-aos-delay="200">
+                
+                {/* Paso 1: Selección de Categoría */}
+                {!categoria && !mostrarCargaArchivos && (
+                  <PasoSeleccionCategoria
+                    categorias={categorias}
+                    onSelect={(cat) => {
+                      setCategoria(cat);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  />
+                )}
+
+                {/* Paso 2: Flujo Específico (Planos u otros) */}
+                {/* Nota: Envuelto en div para mantener animaciones */}
+                {categoria && !mostrarCargaArchivos && (
+                  <div className="animate-fade-in-up">
+                    <button 
+                      onClick={() => setCategoria('')} 
+                      className="mb-4 text-sm text-gray-500 hover:text-[#0B63B2] flex items-center gap-1 transition-colors"
+                    >
+                      ← Volver a categorías
+                    </button>
+                    {/* Aquí renderizamos tu componente original FlujoPlanos */}
+                    <FlujoPlanos onAgregar={agregarAlCarrito} />
+                  </div>
+                )}
+
+                {/* Paso 3: Subida de Archivos */}
+                {mostrarCargaArchivos && (
+                  <PasoSubirArchivos
+                    productos={carrito}
+                    archivosAsignados={archivosAsignados}
+                    setArchivosAsignados={setArchivosAsignados}
+                    // Si PasoSubirArchivos tiene un botón finalizar, pásale la función:
+                    onFinalizar={finalizarCotizacion} 
+                  />
+                )}
+              </div>
+
+              {/* COLUMNA DERECHA: Resumen (Solo aparece si hay items y no hemos terminado) */}
+              {carrito.length > 0 && !completado && (
+                <div 
+                  className="w-full lg:w-[400px] flex-shrink-0 sticky top-28" 
+                  data-aos="fade-left" 
+                  data-aos-delay="300"
+                >
+                  <ResumenCotizacion
+                    productos={carrito}
+                    onEliminar={eliminarDelCarrito}
+                    onActualizarCantidad={actualizarCantidad}
+                    onContinuar={() => {
+                        setMostrarCargaArchivos(true);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        ) : (
+          /* PANTALLA DE ÉXITO (Opcional, basado en el diseño nuevo) */
+          <div className="max-w-2xl mx-auto text-center py-20 px-4" data-aos="zoom-in">
+             <div className="w-28 h-28 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-green-100 border-4 border-white">
+                {/* Usando icono CheckCircle de lucide o un SVG simple */}
+                <CheckCircle size={56} strokeWidth={2} />
+             </div>
+             <h2 className="text-4xl md:text-5xl font-extrabold text-[#003082] mb-6 font-brand">¡Cotización Lista!</h2>
+             <p className="text-xl text-gray-600 mb-10 leading-relaxed">
+                Hemos procesado tu información.
+             </p>
+             <div className="flex justify-center gap-4">
+                <button onClick={() => window.location.reload()} className="px-8 py-4 bg-white text-gray-700 font-bold rounded-xl border border-gray-200 hover:bg-gray-50 transition-all shadow-sm">
+                  Nueva Cotización
+                </button>
+                <a href="/" className="px-8 py-4 bg-[#0B63B2] text-white font-bold rounded-xl hover:bg-[#004a8f] shadow-lg shadow-blue-500/20 transition-all">
+                  Volver al Inicio
+                </a>
+             </div>
+          </div>
+        )}
+
       </main>
       <Footer />
-      <FloatingBubbles />
-    </>
+    </div>
   );
 }
-
-// Nota: Asegúrate de que los componentes como PasoSeleccionCategoria, FlujoPlanos, etc.,
-// tengan estilos que también sigan la misma línea de diseño (colores, sombras, bordes redondeados).
-// Por ejemplo, para los botones, usar 'bg-[#0B63B2] hover:brightness-110' como en la página de inicio.
