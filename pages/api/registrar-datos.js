@@ -22,6 +22,10 @@ export default async function handler(req, res) {
       return res.status(502).json({ status: 'error', message: 'Upstream error', upstream: json });
     }
 
+    if (json && json.status === 'error') {
+      return res.status(400).json(json);
+    }
+
     return res.status(200).json(json);
   } catch (err) {
     return res.status(500).json({ status: 'error', message: String(err) });

@@ -204,9 +204,12 @@ export default function Facturar() {
           usoCfdi: usoCfdiLabel 
         }),
       });
-      
-      if (!res.ok) throw new Error('Error al registrar.');
-      
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || data.status === 'error') {
+        throw new Error(data.message || 'Error al registrar.');
+      }
+
       setFacturaGenerada({ pdf_url: null });
       setSuccess('Solicitud enviada correctamente.');
     } catch (err) { 
