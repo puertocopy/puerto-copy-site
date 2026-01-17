@@ -16,13 +16,19 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve"
+    "jsx": "react-jsx"
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
-    "**/*.tsx"
-, "components/Footer.js", "components/TipoImpresionSelector.js", "components/TamanoSelector.js", "components/ColorSelector.js", "components/PasoColor.js", "pages/pedido.js"  ],
+    "**/*.tsx",
+    "components/Footer.js",
+    "components/TipoImpresionSelector.js",
+    "components/TamanoSelector.js",
+    "components/ColorSelector.js",
+    "components/PasoColor.js",
+    "pages/pedido.js"
+  ],
   "exclude": [
     "node_modules"
   ]
