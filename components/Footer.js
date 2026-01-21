@@ -33,7 +33,7 @@ export default function Footer() {
             <h4 className="font-bold text-[#003082] mb-4">Contacto</h4>
             <ul className="space-y-2 text-gray-600">
               <li className="flex items-center"><Phone size={14} className="mr-2"/> 322 191 6038</li>
-              <li className="flex items-center"><Mail size={14} className="mr-2"/> hola@puertocopy.com</li>
+              <li className="flex items-center"><Mail size={14} className="mr-2"/> impresiones@puertocopy.com</li>
             </ul>
           </div>
         </div>

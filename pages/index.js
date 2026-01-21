@@ -43,7 +43,7 @@ const Contacto = () => (
                 <Clock className="text-[#0B63B2] mt-1 mr-4 shrink-0" size={24} />
                 <div>
                     <h4 className="font-bold text-[#003082]">Horario</h4>
-                    <p className="text-gray-600">Lun - Vie: 9:00 - 19:00 | Sáb: 10:00 - 14:00</p>
+                    <p className="text-gray-600">Lun - Vie: 8:00 - 18:00 | Sáb: 10:00 - 14:00</p>
                 </div>
             </div>
         </div>
