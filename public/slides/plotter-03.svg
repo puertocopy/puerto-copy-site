@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1200" viewBox="0 0 2000 1200">
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#081E3F"/>
+      <stop offset="55%" stop-color="#0B63B2"/>
+      <stop offset="100%" stop-color="#F2F5FA"/>
+    </linearGradient>
+    <pattern id="grid3" width="70" height="70" patternUnits="userSpaceOnUse">
+      <path d="M70 0H0V70" fill="none" stroke="#B9D0F0" stroke-width="1" opacity="0.35"/>
+    </pattern>
+  </defs>
+  <rect width="2000" height="1200" fill="url(#bg3)"/>
+  <rect width="2000" height="1200" fill="url(#grid3)"/>
+
+  <!-- Desk -->
+  <g transform="translate(180 640)">
+    <rect x="0" y="0" width="1640" height="260" rx="40" fill="#0A1B35"/>
+    <rect x="60" y="40" width="1520" height="80" rx="20" fill="#1D3B6A"/>
+  </g>
+
+  <!-- Plans spread -->
+  <g transform="translate(260 260)">
+    <rect x="0" y="0" width="760" height="520" rx="28" fill="#FFFFFF"/>
+    <rect x="40" y="40" width="680" height="440" rx="20" fill="#E7F0FF"/>
+    <path d="M100 140H640M100 240H640M100 340H640M100 440H640" stroke="#AFC3E6" stroke-width="6"/>
+    <rect x="120" y="120" width="200" height="140" rx="12" fill="none" stroke="#8DB5FF" stroke-width="6"/>
+  </g>
+
+  <!-- Rolled plan -->
+  <g transform="translate(1080 320)">
+    <rect x="0" y="0" width="620" height="160" rx="20" fill="#EAF2FF"/>
+    <rect x="30" y="25" width="560" height="110" rx="16" fill="#FFFFFF"/>
+    <path d="M70 80H560" stroke="#B5C8E6" stroke-width="8"/>
+  </g>
+
+  <!-- Hand silhouette -->
+  <g transform="translate(1120 560)">
+    <path d="M120 220c20-40 40-70 80-80 50-12 90 14 130 40 30 20 90 20 120-10l40-40c20-20 50-20 70 0 20 20 20 50 0 70l-80 80c-60 60-160 90-250 80l-100-12c-20-2-40-20-40-40 0-30 10-70 30-88z" fill="#F0D7C2" opacity="0.95"/>
+  </g>
+</svg>

@@ -206,8 +206,8 @@ export default function Facturar() {
       });
       const data = await res.json().catch(() => ({}));
 
-      if (!res.ok || data.status === 'error') {
-        throw new Error(data.message || 'Error al registrar.');
+      if (!res.ok || !data || data.status !== 'ok') {
+        throw new Error(data?.message || 'Error al registrar.');
       }
 
       setFacturaGenerada({ pdf_url: null });
@@ -245,10 +245,8 @@ export default function Facturar() {
       <div className="min-h-screen bg-[#FDFDFD] pt-28 pb-16 font-sans">
         <div className="mx-auto w-full max-w-screen-2xl px-4 grid grid-cols-1 xl:grid-cols-[200px_minmax(0,1fr)_200px] 2xl:grid-cols-[300px_minmax(0,1fr)_300px] gap-6">
           
-          {/* Panel Izquierdo */}
-          <div className="hidden xl:block sticky top-32 self-start h-[calc(100vh-10rem)]">
-             <SidePanel side="left" alt="Publicidad Puerto Copy Izquierda" />
-          </div>
+          {/* Panel Izquierdo (banners removidos) */}
+          <div className="hidden xl:block sticky top-32 self-start h-[calc(100vh-10rem)]" />
           
           {/* Contenido Principal */}
           <main className="min-w-0 max-w-4xl mx-auto w-full relative z-10">
@@ -414,10 +412,8 @@ export default function Facturar() {
             )}
           </main>
 
-          {/* Panel Derecho */}
-          <div className="hidden xl:block sticky top-32 self-start h-[calc(100vh-10rem)]">
-             <SidePanel side="right" alt="Publicidad Puerto Copy Derecha" />
-          </div>
+          {/* Panel Derecho (banners removidos) */}
+          <div className="hidden xl:block sticky top-32 self-start h-[calc(100vh-10rem)]" />
         </div>
       </div>
 

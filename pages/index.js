@@ -88,9 +88,9 @@ const Contacto = () => (
 
 export default function Home() {
   const slides = [
-    'https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=2000&auto=format&fit=crop', // Planos
-    'https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?q=80&w=2000&auto=format&fit=crop', // Impresora
-    'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=2000&auto=format&fit=crop'  // Oficina
+    '/slides/plotter-01.svg', // Planos
+    '/slides/plotter-02.svg', // Impresora
+    '/slides/plotter-03.svg'  // Revisión de planos
   ];
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fading, setFading] = useState(true);
