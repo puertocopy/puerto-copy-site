@@ -17,6 +17,9 @@ export default async function handler(req, res) {
     const text = await r.text(); // Apps Script siempre responde texto
     let json;
     try { json = JSON.parse(text); } catch { json = { raw: text }; }
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('GAS response', { status: r.status, text });
+    }
 
     if (!r.ok) {
       return res.status(502).json({ status: 'error', message: 'Upstream error', upstream: json });
@@ -24,6 +27,10 @@ export default async function handler(req, res) {
 
     if (json && json.status === 'error') {
       return res.status(400).json(json);
+    }
+
+    if (!json || json.status !== 'ok') {
+      return res.status(200).json({ status: 'ok', message: text, upstream: json });
     }
 
     return res.status(200).json(json);
