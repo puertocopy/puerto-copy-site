@@ -303,6 +303,13 @@ export default function Facturar() {
                     {loading ? 'Validando...' : 'Buscar ticket'} {!loading && <ArrowRight size={20} />}
                   </button>
                 </div>
+                <div className="mt-3 w-full max-w-sm mx-auto rounded-2xl border border-blue-100 bg-blue-50/60 text-blue-900 px-5 py-2.5 text-xs md:text-sm flex items-start gap-2">
+                  <AlertCircle className="shrink-0 mt-0.5 text-blue-700" size={16} />
+                  <p>
+                    Emisión manual por el momento; este formulario es solo un registro. No dupliques tickets.
+                    La factura se enviará en 72 horas hábiles después del registro.
+                  </p>
+                </div>
               </motion.div>
             )}
 
