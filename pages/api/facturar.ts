@@ -1,4 +1,40 @@
-export default async function handler(req, res) {
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+const SANDBOX_BASE_URL = 'https://apisandbox.facturama.mx';
+const PROD_BASE_URL = 'https://api.facturama.mx';
+const SANDBOX_DEMO_USER = 'pruebas';
+const SANDBOX_DEMO_PASSWORD = 'pruebas2011';
+
+function getBaseUrl() {
+  if (process.env.FACTURAMA_API_BASE_URL) {
+    return process.env.FACTURAMA_API_BASE_URL;
+  }
+  return process.env.FACTURAMA_SANDBOX === 'true' ? SANDBOX_BASE_URL : PROD_BASE_URL;
+}
+
+function getAuthHeader() {
+  const isSandbox = process.env.FACTURAMA_SANDBOX === 'true';
+  const user = process.env.FACTURAMA_USER;
+  const pass = process.env.FACTURAMA_PASSWORD;
+  const canUseDemo =
+    isSandbox && (!user || !pass) && process.env.NODE_ENV !== 'production';
+
+  const authUser = canUseDemo ? SANDBOX_DEMO_USER : user;
+  const authPass = canUseDemo ? SANDBOX_DEMO_PASSWORD : pass;
+
+  if (!authUser || !authPass) {
+    return null;
+  }
+
+  const base64 = Buffer.from(`${authUser}:${authPass}`).toString('base64');
+  return {
+    header: `Basic ${base64}`,
+    user: authUser,
+    base64Length: base64.length
+  };
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Método no permitido' });
   }
@@ -12,95 +48,149 @@ export default async function handler(req, res) {
     usoCfdi,
     codigoPostal,
     email
-  } = req.body;
+  } = req.body || {};
 
   if (!productos || productos.length === 0) {
     return res.status(400).json({ message: 'No se proporcionaron productos' });
   }
 
-  // Construir el objeto de factura
-  const esSandbox = process.env.FACTURACION_SANDBOX === 'true';
+  const requiredEnv = [
+    'FACTURAMA_ISSUER_RFC',
+    'FACTURAMA_ISSUER_NAME',
+    'FACTURAMA_ISSUER_REGIMEN'
+  ];
+  const missingEnv = requiredEnv.filter((key) => !process.env[key]);
+  if (missingEnv.length) {
+    return res.status(500).json({ message: `Faltan variables de entorno: ${missingEnv.join(', ')}` });
+  }
 
-const emisor = esSandbox
-  ? {
-      Rfc: 'CACX7605101P8',
-      Nombre: 'XOCHILT CASAS CHAVEZ',
-      RegimenFiscal: '621'
-    }
-  : {
-      Rfc: process.env.EMISOR_RFC,
-      Nombre: process.env.EMISOR_NAME,
-      RegimenFiscal: process.env.EMISOR_REGIMEN
+  const baseUrl = getBaseUrl();
+  const authHeader = getAuthHeader();
+  if (!authHeader) {
+    return res.status(500).json({ message: 'Faltan credenciales de Facturama (usuario y password)' });
+  }
+  if (process.env.NODE_ENV !== 'production') {
+    const maskedUser = authHeader.user ? `${authHeader.user.slice(0, 2)}***` : '??';
+    console.log('facturamaBaseUrl', baseUrl);
+    console.log('facturamaUser', maskedUser);
+    console.log('authHeader', 'Basic ', authHeader.base64Length);
+  }
+
+  const items = productos.map((item) => {
+    const quantity = Number(item.cantidad) || 0;
+    const unitPrice = Number(item.precio_unitario) || 0;
+    const subtotal = quantity * unitPrice;
+    const taxTotal = +(subtotal * 0.16).toFixed(2);
+    return {
+      ProductCode: '81112100',
+      UnitCode: 'E48',
+      Description: String(item.nombre || 'Servicio'),
+      Quantity: quantity,
+      UnitPrice: unitPrice,
+      Subtotal: subtotal,
+      Taxes: [
+        {
+          Total: taxTotal,
+          Name: 'IVA',
+          Base: subtotal,
+          Rate: 0.16,
+          IsRetention: false
+        }
+      ]
     };
+  });
 
-  const facturaPayload = {
-    Receptor: {
-      Rfc: rfc,
-      Nombre: razonSocial,
-      DomicilioFiscalReceptor: codigoPostal,
-      RegimenFiscalReceptor: regimenFiscal,
-      UsoCFDI: usoCfdi
+  const payload = {
+    CfdiType: 'I',
+    PaymentForm: '01',
+    PaymentMethod: 'PUE',
+    ExpeditionPlace: codigoPostal,
+    Currency: 'MXN',
+    Issuer: {
+      Rfc: process.env.FACTURAMA_ISSUER_RFC,
+      Name: process.env.FACTURAMA_ISSUER_NAME,
+      FiscalRegime: process.env.FACTURAMA_ISSUER_REGIMEN
     },
-    Emisor: emisor,
-
-    Conceptos: productos.map((item) => ({
-      ClaveProdServ: '81112100', // Genérico impresión
-      Cantidad: item.cantidad,
-      ClaveUnidad: 'E48', // Servicio
-      Descripcion: item.nombre,
-      ValorUnitario: item.precio_unitario,
-      Importe: item.cantidad * item.precio_unitario,
-      ObjetoImp: '02', // sujeto a impuesto
-      Impuestos: {
-        Traslados: [
-          {
-            Base: item.cantidad * item.precio_unitario,
-            Impuesto: '002', // IVA
-            TipoFactor: 'Tasa',
-            TasaOCuota: 0.16,
-            Importe: (item.cantidad * item.precio_unitario * 0.16)
-          }
-        ]
-      }
-    })),
-    MetodoPago: 'PUE',
-    FormaPago: '01',
-    TipoDeComprobante: 'I',
-    Exportacion: '01',
-    LugarExpedicion: codigoPostal
+    Receiver: {
+      Rfc: rfc,
+      Name: razonSocial,
+      CfdiUse: usoCfdi,
+      FiscalRegime: regimenFiscal,
+      TaxZipCode: codigoPostal,
+      Email: email
+    },
+    Items: items,
+    OrderNumber: ticket,
+    Notes: `Registro de ticket ${ticket}. Emision manual.`
   };
 
   try {
-    const response = await fetch(`${process.env.FACTURA_COM_API_BASE_URL}/v4/cfdi40/create`, {
+    const createRes = await fetch(`${baseUrl}/3/cfdis`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        apikey: process.env.FACTURA_COM_API_KEY,
-        Authorization: `Bearer ${process.env.FACTURA_COM_API_SECRET}`
+        Authorization: authHeader.header,
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(facturaPayload)
+      body: JSON.stringify(payload)
     });
-    
 
-    const rawText = await response.text();
-console.log('FACTURA SANDBOX RESPUESTA:', rawText);
-const data = JSON.parse(rawText);
-
-
-    if (!response.ok) {
-      return res.status(response.status).json({ message: data.message || 'Error al generar factura', detalles: data });
+    const createData = await createRes.json().catch(() => ({}));
+    if (process.env.NODE_ENV !== 'production' && createRes.status === 401) {
+      const authHeaderValue = createRes.headers.get('www-authenticate');
+      if (authHeaderValue) {
+        console.log('facturamaWwwAuthenticate', authHeaderValue);
+      }
+    }
+    if (!createRes.ok) {
+      return res.status(createRes.status).json({
+        message: 'Error al generar CFDI',
+        facturamaStatus: createRes.status,
+        facturamaResponse: createData
+      });
     }
 
-    // Enviar la factura por correo al cliente
-    // Aquí puedes usar Nodemailer o Mailgun si deseas enviar el PDF/XML
+    const cfdiId = createData.Id;
+    if (!cfdiId) {
+      return res.status(502).json({ message: 'Respuesta inválida de Facturama', detalles: createData });
+    }
+
+    const [pdfRes, xmlRes] = await Promise.all([
+      fetch(`${baseUrl}/3/cfdis/${cfdiId}/pdf`, {
+        headers: { Authorization: authHeader.header }
+      }),
+      fetch(`${baseUrl}/3/cfdis/${cfdiId}/xml`, {
+        headers: { Authorization: authHeader.header }
+      })
+    ]);
+
+    if (!pdfRes.ok || !xmlRes.ok) {
+      const [pdfError, xmlError] = await Promise.all([
+        pdfRes.ok ? Promise.resolve(null) : pdfRes.text().catch(() => null),
+        xmlRes.ok ? Promise.resolve(null) : xmlRes.text().catch(() => null)
+      ]);
+      return res.status(502).json({
+        message: 'Error al obtener PDF/XML',
+        facturamaStatus: {
+          pdf: pdfRes.status,
+          xml: xmlRes.status
+        },
+        facturamaResponse: {
+          pdf: pdfError,
+          xml: xmlError
+        }
+      });
+    }
+
+    const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer()).toString('base64');
+    const xmlText = await xmlRes.text();
 
     return res.status(200).json({
       message: 'Factura generada correctamente',
-      links: data.Links,
-      debug: data // 👈 Esto es clave
-        
+      cfdiId,
+      pdf: pdfBuffer,
+      xml: xmlText
     });
-  } catch (error) {
-    return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+  } catch (error: any) {
+    return res.status(500).json({ message: 'Error interno del servidor', error: String(error?.message || error) });
   }
 }
