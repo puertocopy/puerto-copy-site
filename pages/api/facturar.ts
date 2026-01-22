@@ -77,12 +77,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('authHeader', 'Basic ', authHeader.base64Length);
   }
 
+  const normalizedRfc = String(rfc || '').trim().toUpperCase();
+  const normalizedRazon = String(razonSocial || '').trim().toUpperCase();
+  const esPublicoGeneral =
+    normalizedRfc === 'XAXX010101000' && normalizedRazon === 'PUBLICO EN GENERAL';
+
+  const cfdiUse = String(usoCfdi || '').trim().toUpperCase();
+  const fiscalRegime = String(regimenFiscal || '').trim();
+  const cfdiUseOk = /^[A-Z0-9]{3}$/.test(cfdiUse);
+  const fiscalRegimeOk = /^\d{3}$/.test(fiscalRegime);
+  if (!cfdiUseOk || !fiscalRegimeOk) {
+    return res.status(400).json({
+      message: 'Formato inválido',
+      invalidFields: { usoCfdi: cfdiUse, regimenFiscal: fiscalRegime }
+    });
+  }
+
+  const round2 = (value: number) => Number(value.toFixed(2));
+
   const items = productos.map((item) => {
     const quantity = Number(item.cantidad) || 0;
-    const unitPrice = Number(Number(item.precio_unitario || 0).toFixed(2));
-    const subtotal = Number((quantity * unitPrice).toFixed(2));
-    const taxTotal = Number((subtotal * 0.16).toFixed(2));
-    const total = Number((subtotal + taxTotal).toFixed(2));
+    const unitWithIva = Number(item.precio_unitario ?? 0);
+    const unitPrice = round2(unitWithIva / 1.16);
+    const subtotal = round2(unitPrice * quantity);
+    const taxTotal = round2(subtotal * 0.16);
     return {
       ProductCode: '81112100',
       UnitCode: 'E48',
@@ -90,7 +108,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Quantity: quantity,
       UnitPrice: unitPrice,
       Subtotal: subtotal,
-      Total: total,
       TaxObject: '02',
       Taxes: [
         {
@@ -104,6 +121,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     };
   });
 
+  const receiver = esPublicoGeneral
+    ? {
+        Rfc: 'XAXX010101000',
+        Name: 'PUBLICO EN GENERAL',
+        CfdiUse: 'S01',
+        FiscalRegime: '616',
+        TaxZipCode: codigoPostal
+      }
+    : {
+        Rfc: rfc,
+        Name: razonSocial,
+        CfdiUse: cfdiUse,
+        FiscalRegime: fiscalRegime,
+        TaxZipCode: codigoPostal,
+        Email: email
+      };
+
+  const now = new Date();
+  const globalInformation = esPublicoGeneral
+    ? {
+        Periodicity: '01',
+        Months: String(now.getMonth() + 1).padStart(2, '0'),
+        Year: now.getFullYear()
+      }
+    : undefined;
+
   const payload = {
     CfdiType: 'I',
     PaymentForm: '01',
@@ -115,20 +158,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Name: process.env.FACTURAMA_ISSUER_NAME,
       FiscalRegime: process.env.FACTURAMA_ISSUER_REGIMEN
     },
-    Receiver: {
-      Rfc: rfc,
-      Name: razonSocial,
-      CfdiUse: usoCfdi,
-      FiscalRegime: regimenFiscal,
-      TaxZipCode: codigoPostal,
-      Email: email
-    },
+    Receiver: receiver,
     Items: items,
     OrderNumber: ticket,
-    Notes: `Registro de ticket ${ticket}. Emision manual.`
+    Notes: `Registro de ticket ${ticket}. Emision manual.`,
+    ...(globalInformation ? { GlobalInformation: globalInformation } : {})
   };
 
   try {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('facturamaCreatePayload', payload);
+    }
     const createRes = await fetch(`${baseUrl}/3/cfdis`, {
       method: 'POST',
       headers: {
@@ -139,6 +179,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     const createData = await createRes.json().catch(() => ({}));
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('facturamaCreateResponse', createData);
+    }
     let wwwAuthenticate: string | null = null;
     if (createRes.status === 401) {
       wwwAuthenticate = createRes.headers.get('www-authenticate');
@@ -156,24 +199,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const cfdiId = createData.Id;
+    const cfdiId =
+      createData.Id ||
+      createData.id ||
+      createData.CfdiId ||
+      createData?.Complement?.Id ||
+      createData?.Complement?.CfdiId ||
+      createData?.Complement?.UUID;
     if (!cfdiId) {
       return res.status(502).json({ message: 'Respuesta inválida de Facturama', detalles: createData });
     }
 
     const [pdfRes, xmlRes] = await Promise.all([
-      fetch(`${baseUrl}/3/cfdis/${cfdiId}/pdf`, {
+      fetch(`${baseUrl}/cfdi/pdf/issued/${cfdiId}`, {
         headers: { Authorization: authHeader.header }
       }),
-      fetch(`${baseUrl}/3/cfdis/${cfdiId}/xml`, {
+      fetch(`${baseUrl}/cfdi/xml/issued/${cfdiId}`, {
         headers: { Authorization: authHeader.header }
       })
     ]);
 
     if (!pdfRes.ok || !xmlRes.ok) {
       const [pdfError, xmlError] = await Promise.all([
-        pdfRes.ok ? Promise.resolve(null) : pdfRes.text().catch(() => null),
-        xmlRes.ok ? Promise.resolve(null) : xmlRes.text().catch(() => null)
+        pdfRes.ok ? Promise.resolve('') : pdfRes.text().catch(() => ''),
+        xmlRes.ok ? Promise.resolve('') : xmlRes.text().catch(() => '')
       ]);
       return res.status(502).json({
         message: 'Error al obtener PDF/XML',
@@ -182,19 +231,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           xml: xmlRes.status
         },
         facturamaResponse: {
-          pdf: pdfError,
-          xml: xmlError
+          pdf: pdfError ? pdfError.slice(0, 200) : '',
+          xml: xmlError ? xmlError.slice(0, 200) : ''
         }
       });
     }
 
-    const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer()).toString('base64');
+    const pdfText = await pdfRes.text();
     const xmlText = await xmlRes.text();
 
     return res.status(200).json({
       message: 'Factura generada correctamente',
       cfdiId,
-      pdf: pdfBuffer,
+      pdf: pdfText,
       xml: xmlText
     });
   } catch (error: any) {

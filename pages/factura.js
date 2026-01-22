@@ -56,8 +56,6 @@ const usosCFDI = [
   { value: 'P01', label: 'P01 - Por definir' },
 ];
 
-const EMISOR_CP = process.env.NEXT_PUBLIC_FACTURAMA_EXPEDITION_PLACE || '48300';
-
 const LoadingIndicator = () => (
   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-10 flex flex-col items-center text-[#0B63B2]">
     <div className="w-8 h-8 border-4 border-[#0B63B2] border-t-transparent rounded-full animate-spin mb-3"></div>
@@ -95,7 +93,9 @@ export default function Facturar() {
   });
   
   const [loading, setLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState('');
   const [error, setError] = useState('');
+  const [errorDetails, setErrorDetails] = useState(null);
   const [facturaGenerada, setFacturaGenerada] = useState(null);
   const [success, setSuccess] = useState('');
   const [codigoCliente, setCodigoCliente] = useState('');
@@ -148,7 +148,9 @@ export default function Facturar() {
 
   const handleBuscarTicket = async () => {
     setLoading(true); 
+    setLoadingAction('buscar');
     setError(''); 
+    setErrorDetails(null);
     setSuccess(''); 
     setProductos([]);
     
@@ -169,18 +171,26 @@ export default function Facturar() {
       setError(err.message); 
     } finally { 
       setLoading(false); 
+      setLoadingAction('');
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'codigoPostal') {
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 5);
+      setDatosFiscales((prev) => ({ ...prev, [name]: digitsOnly }));
+      return;
+    }
     setDatosFiscales((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault(); 
     setLoading(true); 
+    setLoadingAction('timbrar');
     setError(''); 
+    setErrorDetails(null);
     setSuccess(''); 
     setFacturaGenerada(null);
     
@@ -194,7 +204,7 @@ export default function Facturar() {
     const usoCfdiLabel = usosCFDI.find(u => u.value === datosFiscales.usoCfdi)?.label.split(' - ')[1] || '';
 
     try {
-      const res = await fetch('/api/registrar-datos', {
+      const res = await fetch('/api/facturar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -208,16 +218,26 @@ export default function Facturar() {
       });
       const data = await res.json().catch(() => ({}));
 
-      if (!res.ok || !data || data.status !== 'ok') {
-        throw new Error(data?.message || 'Error al registrar.');
+      if (!res.ok) {
+        const errorMessage = data?.message || 'No se pudo timbrar la factura.';
+        const details = process.env.NODE_ENV !== 'production' ? data : null;
+        const err = new Error(errorMessage);
+        err.details = details;
+        throw err;
       }
 
-      setFacturaGenerada({ pdf_url: null });
-      setSuccess('Solicitud enviada correctamente.');
+      setFacturaGenerada({
+        cfdiId: data?.cfdiId || null,
+        pdf: data?.pdf || null,
+        xml: data?.xml || null
+      });
+      setSuccess('Factura hecha.');
     } catch (err) { 
-      setError(err.message); 
+      setError('No pudimos timbrar la factura. Intenta nuevamente o contáctanos.');
+      setErrorDetails(err.details || err.message);
     } finally { 
       setLoading(false); 
+      setLoadingAction('');
     }
   };
 
@@ -226,6 +246,7 @@ export default function Facturar() {
     setTicket(''); 
     setProductos([]); 
     setError(''); 
+    setErrorDetails(null);
     setSuccess('');
     setCodigoCliente('');
     setShowClientCodeInput(false);
@@ -265,6 +286,9 @@ export default function Facturar() {
             {error && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6 rounded-[1.5rem] border border-red-100 bg-red-50 text-red-800 px-6 py-4 flex items-center shadow-sm">
                 <AlertCircle className="mr-3 shrink-0" /> {error}
+                {process.env.NODE_ENV !== 'production' && errorDetails && (
+                  <pre className="mt-3 text-xs text-red-700 whitespace-pre-wrap">{JSON.stringify(errorDetails, null, 2)}</pre>
+                )}
               </motion.div>
             )}
             {success && (
@@ -302,7 +326,7 @@ export default function Facturar() {
                     className="w-full py-4 bg-[#0B63B2] hover:bg-[#004a8f] text-white rounded-full font-bold text-lg shadow-xl hover:shadow-blue-500/30 active:scale-[0.98] disabled:opacity-60 transition-all flex justify-center gap-2" 
                     disabled={!ticket || loading}
                   >
-                    {loading ? 'Validando...' : 'Buscar ticket'} {!loading && <ArrowRight size={20} />}
+                    {loading && loadingAction === 'buscar' ? 'Validando...' : 'Buscar ticket'} {!loading && <ArrowRight size={20} />}
                   </button>
                 </div>
                 <div className="mt-3 w-full max-w-sm mx-auto rounded-2xl border border-blue-100 bg-blue-50/60 text-blue-900 px-5 py-2.5 text-xs md:text-sm flex items-start gap-2">
@@ -361,8 +385,15 @@ export default function Facturar() {
                     <input name="rfc" value={datosFiscales.rfc} onChange={handleChange} placeholder="RFC" className="w-full bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3.5 outline-none shadow-sm" />
                     <input name="razonSocial" value={datosFiscales.razonSocial} onChange={handleChange} placeholder="Razón Social" className="w-full bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3.5 outline-none shadow-sm" />
                     <input name="email" value={datosFiscales.email} onChange={handleChange} placeholder="Correo" className="w-full bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3.5 outline-none shadow-sm" />
-                    <input name="emisorCodigoPostal" value={EMISOR_CP} readOnly placeholder="CP Emisor (expedición)" className="w-full bg-gray-100 border-transparent rounded-2xl px-5 py-3.5 outline-none shadow-sm text-gray-600" />
-                    <input name="codigoPostal" value={datosFiscales.codigoPostal} onChange={handleChange} placeholder="CP Receptor (domicilio fiscal)" className="w-full bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3.5 outline-none shadow-sm" />
+                    <input
+                      name="codigoPostal"
+                      value={datosFiscales.codigoPostal}
+                      onChange={handleChange}
+                      placeholder="CP Receptor (domicilio fiscal)"
+                      type="text"
+                      maxLength={5}
+                      className="w-full bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3.5 outline-none shadow-sm"
+                    />
                     
                     <select name="regimenFiscal" value={datosFiscales.regimenFiscal} onChange={handleChange} className="w-full bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3.5 outline-none shadow-sm">
                       <option value="">Régimen Fiscal</option>
@@ -378,7 +409,7 @@ export default function Facturar() {
                   <div className="mt-8">
                     {!facturaGenerada ? (
                       <button type="submit" disabled={loading} className="w-full py-4 bg-[#0B63B2] text-white rounded-full font-bold shadow-lg hover:bg-[#004a8f] disabled:bg-gray-300">
-                        Facturar Ahora
+                        {loading && loadingAction === 'timbrar' ? 'Timbrando...' : 'Facturar Ahora'}
                       </button>
                     ) : (
                       <button type="button" onClick={resetTodo} className="w-full py-4 bg-gray-800 text-white rounded-full font-bold shadow-lg flex justify-center gap-2">
@@ -416,8 +447,28 @@ export default function Facturar() {
                 <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center text-green-600 mx-auto mb-6">
                   <Check size={40} />
                 </div>
-                <h3 className="text-[#003082] font-bold text-3xl mb-4 font-brand">¡Éxito!</h3>
-                <p className="text-gray-600 text-lg mb-6">Recibirás tu factura en 72 horas hábiles.</p>
+                <h3 className="text-[#003082] font-bold text-3xl mb-4 font-brand">Factura hecha</h3>
+                {facturaGenerada?.cfdiId && (
+                  <p className="text-gray-600 text-sm mb-6">CFDI: {facturaGenerada.cfdiId}</p>
+                )}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <a
+                    href={facturaGenerada?.pdf ? `data:application/pdf;base64,${facturaGenerada.pdf}` : '#'}
+                    download={`factura-${facturaGenerada?.cfdiId || 'cfdi'}.pdf`}
+                    className={`px-6 py-3 rounded-full font-bold ${facturaGenerada?.pdf ? 'bg-[#0B63B2] text-white hover:bg-[#004a8f]' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
+                    onClick={(e) => { if (!facturaGenerada?.pdf) e.preventDefault(); }}
+                  >
+                    Descargar PDF
+                  </a>
+                  <a
+                    href={facturaGenerada?.xml ? `data:application/xml;base64,${facturaGenerada.xml}` : '#'}
+                    download={`factura-${facturaGenerada?.cfdiId || 'cfdi'}.xml`}
+                    className={`px-6 py-3 rounded-full font-bold ${facturaGenerada?.xml ? 'bg-gray-800 text-white hover:bg-gray-900' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
+                    onClick={(e) => { if (!facturaGenerada?.xml) e.preventDefault(); }}
+                  >
+                    Descargar XML
+                  </a>
+                </div>
               </motion.div>
             )}
           </main>
