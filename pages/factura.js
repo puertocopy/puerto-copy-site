@@ -56,6 +56,8 @@ const usosCFDI = [
   { value: 'P01', label: 'P01 - Por definir' },
 ];
 
+const EMISOR_CP = process.env.NEXT_PUBLIC_FACTURAMA_EXPEDITION_PLACE || '48300';
+
 const LoadingIndicator = () => (
   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-10 flex flex-col items-center text-[#0B63B2]">
     <div className="w-8 h-8 border-4 border-[#0B63B2] border-t-transparent rounded-full animate-spin mb-3"></div>
@@ -359,7 +361,8 @@ export default function Facturar() {
                     <input name="rfc" value={datosFiscales.rfc} onChange={handleChange} placeholder="RFC" className="w-full bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3.5 outline-none shadow-sm" />
                     <input name="razonSocial" value={datosFiscales.razonSocial} onChange={handleChange} placeholder="Razón Social" className="w-full bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3.5 outline-none shadow-sm" />
                     <input name="email" value={datosFiscales.email} onChange={handleChange} placeholder="Correo" className="w-full bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3.5 outline-none shadow-sm" />
-                    <input name="codigoPostal" value={datosFiscales.codigoPostal} onChange={handleChange} placeholder="C.P." className="w-full bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3.5 outline-none shadow-sm" />
+                    <input name="emisorCodigoPostal" value={EMISOR_CP} readOnly placeholder="CP Emisor (expedición)" className="w-full bg-gray-100 border-transparent rounded-2xl px-5 py-3.5 outline-none shadow-sm text-gray-600" />
+                    <input name="codigoPostal" value={datosFiscales.codigoPostal} onChange={handleChange} placeholder="CP Receptor (domicilio fiscal)" className="w-full bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3.5 outline-none shadow-sm" />
                     
                     <select name="regimenFiscal" value={datosFiscales.regimenFiscal} onChange={handleChange} className="w-full bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3.5 outline-none shadow-sm">
                       <option value="">Régimen Fiscal</option>

@@ -55,6 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const requiredEnv = [
+    'FACTURAMA_EXPEDITION_PLACE',
     'FACTURAMA_ISSUER_RFC',
     'FACTURAMA_ISSUER_NAME',
     'FACTURAMA_ISSUER_REGIMEN'
@@ -107,7 +108,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     CfdiType: 'I',
     PaymentForm: '01',
     PaymentMethod: 'PUE',
-    ExpeditionPlace: codigoPostal,
+    ExpeditionPlace: process.env.FACTURAMA_EXPEDITION_PLACE,
     Currency: 'MXN',
     Issuer: {
       Rfc: process.env.FACTURAMA_ISSUER_RFC,
