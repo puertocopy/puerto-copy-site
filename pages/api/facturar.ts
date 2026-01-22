@@ -78,9 +78,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const items = productos.map((item) => {
     const quantity = Number(item.cantidad) || 0;
-    const unitPrice = Number(item.precio_unitario) || 0;
-    const subtotal = quantity * unitPrice;
-    const taxTotal = +(subtotal * 0.16).toFixed(2);
+    const unitPrice = Number(Number(item.precio_unitario || 0).toFixed(2));
+    const subtotal = Number((quantity * unitPrice).toFixed(2));
+    const taxTotal = Number((subtotal * 0.16).toFixed(2));
+    const total = Number((subtotal + taxTotal).toFixed(2));
     return {
       ProductCode: '81112100',
       UnitCode: 'E48',
@@ -88,6 +89,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Quantity: quantity,
       UnitPrice: unitPrice,
       Subtotal: subtotal,
+      Total: total,
+      TaxObject: '02',
       Taxes: [
         {
           Total: taxTotal,
@@ -135,17 +138,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     const createData = await createRes.json().catch(() => ({}));
-    if (process.env.NODE_ENV !== 'production' && createRes.status === 401) {
-      const authHeaderValue = createRes.headers.get('www-authenticate');
-      if (authHeaderValue) {
-        console.log('facturamaWwwAuthenticate', authHeaderValue);
+    let wwwAuthenticate: string | null = null;
+    if (createRes.status === 401) {
+      wwwAuthenticate = createRes.headers.get('www-authenticate');
+      if (process.env.NODE_ENV !== 'production' && wwwAuthenticate) {
+        console.log('facturamaWwwAuthenticate', wwwAuthenticate);
       }
     }
     if (!createRes.ok) {
       return res.status(createRes.status).json({
         message: 'Error al generar CFDI',
         facturamaStatus: createRes.status,
-        facturamaResponse: createData
+        facturamaResponse: createData,
+        facturamaBaseUrl: baseUrl,
+        wwwAuthenticate: wwwAuthenticate || undefined
       });
     }
 
