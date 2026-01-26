@@ -665,27 +665,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (pdfResult.ok && xmlResult.ok) {
       const totalAmount = items.reduce((sum, item) => sum + Number(item.Total || 0), 0);
       const subject = `Factura – Puerto Copy | Ticket ${ticketValue}`;
-      void sendInvoiceEmail({
-        to: receiver.Email,
-        subject,
-        pdfBase64: pdfResult.body,
-        xmlBase64: xmlResult.body,
-        issuerRfc: String(process.env.FACTURAMA_ISSUER_RFC || ''),
-        issuerName: String(process.env.FACTURAMA_ISSUER_NAME || ''),
-        uuid: String(uuid || cfdiId),
-        total: totalAmount.toFixed(2),
-        ticket: ticketValue
-      })
-        .then(() => {
-          emailSent = true;
-        })
-        .catch((emailErr: any) => {
-          emailSent = false;
-          console.error('invoiceEmailError', {
-            cfdiId,
-            error: String(emailErr?.message || emailErr)
-          });
+      try {
+        await sendInvoiceEmail({
+          to: receiver.Email,
+          subject,
+          pdfBase64: pdfResult.body,
+          xmlBase64: xmlResult.body,
+          issuerRfc: String(process.env.FACTURAMA_ISSUER_RFC || ''),
+          issuerName: String(process.env.FACTURAMA_ISSUER_NAME || ''),
+          uuid: String(uuid || cfdiId),
+          total: totalAmount.toFixed(2),
+          ticket: ticketValue
         });
+        emailSent = true;
+      } catch (emailErr: any) {
+        emailSent = false;
+        console.error('invoiceEmailError', {
+          cfdiId,
+          error: String(emailErr?.message || emailErr)
+        });
+      }
     } else {
       console.error('facturamaFilesNotReady', {
         cfdiId,
@@ -703,7 +702,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       cfdiId,
       uuid,
       emailSent,
-      status: emailSent === true ? 'emailed:true' : emailSent === false ? 'emailed:false' : 'emailed:queued'
+      status: emailSent === true ? 'emailed:true' : 'emailed:false'
     });
   } catch (error: any) {
     return res.status(500).json({ message: 'Error interno del servidor', error: String(error?.message || error) });

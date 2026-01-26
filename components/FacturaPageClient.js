@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Check, AlertCircle, Search, ArrowRight, UserCheck, RefreshCw, FileText as FileIcon, Menu, X, Printer, Phone, Mail } from 'lucide-react';
 
@@ -124,7 +124,6 @@ export default function Facturar() {
   const [showClientCodeInput, setShowClientCodeInput] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
-  const emailAutoTriggeredRef = useRef(false);
 
   useEffect(() => {
     setMounted(true);
@@ -397,30 +396,7 @@ export default function Facturar() {
     setDatosFiscales((prev) => ({ ...prev, [name]: value }));
   };
 
-  const triggerEmailSend = async ({ cfdiId, uuid }) => {
-    if (!cfdiId || emailAutoTriggeredRef.current) return;
-    emailAutoTriggeredRef.current = true;
-    try {
-      await fetch(`/api/cfdi/${cfdiId}/email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: datosFiscales.email,
-          receiverRfc: datosFiscales.rfc,
-          total: Number.isFinite(Number(total)) ? Number(total).toFixed(2) : String(total || ''),
-          date: new Date().toISOString(),
-          uuid: uuid || cfdiId
-        })
-      });
-    } catch (emailErr) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('emailAutoSendError', emailErr);
-      }
-    }
-  };
-
   const handleEmitFactura = async () => {
-    emailAutoTriggeredRef.current = false;
     setConfirmLoading(true);
     setLoading(true);
     setLoadingAction('timbrar');
@@ -461,7 +437,6 @@ export default function Facturar() {
       }
 
       const cfdiId = data?.cfdiId || null;
-      const uuid = data?.uuid || cfdiId;
       const pdf = data?.pdf || null;
       const xml = data?.xml || null;
       const isAlreadyInvoiced = data?.alreadyInvoiced === true;
@@ -529,9 +504,6 @@ export default function Facturar() {
       setEmailStatusCode(emailStatusValue);
       setEmailError(emailSent === false ? data?.emailError || null : null);
 
-      if (cfdiId && pdf && xml) {
-        await triggerEmailSend({ cfdiId, uuid });
-      }
       if (cfdiId && (!pdf || !xml)) {
         let attempts = 0;
         const maxAttempts = 20;
@@ -562,7 +534,6 @@ export default function Facturar() {
               }));
               setPollMessage('');
               clearInterval(interval);
-              await triggerEmailSend({ cfdiId, uuid });
               return;
             }
           } catch (pollError) {
@@ -590,7 +561,6 @@ export default function Facturar() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    emailAutoTriggeredRef.current = false;
     setError('');
     setErrorDetails(null);
     setSuccess('');
@@ -608,7 +578,6 @@ export default function Facturar() {
   };
 
   const resetTodo = () => {
-    emailAutoTriggeredRef.current = false;
     setFacturaGenerada(null); 
     setTicket(''); 
     setTicketInput('');
