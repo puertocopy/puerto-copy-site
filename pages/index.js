@@ -7,21 +7,6 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import FloatingBubbles from '../components/FloatingBubbles';
 
-/* === ESTILOS CSS INLINE === */
-const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&display=swap');
-
-  html { scroll-behavior: smooth; }
-  .font-brand { font-family: 'Product Sans', 'Outfit', sans-serif; }
-  
-  @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
-  .animate-shimmer { background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%); background-size: 200% 100%; animation: shimmer 2s infinite; }
-  
-  .fade-in-up { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease-out, transform 0.8s ease-out; }
-  .fade-in-up.visible { opacity: 1; transform: translateY(0); }
-`;
-
-
 /* === COMPONENTES INTERNOS DE LA HOME (Secciones específicas) === */
 
 const Contacto = () => (
@@ -125,8 +110,6 @@ export default function Home() {
 
   return (
     <div className="bg-white text-gray-900 overflow-x-hidden font-sans">
-      <style>{styles}</style>
-      
       {/* Componentes reutilizables importados */}
       <Navbar /> 
 

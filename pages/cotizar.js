@@ -15,19 +15,6 @@ import PasoSubirArchivos from '../components/PasoSubirArchivos';
 // Datos
 import productosData from '../data/productosPorTipoPrincipal_conPlanos.json';
 
-/* === ESTILOS CSS INLINE PARA FUENTES Y SCROLL === */
-const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&display=swap');
-  html { scroll-behavior: smooth; }
-  .font-brand { font-family: 'Product Sans', 'Outfit', sans-serif; }
-  
-  /* Custom Scrollbar */
-  ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-track { background: #f1f1f1; }
-  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-`;
-
 export default function Cotizar() {
   const [categoria, setCategoria] = useState('');
   const [carrito, setCarrito] = useState([]);
@@ -70,8 +57,6 @@ export default function Cotizar() {
 
   return (
     <div className="bg-[#FDFDFD] min-h-screen flex flex-col font-sans text-gray-900">
-      <style>{styles}</style>
-      
       {/* Navbar forzando fondo blanco para consistencia con el diseño nuevo */}
       <Navbar /> 
       <FloatingBubbles />

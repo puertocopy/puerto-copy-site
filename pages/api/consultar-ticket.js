@@ -2,7 +2,8 @@ export default async function handler(req, res) {
     const { ticket } = req.query;
   
     if (!ticket) {
-      return res.status(400).json({ message: 'Falta el número de ticket' });
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return res.status(400).json({ message: 'No se pudo verificar el ticket.' });
     }
   
     try {
@@ -14,8 +15,8 @@ export default async function handler(req, res) {
       });
   
       if (!response.ok) {
-        const errorData = await response.json();
-        return res.status(response.status).json({ message: errorData.message || 'Error al consultar ticket' });
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        return res.status(response.status).json({ message: 'No se pudo verificar el ticket.' });
       }
   
       const data = await response.json();
@@ -30,7 +31,8 @@ export default async function handler(req, res) {
       );
   
       if (!mismoMes) {
-        return res.status(400).json({ message: 'Este ticket no corresponde al mes actual y no puede ser facturado.' });
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        return res.status(400).json({ message: 'No se pudo verificar el ticket.' });
       }
   
       // Si sí es del mes actual
@@ -38,11 +40,17 @@ export default async function handler(req, res) {
         nombre: item.item_name,
         cantidad: item.quantity,
         precio_unitario: item.price,
+        total_money: item.total_money,
+        gross_total_money: item.gross_total_money,
+        line_taxes: item.line_taxes,
       }));
+
+      const payments = Array.isArray(data.payments) ? data.payments : [];
   
-      return res.status(200).json({ productos });
+      return res.status(200).json({ productos, payments, total_money: data.total_money });
     } catch (error) {
-      return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return res.status(500).json({ message: 'No se pudo verificar el ticket.' });
     }
   }
   

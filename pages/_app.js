@@ -19,19 +19,6 @@ function MyApp({ Component, pageProps }) {
         <meta property="og:url" content="https://puertocopy.com" />
         <meta property="og:type" content="website" />
 
-        {/* Logo para resultados de Google (opcional, ayuda con SEO) */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              "url": "https://puertocopy.com",
-              "logo": "https://puertocopy.com/favicon.png"
-            }),
-          }}
-        />
-    
       </Head>
 
       <Component {...pageProps} />
