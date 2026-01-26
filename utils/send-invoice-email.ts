@@ -18,8 +18,8 @@ const getVerifiedTransporter = async () => {
   if (verifiedTransporterPromise) return verifiedTransporterPromise;
   verifiedTransporterPromise = (async () => {
     const host = process.env.SMTP_HOST;
-    const port = Number(process.env.SMTP_PORT);
-    const secure = process.env.SMTP_SECURE === 'true';
+    const port = Number(process.env.SMTP_PORT || 465);
+    const secure = process.env.SMTP_SECURE === 'true' || port === 465;
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
 
@@ -31,6 +31,7 @@ const getVerifiedTransporter = async () => {
       host,
       port,
       secure,
+      tls: { rejectUnauthorized: false },
       auth: user && pass ? { user, pass } : undefined
     });
 
@@ -53,6 +54,10 @@ export async function sendInvoiceEmail({
 }: SendInvoiceEmailInput) {
   const fromName = process.env.SMTP_FROM_NAME;
   const fromEmail = process.env.SMTP_FROM_EMAIL;
+  const smtpUser = process.env.SMTP_USER;
+  if (smtpUser && fromEmail && smtpUser !== fromEmail) {
+    throw new Error('SMTP_USER y SMTP_FROM_EMAIL deben ser el mismo correo');
+  }
   const from = fromName && fromEmail ? `"${fromName}" <${fromEmail}>` : '';
 
   if (!from) {
@@ -69,7 +74,7 @@ export async function sendInvoiceEmail({
   if (receiverRfc) textLines.push(`RFC receptor: ${receiverRfc}`);
   if (date) textLines.push(`Fecha: ${date}`);
 
-  await transporter.sendMail({
+  const info = await transporter.sendMail({
     from,
     to,
     subject,
@@ -86,5 +91,9 @@ export async function sendInvoiceEmail({
         encoding: 'base64'
       }
     ]
+  });
+  console.log('invoiceEmailSendResult', {
+    messageId: info?.messageId,
+    response: info?.response
   });
 }

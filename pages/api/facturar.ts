@@ -39,8 +39,8 @@ const getVerifiedTransporter = async () => {
   if (verifiedTransporterPromise) return verifiedTransporterPromise;
   verifiedTransporterPromise = (async () => {
     const host = process.env.SMTP_HOST;
-    const port = Number(process.env.SMTP_PORT);
-    const secure = process.env.SMTP_SECURE === 'true';
+    const port = Number(process.env.SMTP_PORT || 465);
+    const secure = process.env.SMTP_SECURE === 'true' || port === 465;
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
     if (!host || !port) {
@@ -50,6 +50,7 @@ const getVerifiedTransporter = async () => {
       host,
       port,
       secure,
+      tls: { rejectUnauthorized: false },
       auth: user && pass ? { user, pass } : undefined
     });
     await transporter.verify();
@@ -83,6 +84,10 @@ const sendInvoiceEmail = async ({
 }: SendInvoiceEmailInput) => {
   const fromName = process.env.SMTP_FROM_NAME;
   const fromEmail = process.env.SMTP_FROM_EMAIL;
+  const smtpUser = process.env.SMTP_USER;
+  if (smtpUser && fromEmail && smtpUser !== fromEmail) {
+    throw new Error('SMTP_USER y SMTP_FROM_EMAIL deben ser el mismo correo');
+  }
   const from = fromName && fromEmail ? `"${fromName}" <${fromEmail}>` : '';
   if (!from) {
     throw new Error('SMTP no configurado');
@@ -95,7 +100,7 @@ const sendInvoiceEmail = async ({
     `Total: ${total}`,
     'Se adjunta su factura en formato PDF y XML'
   ].join('\n');
-  await transporter.sendMail({
+  const info = await transporter.sendMail({
     from,
     to,
     subject,
@@ -226,6 +231,10 @@ const sendInvoiceEmail = async ({
         encoding: 'base64'
       }
     ]
+  });
+  console.log('invoiceEmailSendResult', {
+    messageId: info?.messageId,
+    response: info?.response
   });
 };
 
