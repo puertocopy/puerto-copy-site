@@ -39,11 +39,11 @@ const getVerifiedTransporter = async () => {
   if (verifiedTransporterPromise) return verifiedTransporterPromise;
   verifiedTransporterPromise = (async () => {
     const host = process.env.SMTP_HOST;
-    const port = Number(process.env.SMTP_PORT || 587);
-    const secure = String(process.env.SMTP_SECURE || '').trim().toLowerCase() === 'true';
+    const port = Number(process.env.SMTP_PORT);
+    const secure = process.env.SMTP_SECURE === 'true';
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
-    if (!host) {
+    if (!host || !port) {
       throw new Error('SMTP no configurado');
     }
     const transporter = nodemailer.createTransport({
@@ -81,7 +81,9 @@ const sendInvoiceEmail = async ({
   total,
   ticket
 }: SendInvoiceEmailInput) => {
-  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+  const fromName = process.env.SMTP_FROM_NAME;
+  const fromEmail = process.env.SMTP_FROM_EMAIL;
+  const from = fromName && fromEmail ? `"${fromName}" <${fromEmail}>` : '';
   if (!from) {
     throw new Error('SMTP no configurado');
   }
@@ -215,13 +217,13 @@ const sendInvoiceEmail = async ({
     attachments: [
       {
         filename: `Factura_${ticket}.pdf`,
-        content: Buffer.from(pdfBase64, 'base64'),
-        contentType: 'application/pdf'
+        content: pdfBase64,
+        encoding: 'base64'
       },
       {
         filename: `Factura_${ticket}.xml`,
-        content: Buffer.from(xmlBase64, 'base64'),
-        contentType: 'application/xml'
+        content: xmlBase64,
+        encoding: 'base64'
       }
     ]
   });
