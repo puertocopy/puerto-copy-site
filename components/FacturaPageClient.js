@@ -393,7 +393,12 @@ export default function Facturar() {
       setDatosFiscales((prev) => ({ ...prev, [name]: digitsOnly }));
       return;
     }
-    setDatosFiscales((prev) => ({ ...prev, [name]: value }));
+    if (name === 'email') {
+      setDatosFiscales((prev) => ({ ...prev, [name]: value }));
+      return;
+    }
+    const upperValue = value.toUpperCase();
+    setDatosFiscales((prev) => ({ ...prev, [name]: upperValue }));
   };
 
   const handleEmitFactura = async () => {
