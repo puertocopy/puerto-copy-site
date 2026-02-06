@@ -3,9 +3,6 @@ import nodemailer, { Transporter } from 'nodemailer';
 
 const SANDBOX_BASE_URL = 'https://apisandbox.facturama.mx';
 const PROD_BASE_URL = 'https://api.facturama.mx';
-const GAS_FACTURAS_URL =
-  process.env.GAS_FACTURAS_URL ||
-  'https://script.google.com/macros/s/AKfycbybBXxsXpJSF-sp-PeTsFd5LVzS86Lf4MVJ7J2r7AtwkuLpdG3he2KHU7jngfCz2L_k/exec';
 const GAS_FACTURAS_POST_URL =
   process.env.GAS_FACTURAS_POST_URL ||
   'https://script.google.com/macros/s/AKfycbzf_-GMn9ZGNrNWZOFcDSHfX_Kc4DdXsXQjACOr4AVj8SjPGJSsOFasApCeZMQeOW9r/exec';
@@ -235,20 +232,35 @@ const sendInvoiceEmail = async ({
 
 const normalizeTicket = (value: any) => String(value || '').replace(/\D+/g, '');
 
-const extractTicketRecord = (payload: any, ticketValue: string) => {
-  if (!payload) return null;
-  if (Array.isArray(payload)) {
-    return payload.find((row) => String(row?.ticket ?? row?.Ticket ?? '') === ticketValue) || null;
+const gasPost = async (body: any) => {
+  const gasUrl = process.env.GAS_WEBAPP_URL;
+  const gasToken = process.env.GAS_API_TOKEN;
+  if (!gasUrl || !gasToken) {
+    throw new Error('Missing env GAS_WEBAPP_URL/GAS_API_TOKEN');
   }
-  if (payload?.data) {
-    const data = payload.data;
-    if (Array.isArray(data)) {
-      return data.find((row) => String(row?.ticket ?? row?.Ticket ?? '') === ticketValue) || null;
-    }
-    if (data?.ticket || data?.Ticket) return data;
+  const res = await fetch(`${gasUrl}?token=${encodeURIComponent(gasToken)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(body || {})
+  });
+  const text = await res.text().catch(() => '');
+  const trimmed = text.trim();
+  if (trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html')) {
+    throw new Error('GAS returned HTML');
   }
-  if (payload?.ticket || payload?.Ticket) return payload;
-  return null;
+  const data = JSON.parse(text || '{}');
+  return { status: res.status, data };
+};
+
+// Timeout anterior: ninguno explícito. Nuevo timeout: 90,000 ms.
+const fetchWithTimeout = async (url: string, options: any, timeoutMs = 90000) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -265,7 +277,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     usoCfdi,
     codigoPostal,
     email,
-    payments
+    payments,
+    storeId: rawStoreId,
+    fechaTicket,
+    total: totalFromBody
   } = req.body || {};
 
   if (!productos || productos.length === 0) {
@@ -342,54 +357,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const ticketValue = String(ticket || '').trim();
+  const storeId = String(rawStoreId || 'PV').trim() || 'PV';
+  const ticketKey = `${storeId}:${ticketValue}`;
   const ticketDigits = normalizeTicket(ticketValue);
   if (!ticketDigits) {
     return res.status(400).json({ message: 'Ticket inválido' });
   }
-
-  let existingRecord: any = null;
-  try {
-    const checkUrl = `${GAS_FACTURAS_URL}?ticket=${encodeURIComponent(ticketDigits)}`;
-    const checkRes = await fetch(checkUrl, { headers: { 'Cache-Control': 'no-cache' } });
-    const checkData = await checkRes.json().catch(() => null);
-    if (checkRes.ok && checkData) {
-      existingRecord = extractTicketRecord(checkData, ticketDigits);
-    }
-  } catch (checkErr) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('facturaTicketCheckError', checkErr);
-    }
+  if (!normalizedRfc) {
+    return res.status(400).json({ message: 'RFC inválido' });
   }
 
-  if (existingRecord) {
-    const existingCfdiId =
-      existingRecord?.cfdiId ||
-      existingRecord?.CfdiId ||
-      existingRecord?.cfdi_id ||
-      existingRecord?.id ||
-      existingRecord?.Id;
-    const existingUuid =
-      existingRecord?.uuid ||
-      existingRecord?.UUID ||
-      existingRecord?.Uuid ||
-      existingRecord?.cfdi_uuid ||
-      existingCfdiId;
-
-    if (existingCfdiId) {
-      const [pdfResult, xmlResult] = await Promise.all([
-        fetchWithRetry(`${baseUrl}/cfdi/pdf/issued/${existingCfdiId}`),
-        fetchWithRetry(`${baseUrl}/cfdi/xml/issued/${existingCfdiId}`)
-      ]);
-
-      return res.status(200).json({
-        alreadyInvoiced: true,
-        cfdiId: existingCfdiId,
-        uuid: existingUuid,
-        pdf: pdfResult.ok ? pdfResult.body : null,
-        xml: xmlResult.ok ? xmlResult.body : null
-      });
-    }
-  }
+  // Nota: La verificación de duplicados ahora es controlada por el lock de GAS (reserve/finalize/fail).
 
   const round2 = (value: number) =>
     Math.round((Number(value) + Number.EPSILON) * 100) / 100;
@@ -530,6 +508,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('facturamaItemTaxes', JSON.stringify(items.map((item) => item.Taxes), null, 2));
   }
 
+  const totalAmount = items.reduce((sum, item) => sum + Number(item.Total || 0), 0);
+  const totalForReserve = Number.isFinite(Number(totalFromBody))
+    ? Number(totalFromBody)
+    : totalAmount;
+
   const receiver = esPublicoGeneral
     ? {
         Rfc: 'XAXX010101000',
@@ -583,19 +566,84 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    const reservePayload = {
+      action: 'reserve',
+      ticket: ticketValue,
+      storeId,
+      fechaTicket: fechaTicket || new Date().toISOString(),
+      total: Number.isFinite(totalForReserve) ? totalForReserve : 0,
+      rfc: normalizedRfc,
+      email: normalizedEmail,
+      payload
+    };
+
+    const reserveResult = await gasPost(reservePayload);
+    const reserveData = reserveResult.data || {};
+    if (reserveData?.ok === false) {
+      console.error('gasReserveError', { ticketKey, reserveStatus: reserveResult.status, reserveData });
+      return res.status(500).json({ message: 'No se pudo reservar el ticket', details: reserveData });
+    }
+    if (reserveData?.status === 'TIMBRADO' && reserveData?.facturamaId) {
+      const storedRfc = String(reserveData?.rfc || '').trim().toUpperCase();
+      if (storedRfc && storedRfc !== normalizedRfc) {
+        console.error('gasReserveRfcMismatch', { ticketKey, storedRfc, inputRfc: normalizedRfc });
+        return res.status(409).json({
+          ok: false,
+          error: 'RFC mismatch',
+          alreadyInvoiced: true
+        });
+      }
+      console.log('gasReserveAlreadyInvoiced', { ticketKey, facturamaId: reserveData.facturamaId });
+      return res.status(200).json({
+        ok: true,
+        alreadyInvoiced: true,
+        facturamaId: reserveData.facturamaId,
+        cfdiId: reserveData.facturamaId
+      });
+    }
+    if (reserveData?.status && reserveData.status !== 'PENDING') {
+      console.error('gasReserveUnexpectedStatus', { ticketKey, status: reserveData.status });
+      return res.status(500).json({ message: 'Estado de reserva inválido', status: reserveData.status });
+    }
+
     if (process.env.NODE_ENV !== 'production') {
       console.log('facturamaCreatePayload', payload);
     }
-    const createRes = await fetch(`${baseUrl}/3/cfdis`, {
-      method: 'POST',
-      headers: {
-        Authorization: authHeader.header,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
+    let createRes;
+    let createData: any = {};
+    try {
+      createRes = await fetchWithTimeout(
+        `${baseUrl}/3/cfdis`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: authHeader.header,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        },
+        90000
+      );
+      createData = await createRes.json().catch(() => ({}));
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        console.error('facturamaTimeout', { ticketKey });
+        try {
+          await gasPost({
+            action: 'fail',
+            ticket: ticketValue,
+            storeId,
+            rfc: normalizedRfc,
+            errorMsg: 'Facturama timeout'.slice(0, 500)
+          });
+        } catch (failErr) {
+          console.error('gasFailError', { ticketKey, error: String(failErr?.message || failErr) });
+        }
+        return res.status(504).json({ message: 'La operación tardó demasiado, reintenta.' });
+      }
+      throw err;
+    }
 
-    const createData = await createRes.json().catch(() => ({}));
     if (process.env.NODE_ENV !== 'production') {
       console.log('facturamaCreateResponse', createData);
     }
@@ -607,6 +655,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
     if (!createRes.ok) {
+      try {
+        await gasPost({
+          action: 'fail',
+          ticket: ticketValue,
+          storeId,
+          rfc: normalizedRfc,
+          errorMsg: `Facturama error ${createRes.status}`.slice(0, 500)
+        });
+      } catch (failErr) {
+        console.error('gasFailError', { ticketKey, error: String(failErr?.message || failErr) });
+      }
       return res.status(createRes.status).json({
         message: 'Error al generar CFDI',
         facturamaStatus: createRes.status,
@@ -631,6 +690,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       cfdiId;
     if (!cfdiId) {
       return res.status(502).json({ message: 'Respuesta inválida de Facturama', detalles: createData });
+    }
+
+    try {
+      await gasPost({
+        action: 'finalize',
+        ticket: ticketValue,
+        storeId,
+        rfc: normalizedRfc,
+        email: normalizedEmail,
+        facturamaId: cfdiId
+      });
+    } catch (finalizeErr) {
+      console.error('gasFinalizeError', { ticketKey, error: String(finalizeErr?.message || finalizeErr) });
     }
 
     let emailSent: boolean | null = null;
@@ -663,7 +735,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (pdfResult.ok && xmlResult.ok) {
-      const totalAmount = items.reduce((sum, item) => sum + Number(item.Total || 0), 0);
       const subject = `Factura – Puerto Copy | Ticket ${ticketValue}`;
       try {
         await sendInvoiceEmail({
@@ -705,6 +776,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       status: emailSent === true ? 'emailed:true' : 'emailed:false'
     });
   } catch (error: any) {
+    try {
+      await gasPost({
+        action: 'fail',
+        ticket: ticketValue,
+        storeId,
+        rfc: normalizedRfc,
+        errorMsg: String(error?.message || error).slice(0, 500)
+      });
+    } catch (failErr) {
+      console.error('gasFailError', { ticketKey, error: String(failErr?.message || failErr) });
+    }
     return res.status(500).json({ message: 'Error interno del servidor', error: String(error?.message || error) });
   }
 }

@@ -7,12 +7,17 @@ export default async function handler(req, res) {
     }
   
     try {
+      // Timeout anterior: ninguno explícito. Nuevo timeout: 90,000 ms.
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000);
       const response = await fetch(`https://api.loyverse.com/v1.0/receipts/${ticket}`, {
         headers: {
           Authorization: `Bearer ${process.env.LOYVERSE_API_TOKEN}`,
           'Content-Type': 'application/json',
         },
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
   
       if (!response.ok) {
         await new Promise((resolve) => setTimeout(resolve, 500));
@@ -47,8 +52,11 @@ export default async function handler(req, res) {
 
       const payments = Array.isArray(data.payments) ? data.payments : [];
   
-      return res.status(200).json({ productos, payments, total_money: data.total_money });
+      return res.status(200).json({ productos, payments, total_money: data.total_money, created_at: data.created_at });
     } catch (error) {
+      if (error?.name === 'AbortError') {
+        return res.status(504).json({ message: 'La operación tardó demasiado, reintenta.' });
+      }
       await new Promise((resolve) => setTimeout(resolve, 500));
       return res.status(500).json({ message: 'No se pudo verificar el ticket.' });
     }
