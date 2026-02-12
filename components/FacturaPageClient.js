@@ -6,6 +6,7 @@ import { Check, AlertCircle, Search, ArrowRight, UserCheck, RefreshCw, FileText 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import FloatingBubbles from '../components/FloatingBubbles';
+import { checkTicket, reserveTicket, finalizeTicket, failTicket } from '../lib/gasTickets';
 
 /* === PANEL LATERAL (Local en esta página) === */
 const SidePanel = ({ href = "#", side = "left", alt = "Imagen lateral" }) => (
@@ -51,13 +52,6 @@ const usosCFDI = [
   { value: 'P01', label: 'P01 - Por definir' },
 ];
 
-const LoadingIndicator = () => (
-  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-10 flex flex-col items-center text-[#0B63B2]">
-    <div className="w-8 h-8 border-4 border-[#0B63B2] border-t-transparent rounded-full animate-spin mb-3"></div>
-    <span className="font-medium text-lg font-brand">Procesando datos...</span>
-  </motion.div>
-);
-
 function validarRFC(rfc) {
   const regex = /^([A-ZÑ&]{3,4})\d{6}[A-Z0-9]{3}$/;
   return regex.test((rfc || '').toUpperCase());
@@ -96,6 +90,10 @@ export default function Facturar() {
   const [verifyError, setVerifyError] = useState('');
   const [verified, setVerified] = useState(false);
   const [receiptTotal, setReceiptTotal] = useState(0);
+  const [ticketFecha, setTicketFecha] = useState('');
+  const [ticketCheck, setTicketCheck] = useState(null);
+  const [recoverRfc, setRecoverRfc] = useState('');
+  const [recoverError, setRecoverError] = useState('');
   const [productos, setProductos] = useState([]);
   const [datosFiscales, setDatosFiscales] = useState({ 
     rfc: '', 
@@ -124,6 +122,7 @@ export default function Facturar() {
   const [showClientCodeInput, setShowClientCodeInput] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
+  const [confirmError, setConfirmError] = useState('');
 
   useEffect(() => {
     setMounted(true);
@@ -139,8 +138,15 @@ export default function Facturar() {
     const body = document.body;
     const prevBodyOverflow = body.style.overflow;
     body.style.overflow = 'hidden';
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setShowConfirm(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
       body.style.overflow = prevBodyOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [showConfirm]);
 
@@ -330,20 +336,54 @@ export default function Facturar() {
     }
   };
 
-  const handleContinue = () => {
-    setTicket(ticketInput);
-    setStep(2);
-    setVerifyAmount('');
+  const handleContinue = async () => {
+    setLoading(true);
+    setLoadingAction('check');
+    setError('');
+    setErrorDetails(null);
     setVerifyError('');
+    setRecoverError('');
+    setTicketCheck(null);
+    setRecoverRfc('');
+
+    const nextTicket = ticketInput;
+    setTicket(nextTicket);
+    setVerifyAmount('');
     setVerified(false);
     setProductos([]);
     setPayments([]);
     setReceiptTotal(0);
-    setError('');
-    setErrorDetails(null);
+    setTicketFecha('');
+
+    try {
+      const gasData = await checkTicket(nextTicket, 'PV');
+      setTicketCheck(gasData || null);
+
+      if (gasData?.exists && gasData?.status === 'PENDING') {
+        setError('Ticket en proceso. Intenta más tarde.');
+        setStep(1);
+        return;
+      }
+
+      if (gasData?.exists && gasData?.status === 'TIMBRADO') {
+        setStep(2);
+        return;
+      }
+
+      setStep(2);
+    } catch (err) {
+      setStep(2);
+    } finally {
+      setLoading(false);
+      setLoadingAction('');
+    }
   };
 
   const handleVerifyTicket = async () => {
+    if (ticketCheck?.exists && ticketCheck?.status === 'TIMBRADO') {
+      setVerifyError('Este ticket ya fue facturado.');
+      return;
+    }
     if (isBlocked(ticket)) {
       setVerifyError('Verificación temporalmente bloqueada. Intenta más tarde.');
       return;
@@ -354,11 +394,33 @@ export default function Facturar() {
     setError('');
     setErrorDetails(null);
     try {
+      try {
+        const gasData = await checkTicket(ticket, 'PV');
+        if (gasData) setTicketCheck(gasData || null);
+        if (gasData?.exists && gasData?.status === 'PENDING') {
+          setVerifyError('Ticket en proceso. Intenta más tarde.');
+          return;
+        }
+        if (gasData?.exists && gasData?.status === 'TIMBRADO') {
+          setVerifyError('Este ticket ya fue facturado.');
+          return;
+        }
+      } catch (gasErr) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('gasCheckError', gasErr);
+        }
+      }
+
       const res = await fetch(`/api/consultar-ticket?ticket=${encodeURIComponent(ticket)}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        if (res.status === 504 || data?.code === 'TIMEOUT') {
+          setVerifyError('La operación tardó demasiado, reintenta.');
+          return;
+        }
         registerFailure(ticket);
-        setVerifyError('No se pudo verificar el ticket.');
+        const message = data?.message || 'No se pudo verificar el ticket.';
+        setVerifyError(message);
         return;
       }
 
@@ -377,9 +439,95 @@ export default function Facturar() {
       setProductos(Array.isArray(data.productos) ? data.productos : []);
       setPayments(Array.isArray(data.payments) ? data.payments : []);
       setReceiptTotal(Number(data.total_money || 0));
+      setTicketFecha(data.created_at || '');
     } catch (err) {
-      registerFailure(ticket);
-      setVerifyError('No se pudo verificar el ticket.');
+      const isTimeout = String(err?.message || '').includes('tardó demasiado');
+      if (!isTimeout) {
+        registerFailure(ticket);
+      }
+      setVerifyError(isTimeout ? 'La operación tardó demasiado, reintenta.' : 'No se pudo verificar el ticket.');
+    } finally {
+      setLoading(false);
+      setLoadingAction('');
+    }
+  };
+
+  const handleRecoverFactura = async (options = {}) => {
+    setRecoverError('');
+    setError('');
+    setErrorDetails(null);
+    setSuccess('');
+    const overrideTicket = options?.ticketCheck || null;
+    const overrideRfc = options?.rfc;
+    const normalizedRfc = String(overrideRfc ?? (recoverRfc || '')).trim().toUpperCase();
+    if (!validarRFC(normalizedRfc)) {
+      setRecoverError('RFC inválido.');
+      return;
+    }
+
+    const storedRfc = String((overrideTicket || ticketCheck)?.rfc || '').trim().toUpperCase();
+    if (!storedRfc || normalizedRfc !== storedRfc) {
+      setRecoverError('Este ticket ya fue facturado con otro RFC.');
+      return;
+    }
+
+    const cfdiId = String((overrideTicket || ticketCheck)?.facturamaId || '').trim();
+    if (!cfdiId) {
+      setRecoverError('No se encontró la factura para este ticket.');
+      return;
+    }
+
+    setLoading(true);
+    setLoadingAction('recuperar');
+    try {
+      const filesRes = await fetch(`/api/cfdi/${cfdiId}/files`);
+      const filesData = await filesRes.json().catch(() => ({}));
+      applyFacturaData({
+        cfdiId,
+        pdf: filesData?.pdf || null,
+        xml: filesData?.xml || null,
+        message: 'Este ticket ya fue facturado',
+        already: true
+      });
+    } catch (err) {
+      setRecoverError('No se pudo recuperar la factura. Intenta más tarde.');
+    } finally {
+      setLoading(false);
+      setLoadingAction('');
+    }
+  };
+
+  const handleResendEmail = async () => {
+    if (!facturaGenerada?.cfdiId) return;
+    const toEmail = String(ticketCheck?.email || datosFiscales.email || '').trim();
+    if (!toEmail) {
+      setError('No hay correo disponible para reenviar.');
+      return;
+    }
+    setLoading(true);
+    setLoadingAction('email');
+    setError('');
+    setErrorDetails(null);
+    try {
+      const res = await fetch(`/api/cfdi/${facturaGenerada.cfdiId}/email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: toEmail,
+          receiverRfc: ticketCheck?.rfc || datosFiscales.rfc || '',
+          total: receiptTotal || total || '',
+          date: ticketFecha || new Date().toISOString(),
+          uuid: facturaGenerada.cfdiId
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.emailSent === false) {
+        setError('No se pudo reenviar el correo.');
+        return;
+      }
+      setSuccess('Correo reenviado.');
+    } catch (err) {
+      setError('No se pudo reenviar el correo.');
     } finally {
       setLoading(false);
       setLoadingAction('');
@@ -401,13 +549,72 @@ export default function Facturar() {
     setDatosFiscales((prev) => ({ ...prev, [name]: upperValue }));
   };
 
+  const startFilesPoll = (cfdiId) => {
+    if (!cfdiId) return;
+    let attempts = 0;
+    const maxAttempts = 20;
+    const interval = setInterval(async () => {
+      attempts += 1;
+      try {
+        const pollRes = await fetch(`/api/cfdi/${cfdiId}/files`);
+        const pollData = await pollRes.json().catch(() => ({}));
+        const newPdf = pollData?.pdf || '';
+        const newXml = pollData?.xml || '';
+        const newPdfLen = newPdf ? newPdf.length : 0;
+        const newXmlLen = newXml ? newXml.length : 0;
+        setPdfLen(newPdfLen);
+        setXmlLen(newXmlLen);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('cfdiFilesPoll', {
+            attempt: attempts,
+            status: pollRes.status,
+            pdfLen: newPdfLen,
+            xmlLen: newXmlLen
+          });
+        }
+        if (newPdfLen > 50 && newXmlLen > 50) {
+          setFacturaGenerada((prev) => ({
+            ...(prev || {}),
+            pdf: newPdf,
+            xml: newXml
+          }));
+          setPollMessage('');
+          clearInterval(interval);
+          return;
+        }
+      } catch (pollError) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('cfdiFilesPollError', pollError);
+        }
+      }
+
+      if (attempts >= maxAttempts) {
+        setPollMessage('Factura timbrada, PDF/XML aún no disponibles. Reintentar.');
+        clearInterval(interval);
+      }
+    }, 1000);
+  };
+
+  const applyFacturaData = ({ cfdiId, pdf, xml, message, already }) => {
+    setAlreadyInvoiced(Boolean(already));
+    setFacturaGenerada({ cfdiId, pdf, xml });
+    setPdfLen(pdf ? pdf.length : 0);
+    setXmlLen(xml ? xml.length : 0);
+    if (message) setSuccess(message);
+    if (cfdiId && (!pdf || !xml)) {
+      startFilesPoll(cfdiId);
+    }
+  };
+
   const handleEmitFactura = async () => {
+    let hadError = false;
     setConfirmLoading(true);
     setLoading(true);
     setLoadingAction('timbrar');
     setError('');
     setErrorDetails(null);
     setSuccess('');
+    setConfirmError('');
     setFacturaGenerada(null);
     setAlreadyInvoiced(false);
     setPdfLen(0);
@@ -417,23 +624,75 @@ export default function Facturar() {
     setEmailStatusCode(null);
     setEmailError(null);
 
+    let reserveResponse = null;
     try {
+      reserveResponse = await reserveTicket({
+        ticket,
+        storeId: 'PV',
+        fechaTicket: ticketFecha || new Date().toISOString(),
+        total: round2(total),
+        rfc: datosFiscales.rfc,
+        email: datosFiscales.email,
+        payload: {
+          productos,
+          payments,
+          total: round2(total),
+          datosFiscales
+        }
+      });
+
+      if (reserveResponse?.status === 'TIMBRADO' && reserveResponse?.facturamaId) {
+        const recoveredTicket = {
+          ...(ticketCheck || {}),
+          exists: true,
+          status: 'TIMBRADO',
+          facturamaId: reserveResponse.facturamaId,
+          rfc: reserveResponse.rfc || datosFiscales.rfc,
+          email: reserveResponse.email || datosFiscales.email
+        };
+        await handleRecoverFactura({
+          rfc: reserveResponse.rfc || datosFiscales.rfc,
+          ticketCheck: recoveredTicket
+        });
+        return;
+      }
+
+      if (reserveResponse?.status === 'PENDING') {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('gasReservePending', reserveResponse);
+        }
+      }
+    } catch (reserveErr) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('gasReserveError', reserveErr);
+      }
+    }
+
+    try {
+      const body = { 
+        ticket, 
+        productos, 
+        total, 
+        payments,
+        ...datosFiscales, 
+        regimenFiscal: datosFiscales.regimenFiscal, 
+        usoCfdi: datosFiscales.usoCfdi 
+      };
       const res = await fetch('/api/facturar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          ticket, 
-          productos, 
-          total, 
-          payments,
-          ...datosFiscales, 
-          regimenFiscal: datosFiscales.regimenFiscal, 
-          usoCfdi: datosFiscales.usoCfdi 
-        }),
+        body: JSON.stringify(body),
       });
-      const data = await res.json().catch(() => ({}));
+      const txt = await res.text();
+      let data = {};
+      try { data = JSON.parse(txt); } catch {}
 
       if (!res.ok) {
+        if (res.status === 504 || data?.code === 'TIMEOUT') {
+          const err = new Error('La operación tardó demasiado, reintenta.');
+          err.details = process.env.NODE_ENV !== 'production' ? data : null;
+          throw err;
+        }
         const errorMessage = data?.message || 'No se pudo timbrar la factura.';
         const details = process.env.NODE_ENV !== 'production' ? data : null;
         const err = new Error(errorMessage);
@@ -441,126 +700,61 @@ export default function Facturar() {
         throw err;
       }
 
-      const cfdiId = data?.cfdiId || null;
+      const cfdiId = data?.cfdiId || data?.facturamaId || null;
       const pdf = data?.pdf || null;
       const xml = data?.xml || null;
       const isAlreadyInvoiced = data?.alreadyInvoiced === true;
       if (isAlreadyInvoiced) {
-        setAlreadyInvoiced(true);
-        setFacturaGenerada({ cfdiId, pdf, xml });
-        setPdfLen(pdf ? pdf.length : 0);
-        setXmlLen(xml ? xml.length : 0);
-        setSuccess('Este ticket ya fue facturado');
-        if (cfdiId && (!pdf || !xml)) {
-          let attempts = 0;
-          const maxAttempts = 20;
-          const interval = setInterval(async () => {
-            attempts += 1;
-            try {
-              const pollRes = await fetch(`/api/cfdi/${cfdiId}/files`);
-              const pollData = await pollRes.json().catch(() => ({}));
-              const newPdf = pollData?.pdf || '';
-              const newXml = pollData?.xml || '';
-              const newPdfLen = newPdf ? newPdf.length : 0;
-              const newXmlLen = newXml ? newXml.length : 0;
-              setPdfLen(newPdfLen);
-              setXmlLen(newXmlLen);
-              if (process.env.NODE_ENV !== 'production') {
-                console.log('cfdiFilesPoll', {
-                  attempt: attempts,
-                  status: pollRes.status,
-                  pdfLen: newPdfLen,
-                  xmlLen: newXmlLen
-                });
-              }
-              if (newPdfLen > 50 && newXmlLen > 50) {
-                setFacturaGenerada((prev) => ({
-                  ...(prev || {}),
-                  pdf: newPdf,
-                  xml: newXml
-                }));
-                setPollMessage('');
-                clearInterval(interval);
-                return;
-              }
-            } catch (pollError) {
-              if (process.env.NODE_ENV !== 'production') {
-                console.log('cfdiFilesPollError', pollError);
-              }
-            }
-
-            if (attempts >= maxAttempts) {
-              setPollMessage('Factura timbrada, PDF/XML aún no disponibles. Reintentar.');
-              clearInterval(interval);
-            }
-          }, 1000);
-        }
+        applyFacturaData({ cfdiId, pdf, xml, message: 'Este ticket ya fue facturado', already: true });
         return;
       }
       const emailSent = data?.emailSent;
       const emailStatusValue = Number.isFinite(Number(data?.emailStatus))
         ? Number(data?.emailStatus)
         : null;
-      setFacturaGenerada({ cfdiId, pdf, xml });
-      setPdfLen(pdf ? pdf.length : 0);
-      setXmlLen(xml ? xml.length : 0);
-      setSuccess('Factura hecha.');
+      applyFacturaData({ cfdiId, pdf, xml, message: 'Factura hecha.', already: false });
       setEmailStatus(emailSent === true ? 'sent' : emailSent === false ? 'failed' : null);
       setEmailStatusCode(emailStatusValue);
       setEmailError(emailSent === false ? data?.emailError || null : null);
 
-      if (cfdiId && (!pdf || !xml)) {
-        let attempts = 0;
-        const maxAttempts = 20;
-        const interval = setInterval(async () => {
-          attempts += 1;
-          try {
-            const pollRes = await fetch(`/api/cfdi/${cfdiId}/files`);
-            const pollData = await pollRes.json().catch(() => ({}));
-            const newPdf = pollData?.pdf || '';
-            const newXml = pollData?.xml || '';
-            const newPdfLen = newPdf ? newPdf.length : 0;
-            const newXmlLen = newXml ? newXml.length : 0;
-            setPdfLen(newPdfLen);
-            setXmlLen(newXmlLen);
-            if (process.env.NODE_ENV !== 'production') {
-              console.log('cfdiFilesPoll', {
-                attempt: attempts,
-                status: pollRes.status,
-                pdfLen: newPdfLen,
-                xmlLen: newXmlLen
-              });
-            }
-            if (newPdfLen > 50 && newXmlLen > 50) {
-              setFacturaGenerada((prev) => ({
-                ...(prev || {}),
-                pdf: newPdf,
-                xml: newXml
-              }));
-              setPollMessage('');
-              clearInterval(interval);
-              return;
-            }
-          } catch (pollError) {
-            if (process.env.NODE_ENV !== 'production') {
-              console.log('cfdiFilesPollError', pollError);
-            }
+      if (cfdiId) {
+        finalizeTicket({
+          ticket,
+          storeId: 'PV',
+          rfc: datosFiscales.rfc,
+          email: datosFiscales.email,
+          facturamaId: cfdiId
+        }).catch((finalizeErr) => {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('gasFinalizeError', finalizeErr);
           }
-
-          if (attempts >= maxAttempts) {
-            setPollMessage('Factura timbrada, PDF/XML aún no disponibles. Reintentar.');
-            clearInterval(interval);
-          }
-        }, 1000);
+        });
       }
     } catch (err) { 
+      hadError = true;
+      const msg = String(err?.message || '').trim();
+      setConfirmError(msg || 'No pudimos timbrar la factura. Intenta nuevamente o contáctanos.');
+      if (reserveResponse) {
+        failTicket({
+          ticket,
+          storeId: 'PV',
+          rfc: datosFiscales.rfc,
+          errorMsg: String(err?.message || err)
+        }).catch((failErr) => {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('gasFailError', failErr);
+          }
+        });
+      }
       setError('No pudimos timbrar la factura. Intenta nuevamente o contáctanos.');
       setErrorDetails(err.details || err.message);
     } finally {
       setLoading(false);
       setLoadingAction('');
       setConfirmLoading(false);
-      setShowConfirm(false);
+      if (!hadError) {
+        setShowConfirm(false);
+      }
     }
   };
 
@@ -573,6 +767,7 @@ export default function Facturar() {
     setEmailStatusCode(null);
     setEmailError(null);
     setAlreadyInvoiced(false);
+    setConfirmError('');
 
     if (!validarRFC(datosFiscales.rfc)) {
       setError('RFC inválido.');
@@ -606,6 +801,11 @@ export default function Facturar() {
     setReceiptTotal(0);
     setShowConfirm(false);
     setConfirmLoading(false);
+    setConfirmError('');
+    setTicketFecha('');
+    setTicketCheck(null);
+    setRecoverRfc('');
+    setRecoverError('');
     setDatosFiscales({ 
       rfc: '', 
       razonSocial: '', 
@@ -724,8 +924,20 @@ export default function Facturar() {
               <div className="mb-4 text-sm text-blue-700">{pollMessage}</div>
             )}
             {showConfirm && (
-              <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center bg-black/40 px-4">
-                <div className="w-full md:max-w-2xl h-[90dvh] md:h-auto overflow-y-auto overscroll-contain md:overflow-visible rounded-t-[2rem] md:rounded-[2rem] bg-white shadow-2xl border border-gray-100 p-6 md:p-8">
+              <div
+                className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center bg-black/40 px-4"
+                onClick={() => setShowConfirm(false)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setShowConfirm(false);
+                }}
+                role="dialog"
+                aria-modal="true"
+                tabIndex={-1}
+              >
+                <div
+                  className="w-full md:max-w-2xl h-[90dvh] md:h-auto overflow-y-auto overscroll-contain md:overflow-visible rounded-t-[2rem] md:rounded-[2rem] bg-white shadow-2xl border border-gray-100 p-6 md:p-8"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div className="flex items-start justify-between gap-4 mb-6">
                     <div>
                       <h3 className="text-2xl font-bold text-[#003082] font-brand">Confirmar datos</h3>
@@ -735,7 +947,6 @@ export default function Facturar() {
                       type="button"
                       onClick={() => setShowConfirm(false)}
                       className="text-gray-400 hover:text-gray-600"
-                      disabled={confirmLoading}
                       aria-label="Cerrar"
                     >
                       <X size={22} />
@@ -813,14 +1024,19 @@ export default function Facturar() {
                     <p>Verifica cuidadosamente tus datos fiscales. La factura no se puede modificar después de emitida.</p>
                   </div>
 
+                  {confirmError && (
+                    <div className="mt-5 rounded-xl border border-red-100 bg-red-50 text-red-700 px-4 py-3 text-sm">
+                      {confirmError}
+                    </div>
+                  )}
+
                   <div className="mt-6 flex flex-col md:flex-row gap-3">
                     <button
                       type="button"
                       onClick={() => setShowConfirm(false)}
                       className="w-full md:w-auto px-6 py-3 rounded-full border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold"
-                      disabled={confirmLoading}
                     >
-                      Editar datos
+                      {confirmLoading ? 'Cerrar' : 'Editar datos'}
                     </button>
                     <button
                       type="button"
@@ -864,7 +1080,16 @@ export default function Facturar() {
                     className="w-full py-3 md:py-4 bg-[#0B63B2] hover:bg-[#004a8f] text-white rounded-full font-bold text-lg shadow-xl hover:shadow-blue-500/30 active:scale-[0.98] disabled:opacity-60 transition-all flex justify-center gap-2" 
                     disabled={!ticketInput || loading}
                   >
-                    Continuar {!loading && <ArrowRight size={20} />}
+                    {loading && loadingAction === 'check' ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white/70 border-t-transparent rounded-full animate-spin"></span>
+                        Continuar
+                      </span>
+                    ) : (
+                      <>
+                        Continuar <ArrowRight size={20} />
+                      </>
+                    )}
                   </button>
                 </div>
                 <div className="mt-3 w-full max-w-sm mx-auto rounded-2xl border border-blue-100 bg-blue-50/60 text-blue-900 px-5 py-2.5 text-xs md:text-sm flex items-start gap-2">
@@ -874,8 +1099,42 @@ export default function Facturar() {
               </motion.div>
             )}
 
+            {/* Paso 2: Recuperar Factura (si ya está timbrada) */}
+            {step === 2 && !facturaGenerada && ticketCheck?.exists && ticketCheck?.status === 'TIMBRADO' && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2.5rem] p-8 md:p-12 border border-gray-50">
+                <div className="flex flex-col items-center text-center mb-6">
+                  <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-[#0B63B2] mb-4">
+                    <FileIcon size={32} />
+                  </div>
+                  <h3 className="text-xl font-bold text-[#003082]">Ticket ya facturado</h3>
+                  <p className="text-sm text-gray-500 mt-2">Ticket: {ticket}</p>
+                </div>
+                <div className="max-w-md mx-auto space-y-6">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={recoverRfc}
+                      onChange={(e) => setRecoverRfc(e.target.value.toUpperCase())}
+                      placeholder="Ingresa tu RFC para recuperar la factura"
+                      className="w-full bg-[#F3F7FC] border border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-6 py-3 md:py-4 text-base md:text-sm outline-none transition-all shadow-inner focus:shadow-lg placeholder-gray-400"
+                    />
+                  </div>
+                  <button
+                    onClick={handleRecoverFactura}
+                    className="w-full py-3 md:py-4 bg-[#0B63B2] hover:bg-[#004a8f] text-white rounded-full font-bold text-lg shadow-xl hover:shadow-blue-500/30 active:scale-[0.98] disabled:opacity-60 transition-all flex justify-center gap-2"
+                    disabled={!recoverRfc || loading}
+                  >
+                    {loading && loadingAction === 'recuperar' ? 'Recuperando...' : 'Recuperar factura'} {!loading && <ArrowRight size={20} />}
+                  </button>
+                </div>
+                {recoverError && (
+                  <div className="mt-4 text-sm text-red-700 text-center">{recoverError}</div>
+                )}
+              </motion.div>
+            )}
+
             {/* Paso 2: Verificación */}
-            {step === 2 && !facturaGenerada && (
+            {step === 2 && !facturaGenerada && (!ticketCheck?.exists || ticketCheck?.status !== 'TIMBRADO') && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2.5rem] p-8 md:p-12 border border-gray-50">
                 <div className="flex flex-col items-center text-center mb-6">
                   <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-[#0B63B2] mb-4">
@@ -1049,6 +1308,14 @@ export default function Facturar() {
                     className={`px-6 py-3 rounded-full font-bold ${facturaGenerada?.xml ? 'bg-gray-800 text-white hover:bg-gray-900' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
                   >
                     Descargar XML
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResendEmail}
+                    disabled={!facturaGenerada?.cfdiId || loading}
+                    className={`px-6 py-3 rounded-full font-bold ${!facturaGenerada?.cfdiId || loading ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-[#0B63B2] text-white hover:bg-[#004a8f]'}`}
+                  >
+                    Reenviar correo
                   </button>
                 </div>
               </motion.div>

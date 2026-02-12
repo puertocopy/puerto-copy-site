@@ -1,4 +1,5 @@
-import nodemailer, { Transporter } from 'nodemailer';
+import { buildInvoiceEmailHtml } from './invoice-email-template';
+import { buildFromAddress, sendMailQueued } from './smtp';
 
 type SendInvoiceEmailInput = {
   to: string;
@@ -10,34 +11,8 @@ type SendInvoiceEmailInput = {
   uuid: string;
   receiverRfc?: string;
   date?: string;
-};
-
-let verifiedTransporterPromise: Promise<Transporter> | null = null;
-
-const getVerifiedTransporter = async () => {
-  if (verifiedTransporterPromise) return verifiedTransporterPromise;
-  verifiedTransporterPromise = (async () => {
-    const host = process.env.SMTP_HOST;
-    const port = Number(process.env.SMTP_PORT);
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
-
-    if (!host || !port) {
-      throw new Error('SMTP no configurado');
-    }
-
-    const transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: true,
-      tls: { rejectUnauthorized: false },
-      auth: user && pass ? { user, pass } : undefined
-    });
-
-    await transporter.verify();
-    return transporter;
-  })();
-  return verifiedTransporterPromise;
+  ticket?: string;
+  context?: 'original' | 'resend';
 };
 
 export async function sendInvoiceEmail({
@@ -49,17 +24,11 @@ export async function sendInvoiceEmail({
   total,
   uuid,
   receiverRfc,
-  date
+  date,
+  ticket,
+  context
 }: SendInvoiceEmailInput) {
-  const fromName = process.env.SMTP_FROM_NAME;
-  const smtpUser = process.env.SMTP_USER;
-  const from = fromName && smtpUser ? `"${fromName}" <${smtpUser}>` : '';
-
-  if (!from) {
-    throw new Error('SMTP no configurado');
-  }
-
-  const transporter = await getVerifiedTransporter();
+  const from = buildFromAddress();
 
   const textLines = [
     `RFC emisor: ${issuerRfc}`,
@@ -69,11 +38,20 @@ export async function sendInvoiceEmail({
   if (receiverRfc) textLines.push(`RFC receptor: ${receiverRfc}`);
   if (date) textLines.push(`Fecha: ${date}`);
 
-  const info = await transporter.sendMail({
+  const html = buildInvoiceEmailHtml({
+    ticket,
+    uuid,
+    total,
+    issuedAt: date,
+    context
+  });
+
+  const info = await sendMailQueued({
     from,
     to,
     subject,
     text: textLines.join('\n'),
+    html,
     attachments: [
       {
         filename: 'factura.pdf',

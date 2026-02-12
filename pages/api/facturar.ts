@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import nodemailer, { Transporter } from 'nodemailer';
+import { buildInvoiceEmailHtml } from '../../utils/invoice-email-template';
+import { buildFromAddress, sendMailQueued } from '../../utils/smtp';
 
 const SANDBOX_BASE_URL = 'https://apisandbox.facturama.mx';
 const PROD_BASE_URL = 'https://api.facturama.mx';
@@ -31,30 +32,6 @@ function getAuthHeader() {
   };
 }
 
-let verifiedTransporterPromise: Promise<Transporter> | null = null;
-const getVerifiedTransporter = async () => {
-  if (verifiedTransporterPromise) return verifiedTransporterPromise;
-  verifiedTransporterPromise = (async () => {
-    const host = process.env.SMTP_HOST;
-    const port = Number(process.env.SMTP_PORT);
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
-    if (!host || !port) {
-      throw new Error('SMTP no configurado');
-    }
-    const transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: true,
-      tls: { rejectUnauthorized: false },
-      auth: user && pass ? { user, pass } : undefined
-    });
-    await transporter.verify();
-    return transporter;
-  })();
-  return verifiedTransporterPromise;
-};
-
 type SendInvoiceEmailInput = {
   to: string;
   subject: string;
@@ -78,13 +55,7 @@ const sendInvoiceEmail = async ({
   total,
   ticket
 }: SendInvoiceEmailInput) => {
-  const fromName = process.env.SMTP_FROM_NAME;
-  const smtpUser = process.env.SMTP_USER;
-  const from = fromName && smtpUser ? `"${fromName}" <${smtpUser}>` : '';
-  if (!from) {
-    throw new Error('SMTP no configurado');
-  }
-  const transporter = await getVerifiedTransporter();
+  const from = buildFromAddress();
   const text = [
     `RFC emisor: ${issuerRfc}`,
     `Razón social emisor: ${issuerName}`,
@@ -92,125 +63,19 @@ const sendInvoiceEmail = async ({
     `Total: ${total}`,
     'Se adjunta su factura en formato PDF y XML'
   ].join('\n');
-  const info = await transporter.sendMail({
+  const html = buildInvoiceEmailHtml({
+    ticket,
+    uuid,
+    total,
+    issuedAt: new Date().toISOString(),
+    context: 'original'
+  });
+  const info = await sendMailQueued({
     from,
     to,
     subject,
     text,
-    html: `
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Factura emitida - Puerto Copy</title>
-</head>
-<body style="margin:0; padding:0; background-color:#F3F7FC; font-family:Arial, Helvetica, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0"
-          style="background-color:#ffffff; border-radius:28px; overflow:hidden; border:1px solid #E5EEF9;">
-          <tr>
-            <td style="background:linear-gradient(135deg,#003082,#0B63B2); padding:36px 20px; text-align:center; color:#ffffff;">
-              <h1 style="margin:0; font-size:26px; font-weight:bold; letter-spacing:-0.5px;">
-                PUERTO COPY
-              </h1>
-              <p style="margin:6px 0 0; font-size:12px; letter-spacing:2px; opacity:0.85;">
-                FACTURACIÓN ELECTRÓNICA CFDI 4.0
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:36px 34px; color:#1a1a1a;">
-              <div style="
-                display:inline-block;
-                background:#E3F2FD;
-                color:#0B63B2;
-                padding:8px 16px;
-                border-radius:100px;
-                font-size:12px;
-                font-weight:bold;
-                text-transform:uppercase;
-                margin-bottom:20px;">
-                Factura emitida
-              </div>
-              <h2 style="margin:0 0 14px; font-size:22px; color:#003082;">
-                Hola
-              </h2>
-              <p style="font-size:15px; color:#555; line-height:1.6; margin-bottom:26px;">
-                Tu factura electrónica ha sido emitida correctamente.
-                En este correo encontrarás los archivos fiscales correspondientes.
-              </p>
-              <table width="100%" cellpadding="0" cellspacing="0"
-                style="font-size:14px; margin-bottom:28px;">
-                <tr>
-                  <td style="padding:6px 0;"><strong>Ticket:</strong></td>
-                  <td style="padding:6px 0;">${ticket}</td>
-                </tr>
-                <tr>
-                  <td style="padding:6px 0;"><strong>UUID:</strong></td>
-                  <td style="padding:6px 0;">${uuid}</td>
-                </tr>
-                <tr>
-                  <td style="padding:6px 0;"><strong>Total:</strong></td>
-                  <td style="padding:6px 0;">$ ${total} MXN</td>
-                </tr>
-                <tr>
-                  <td style="padding:6px 0;"><strong>Fecha de emisión:</strong></td>
-                  <td style="padding:6px 0;">${new Date().toLocaleString('es-MX')}</td>
-                </tr>
-              </table>
-              <div style="
-                background:#FDFDFD;
-                border:1px solid #E5EEF9;
-                border-radius:20px;
-                padding:20px;
-                margin-bottom:30px;">
-                <table width="100%" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td style="padding:10px; border:1px solid #E5EEF9; border-radius:14px;">
-                      📄 <strong>Factura PDF</strong><br>
-                      <span style="font-size:12px; color:#777;">Representación impresa</span>
-                    </td>
-                  </tr>
-                  <tr><td height="10"></td></tr>
-                  <tr>
-                    <td style="padding:10px; border:1px solid #E5EEF9; border-radius:14px;">
-                      ⚙️ <strong>Factura XML</strong><br>
-                      <span style="font-size:12px; color:#777;">Archivo fiscal SAT</span>
-                    </td>
-                  </tr>
-                </table>
-              </div>
-              <p style="font-size:13px; color:#777; text-align:center; margin-top:8px;">
-                Se adjunta su factura en formato PDF y XML.
-              </p>
-              <p style="font-size:13px; color:#777; text-align:center;">
-                Si tienes alguna duda o necesitas corrección, responde este correo.
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="background:#ffffff; border-top:1px solid #F3F7FC; padding:28px; text-align:center;">
-              <p style="margin:4px 0; font-size:13px; color:#003082;">
-                <strong>Puerto Copy</strong>
-              </p>
-              <p style="margin:4px 0; font-size:12px; color:#94A3B8;">
-                Villa Colonial 573 · Los Portales · Puerto Vallarta, Jal.
-              </p>
-              <p style="margin-top:14px; font-size:11px; color:#b0b7c3;">
-                Este correo fue generado automáticamente con fines fiscales.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-    `.trim(),
+    html,
     attachments: [
       {
         filename: `Factura_${ticket}.pdf`,
@@ -252,8 +117,8 @@ const gasPost = async (body: any) => {
   return { status: res.status, data };
 };
 
-// Timeout anterior: ninguno explícito. Nuevo timeout: 90,000 ms.
-const fetchWithTimeout = async (url: string, options: any, timeoutMs = 90000) => {
+// Timeout anterior: ninguno explícito. Nuevo timeout: 300,000 ms.
+const fetchWithTimeout = async (url: string, options: any, timeoutMs = 300000) => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -264,13 +129,26 @@ const fetchWithTimeout = async (url: string, options: any, timeoutMs = 90000) =>
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log('>>> HIT /api/facturar', {
+    method: req.method,
+    time: new Date().toISOString(),
+    hasBody: !!req.body
+  });
+  res.setHeader('X-Facturar-Hit', '1');
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Método no permitido' });
   }
 
+  const body = req.body || {};
+  const productosFinal =
+    body.productos ||
+    body.items ||
+    body.products ||
+    body.conceptos ||
+    [];
+
   const {
     ticket,
-    productos,
     rfc,
     razonSocial,
     regimenFiscal,
@@ -281,9 +159,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     storeId: rawStoreId,
     fechaTicket,
     total: totalFromBody
-  } = req.body || {};
+  } = body;
 
-  if (!productos || productos.length === 0) {
+  if (!productosFinal || productosFinal.length === 0) {
     return res.status(400).json({ message: 'No se proporcionaron productos' });
   }
 
@@ -397,7 +275,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   let items;
   try {
-    items = productos.map((item, index) => {
+    items = productosFinal.map((item, index) => {
       const quantity = Number(item.quantity ?? item.cantidad ?? 0);
       const price = parseMoney(item.price ?? item.precio_unitario ?? 0);
       let gross = parseMoney(item.total_money ?? item.gross_total_money ?? 0);
@@ -566,6 +444,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    console.log('FACTURAR payload keys:', Object.keys(payload));
     const reservePayload = {
       action: 'reserve',
       ticket: ticketValue,
@@ -577,33 +456,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       payload
     };
 
-    const reserveResult = await gasPost(reservePayload);
-    const reserveData = reserveResult.data || {};
-    if (reserveData?.ok === false) {
-      console.error('gasReserveError', { ticketKey, reserveStatus: reserveResult.status, reserveData });
-      return res.status(500).json({ message: 'No se pudo reservar el ticket', details: reserveData });
-    }
-    if (reserveData?.status === 'TIMBRADO' && reserveData?.facturamaId) {
-      const storedRfc = String(reserveData?.rfc || '').trim().toUpperCase();
-      if (storedRfc && storedRfc !== normalizedRfc) {
-        console.error('gasReserveRfcMismatch', { ticketKey, storedRfc, inputRfc: normalizedRfc });
-        return res.status(409).json({
-          ok: false,
-          error: 'RFC mismatch',
-          alreadyInvoiced: true
+    let reserveData: any = null;
+    try {
+      const reserveResult = await gasPost(reservePayload);
+      reserveData = reserveResult.data || {};
+      console.log('GAS reserve result:', reserveData);
+      if (reserveData?.ok === true && reserveData?.status === 'TIMBRADO' && reserveData?.facturamaId) {
+        return res.status(200).json({
+          ok: true,
+          alreadyInvoiced: true,
+          facturamaId: reserveData.facturamaId,
+          cfdiId: reserveData.facturamaId
         });
       }
-      console.log('gasReserveAlreadyInvoiced', { ticketKey, facturamaId: reserveData.facturamaId });
-      return res.status(200).json({
-        ok: true,
-        alreadyInvoiced: true,
-        facturamaId: reserveData.facturamaId,
-        cfdiId: reserveData.facturamaId
-      });
-    }
-    if (reserveData?.status && reserveData.status !== 'PENDING') {
-      console.error('gasReserveUnexpectedStatus', { ticketKey, status: reserveData.status });
-      return res.status(500).json({ message: 'Estado de reserva inválido', status: reserveData.status });
+    } catch (reserveErr) {
+      console.error('gasReserveError', { ticketKey, error: String(reserveErr?.message || reserveErr) });
     }
 
     if (process.env.NODE_ENV !== 'production') {
@@ -622,7 +489,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           },
           body: JSON.stringify(payload)
         },
-        90000
+        300000
       );
       createData = await createRes.json().catch(() => ({}));
     } catch (err: any) {
@@ -639,7 +506,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         } catch (failErr) {
           console.error('gasFailError', { ticketKey, error: String(failErr?.message || failErr) });
         }
-        return res.status(504).json({ message: 'La operación tardó demasiado, reintenta.' });
+        return res.status(504).json({
+          ok: false,
+          code: 'TIMEOUT',
+          message: 'La operación tardó demasiado, reintenta.'
+        });
       }
       throw err;
     }
@@ -691,6 +562,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!cfdiId) {
       return res.status(502).json({ message: 'Respuesta inválida de Facturama', detalles: createData });
     }
+    console.log('FACTURAMA response id:', cfdiId);
 
     try {
       await gasPost({

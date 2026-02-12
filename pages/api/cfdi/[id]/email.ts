@@ -86,7 +86,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       receiverRfc: String(receiverRfc || ''),
       total: String(total || ''),
       date: String(date || new Date().toISOString()),
-      uuid: String(uuid || cfdiId)
+      uuid: String(uuid || cfdiId),
+      context: 'resend'
     });
     emailSent = true;
     if (process.env.NODE_ENV !== 'production') {

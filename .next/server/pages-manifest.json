@@ -2,5 +2,7 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/factura": "pages/factura.js"
+  "/factura": "pages/factura.js",
+  "/api/cfdi/[id]/email": "pages/api/cfdi/[id]/email.js",
+  "/": "pages/index.js"
 }
