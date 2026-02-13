@@ -3,6 +3,5 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/factura": "pages/factura.js",
-  "/api/cfdi/[id]/email": "pages/api/cfdi/[id]/email.js",
-  "/": "pages/index.js"
+  "/api/gas-ticket-check": "pages/api/gas-ticket-check.js"
 }

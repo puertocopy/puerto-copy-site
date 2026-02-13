@@ -57,6 +57,10 @@ function validarRFC(rfc) {
   return regex.test((rfc || '').toUpperCase());
 }
 
+function normalizeRFC(rfc = '') {
+  return String(rfc || '').trim().toUpperCase();
+}
+
 function extraerRegimen(valor = '') {
   const v = String(valor).trim().toUpperCase();
   const m = v.match(/^(\d{3})/); 
@@ -94,6 +98,7 @@ export default function Facturar() {
   const [ticketCheck, setTicketCheck] = useState(null);
   const [recoverRfc, setRecoverRfc] = useState('');
   const [recoverError, setRecoverError] = useState('');
+  const [pendingRecovery, setPendingRecovery] = useState(null);
   const [productos, setProductos] = useState([]);
   const [datosFiscales, setDatosFiscales] = useState({ 
     rfc: '', 
@@ -344,9 +349,11 @@ export default function Facturar() {
     setVerifyError('');
     setRecoverError('');
     setTicketCheck(null);
+    setPendingRecovery(null);
     setRecoverRfc('');
 
     const nextTicket = ticketInput;
+    const storeId = 'PV';
     setTicket(nextTicket);
     setVerifyAmount('');
     setVerified(false);
@@ -356,8 +363,19 @@ export default function Facturar() {
     setTicketFecha('');
 
     try {
-      const gasData = await checkTicket(nextTicket, 'PV');
+      const gasData = await checkTicket(nextTicket, storeId);
       setTicketCheck(gasData || null);
+
+      if (gasData?.ok === true && gasData?.exists === true && gasData?.status === 'TIMBRADO' && gasData?.facturamaId) {
+        setPendingRecovery({
+          ticket: nextTicket,
+          storeId,
+          facturamaId: gasData.facturamaId,
+          rfc: gasData?.rfc || ''
+        });
+        setStep('RECOVER_RFC');
+        return;
+      }
 
       if (gasData?.exists && gasData?.status === 'PENDING') {
         setError('Ticket en proceso. Intenta más tarde.');
@@ -365,12 +383,8 @@ export default function Facturar() {
         return;
       }
 
-      if (gasData?.exists && gasData?.status === 'TIMBRADO') {
-        setStep(2);
-        return;
-      }
-
       setStep(2);
+      await handleVerifyTicket({ fromContinue: true });
     } catch (err) {
       setStep(2);
     } finally {
@@ -379,7 +393,43 @@ export default function Facturar() {
     }
   };
 
-  const handleVerifyTicket = async () => {
+  const handleContinueRecovery = async () => {
+    setRecoverError('');
+    const input = normalizeRFC(recoverRfc);
+    const expected = normalizeRFC(pendingRecovery?.rfc);
+    if (!validarRFC(input)) {
+      setRecoverError('RFC inválido.');
+      return;
+    }
+    if (!pendingRecovery?.facturamaId) {
+      setRecoverError('No se encontró la factura para este ticket.');
+      return;
+    }
+    if (expected && input !== expected) {
+      setRecoverError('RFC no coincide');
+      return;
+    }
+
+    const recovered = await handleRecoverFactura({
+      facturamaId: pendingRecovery.facturamaId,
+      ticket: pendingRecovery.ticket,
+      storeId: pendingRecovery.storeId,
+      expectedRfc: pendingRecovery.rfc,
+      rfc: input
+    });
+    if (recovered) {
+      setPendingRecovery(null);
+    }
+  };
+
+  const handleVerifyTicket = async (options = {}) => {
+    if (options?.fromContinue && !String(verifyAmount || '').trim()) {
+      return;
+    }
+    if (ticketCheck?.ok === true && ticketCheck?.exists === true && ticketCheck?.status === 'TIMBRADO' && ticketCheck?.facturamaId) {
+      setVerifyError('');
+      return;
+    }
     if (ticketCheck?.exists && ticketCheck?.status === 'TIMBRADO') {
       setVerifyError('Este ticket ya fue facturado.');
       return;
@@ -459,22 +509,22 @@ export default function Facturar() {
     setSuccess('');
     const overrideTicket = options?.ticketCheck || null;
     const overrideRfc = options?.rfc;
-    const normalizedRfc = String(overrideRfc ?? (recoverRfc || '')).trim().toUpperCase();
+    const expectedRfc = normalizeRFC(options?.expectedRfc ?? ((overrideTicket || ticketCheck)?.rfc || ''));
+    const normalizedRfc = normalizeRFC(overrideRfc ?? recoverRfc);
     if (!validarRFC(normalizedRfc)) {
       setRecoverError('RFC inválido.');
-      return;
+      return false;
     }
 
-    const storedRfc = String((overrideTicket || ticketCheck)?.rfc || '').trim().toUpperCase();
-    if (!storedRfc || normalizedRfc !== storedRfc) {
+    if (expectedRfc && normalizedRfc !== expectedRfc) {
       setRecoverError('Este ticket ya fue facturado con otro RFC.');
-      return;
+      return false;
     }
 
-    const cfdiId = String((overrideTicket || ticketCheck)?.facturamaId || '').trim();
+    const cfdiId = String(options?.facturamaId ?? ((overrideTicket || ticketCheck)?.facturamaId || '')).trim();
     if (!cfdiId) {
       setRecoverError('No se encontró la factura para este ticket.');
-      return;
+      return false;
     }
 
     setLoading(true);
@@ -489,8 +539,10 @@ export default function Facturar() {
         message: 'Este ticket ya fue facturado',
         already: true
       });
+      return true;
     } catch (err) {
       setRecoverError('No se pudo recuperar la factura. Intenta más tarde.');
+      return false;
     } finally {
       setLoading(false);
       setLoadingAction('');
@@ -804,6 +856,7 @@ export default function Facturar() {
     setConfirmError('');
     setTicketFecha('');
     setTicketCheck(null);
+    setPendingRecovery(null);
     setRecoverRfc('');
     setRecoverError('');
     setDatosFiscales({ 
@@ -1099,15 +1152,15 @@ export default function Facturar() {
               </motion.div>
             )}
 
-            {/* Paso 2: Recuperar Factura (si ya está timbrada) */}
-            {step === 2 && !facturaGenerada && ticketCheck?.exists && ticketCheck?.status === 'TIMBRADO' && (
+            {/* Paso RECOVER_RFC: Validar RFC para recuperar factura timbrada */}
+            {step === 'RECOVER_RFC' && !facturaGenerada && pendingRecovery?.facturamaId && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2.5rem] p-8 md:p-12 border border-gray-50">
                 <div className="flex flex-col items-center text-center mb-6">
                   <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-[#0B63B2] mb-4">
                     <FileIcon size={32} />
                   </div>
                   <h3 className="text-xl font-bold text-[#003082]">Ticket ya facturado</h3>
-                  <p className="text-sm text-gray-500 mt-2">Ticket: {ticket}</p>
+                  <p className="text-sm text-gray-500 mt-2">Ticket: {pendingRecovery?.ticket || ticket}</p>
                 </div>
                 <div className="max-w-md mx-auto space-y-6">
                   <div className="relative">
@@ -1120,11 +1173,11 @@ export default function Facturar() {
                     />
                   </div>
                   <button
-                    onClick={handleRecoverFactura}
+                    onClick={handleContinueRecovery}
                     className="w-full py-3 md:py-4 bg-[#0B63B2] hover:bg-[#004a8f] text-white rounded-full font-bold text-lg shadow-xl hover:shadow-blue-500/30 active:scale-[0.98] disabled:opacity-60 transition-all flex justify-center gap-2"
                     disabled={!recoverRfc || loading}
                   >
-                    {loading && loadingAction === 'recuperar' ? 'Recuperando...' : 'Recuperar factura'} {!loading && <ArrowRight size={20} />}
+                    {loading && loadingAction === 'recuperar' ? 'Validando...' : 'Continuar'} {!loading && <ArrowRight size={20} />}
                   </button>
                 </div>
                 {recoverError && (
