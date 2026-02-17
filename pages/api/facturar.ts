@@ -1,12 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { buildInvoiceEmailHtml } from '../../utils/invoice-email-template';
-import { buildFromAddress, sendMailQueued } from '../../utils/smtp';
 
 const SANDBOX_BASE_URL = 'https://apisandbox.facturama.mx';
 const PROD_BASE_URL = 'https://api.facturama.mx';
-const GAS_FACTURAS_POST_URL =
-  process.env.GAS_FACTURAS_POST_URL ||
-  'https://script.google.com/macros/s/AKfycbzf_-GMn9ZGNrNWZOFcDSHfX_Kc4DdXsXQjACOr4AVj8SjPGJSsOFasApCeZMQeOW9r/exec';
 function getBaseUrl() {
   if (process.env.FACTURAMA_API_BASE_URL) {
     return process.env.FACTURAMA_API_BASE_URL;
@@ -31,69 +26,6 @@ function getAuthHeader() {
     base64Length: base64.length
   };
 }
-
-type SendInvoiceEmailInput = {
-  to: string;
-  subject: string;
-  pdfBase64: string;
-  xmlBase64: string;
-  issuerRfc: string;
-  issuerName: string;
-  uuid: string;
-  total: string;
-  ticket: string;
-};
-
-const sendInvoiceEmail = async ({
-  to,
-  subject,
-  pdfBase64,
-  xmlBase64,
-  issuerRfc,
-  issuerName,
-  uuid,
-  total,
-  ticket
-}: SendInvoiceEmailInput) => {
-  const from = buildFromAddress();
-  const text = [
-    `RFC emisor: ${issuerRfc}`,
-    `Razón social emisor: ${issuerName}`,
-    `UUID del CFDI: ${uuid}`,
-    `Total: ${total}`,
-    'Se adjunta su factura en formato PDF y XML'
-  ].join('\n');
-  const html = buildInvoiceEmailHtml({
-    ticket,
-    uuid,
-    total,
-    issuedAt: new Date().toISOString(),
-    context: 'original'
-  });
-  const info = await sendMailQueued({
-    from,
-    to,
-    subject,
-    text,
-    html,
-    attachments: [
-      {
-        filename: `Factura_${ticket}.pdf`,
-        content: pdfBase64,
-        encoding: 'base64'
-      },
-      {
-        filename: `Factura_${ticket}.xml`,
-        content: xmlBase64,
-        encoding: 'base64'
-      }
-    ]
-  });
-  console.log('invoiceEmailSendResult', {
-    messageId: info?.messageId,
-    response: info?.response
-  });
-};
 
 const normalizeTicket = (value: any) => String(value || '').replace(/\D+/g, '');
 
@@ -189,25 +121,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-  const fetchWithRetry = async (url: string) => {
-    for (let attempt = 1; attempt <= 6; attempt += 1) {
-      const response = await fetch(url, {
-        headers: { Authorization: authHeader.header }
-      });
-      const body = await response.text().catch(() => '');
-      const hasBody = body && body.trim().length > 0;
-      if (response.ok && hasBody) {
-        return { ok: true, body, status: response.status };
-      }
-      if (response.status !== 404 && response.ok) {
-        return { ok: false, body, status: response.status };
-      }
-      if (attempt < 6) {
-        await sleep(1000);
-      }
-    }
-    return { ok: false, body: '', status: 404 };
-  };
 
   const normalizedRfc = String(rfc || '').trim().toUpperCase();
   const normalizedRazon = String(razonSocial || '').trim().toUpperCase();
@@ -445,6 +358,151 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     console.log('FACTURAR payload keys:', Object.keys(payload));
+    const toTrimmed = (value: any) => String(value ?? '').trim();
+    const toDigits = (value: any) => String(value ?? '').replace(/\D+/g, '');
+    const toComparableDate = (value: any) => {
+      if (!value) return '';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return '';
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    const toComparableTotal = (value: any) => {
+      const num = Number(value);
+      if (!Number.isFinite(num)) return NaN;
+      return round2(num);
+    };
+    const extractArray = (raw: any): any[] => {
+      if (Array.isArray(raw)) return raw;
+      if (Array.isArray(raw?.Data)) return raw.Data;
+      if (Array.isArray(raw?.data)) return raw.data;
+      if (Array.isArray(raw?.Items)) return raw.Items;
+      if (Array.isArray(raw?.items)) return raw.items;
+      return [];
+    };
+    const extractCfdiId = (item: any) =>
+      toTrimmed(
+        item?.Id ??
+          item?.id ??
+          item?.CfdiId ??
+          item?.cfdiId ??
+          item?.Complement?.Id ??
+          item?.Complement?.CfdiId
+      );
+    const extractExternalId = (item: any) => toTrimmed(item?.ExternalId ?? item?.externalId);
+    const extractOrderNumber = (item: any) => toTrimmed(item?.OrderNumber ?? item?.orderNumber);
+    const extractTotal = (item: any) =>
+      toComparableTotal(item?.Total ?? item?.total ?? item?.Amount ?? item?.amount);
+    const extractDate = (item: any) =>
+      toComparableDate(item?.Date ?? item?.date ?? item?.IssueDate ?? item?.CreatedAt ?? item?.createdAt);
+    const readIssuedCfdis = async (params: URLSearchParams) => {
+      const listUrl = `${baseUrl}/cfdi?${params.toString()}`;
+      const response = await fetch(listUrl, {
+        headers: { Authorization: authHeader.header, Accept: 'application/json' }
+      });
+      if (!response.ok) {
+        return { ok: false, status: response.status, items: [] as any[] };
+      }
+      const text = await response.text().catch(() => '');
+      let parsed: any = [];
+      try {
+        parsed = text ? JSON.parse(text) : [];
+      } catch {
+        parsed = [];
+      }
+      return { ok: true, status: response.status, items: extractArray(parsed) };
+    };
+    const findExistingCfdiAfterTimeout = async () => {
+      const externalId = toTrimmed(body?.externalId ?? body?.ExternalId);
+      const expectedOrder = toTrimmed(ticketValue);
+      const expectedOrderDigits = toDigits(ticketValue);
+      const expectedTotal = toComparableTotal(totalForReserve);
+      const expectedDate = toComparableDate(fechaTicket || new Date().toISOString());
+      let hadSuccessfulLookup = false;
+
+      for (let attempt = 1; attempt <= 4; attempt += 1) {
+        const collected: any[] = [];
+        const seen = new Set<string>();
+        const pushUnique = (item: any) => {
+          const id = extractCfdiId(item);
+          if (!id || seen.has(id)) return;
+          seen.add(id);
+          collected.push(item);
+        };
+
+        const queryAndCollect = async (params: URLSearchParams, reason: string) => {
+          try {
+            const result = await readIssuedCfdis(params);
+            if (result.ok) {
+              hadSuccessfulLookup = true;
+              result.items.forEach(pushUnique);
+            } else {
+              console.error('facturamaLookupStatusError', {
+                ticketKey,
+                reason,
+                status: result.status
+              });
+            }
+          } catch (lookupErr: any) {
+            console.error('facturamaLookupError', {
+              ticketKey,
+              reason,
+              error: String(lookupErr?.message || lookupErr)
+            });
+          }
+        };
+
+        if (externalId) {
+          const externalParams = new URLSearchParams({ type: 'issued', page: '0', keyword: externalId });
+          await queryAndCollect(externalParams, 'externalId');
+        }
+
+        const orderParams = new URLSearchParams({ type: 'issued', page: '0', orderNumber: expectedOrder });
+        await queryAndCollect(orderParams, 'orderNumber');
+
+        const keywordTicketParams = new URLSearchParams({ type: 'issued', page: '0', keyword: expectedOrder });
+        await queryAndCollect(keywordTicketParams, 'ticketKeyword');
+
+        if (externalId) {
+          const matchByExternal = collected.find((item) => extractExternalId(item) === externalId);
+          const externalCfdiId = extractCfdiId(matchByExternal);
+          if (externalCfdiId) {
+            return { found: true, cfdiId: externalCfdiId, hadSuccessfulLookup };
+          }
+        }
+
+        const matchByOrder = collected.find((item) => extractOrderNumber(item) === expectedOrder);
+        const orderCfdiId = extractCfdiId(matchByOrder);
+        if (orderCfdiId) {
+          return { found: true, cfdiId: orderCfdiId, hadSuccessfulLookup };
+        }
+
+        const matchByCombo = collected.find((item) => {
+          const order = extractOrderNumber(item);
+          const orderDigits = toDigits(order);
+          const total = extractTotal(item);
+          const date = extractDate(item);
+          const ticketMatches = !!expectedOrderDigits && orderDigits === expectedOrderDigits;
+          const totalMatches =
+            Number.isFinite(expectedTotal) && Number.isFinite(total) && Math.abs(total - expectedTotal) <= 0.01;
+          const dateMatches = !!expectedDate && !!date && date === expectedDate;
+          return ticketMatches && totalMatches && dateMatches;
+        });
+        const comboCfdiId = extractCfdiId(matchByCombo);
+        if (comboCfdiId) {
+          return { found: true, cfdiId: comboCfdiId, hadSuccessfulLookup };
+        }
+
+        if (attempt < 4) {
+          await sleep(1500);
+        }
+      }
+
+      return { found: false, cfdiId: '', hadSuccessfulLookup };
+    };
+
     const reservePayload = {
       action: 'reserve',
       ticket: ticketValue,
@@ -468,6 +526,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           facturamaId: reserveData.facturamaId,
           cfdiId: reserveData.facturamaId
         });
+      }
+      if (reserveData?.ok === true && reserveData?.status === 'PENDING') {
+        try {
+          const checkResult = await gasPost({
+            action: 'check',
+            ticket: ticketValue,
+            storeId
+          });
+          const checkData = checkResult.data || {};
+          if (checkData?.ok === true && checkData?.status === 'TIMBRADO' && checkData?.facturamaId) {
+            return res.status(200).json({
+              ok: true,
+              alreadyInvoiced: true,
+              facturamaId: checkData.facturamaId,
+              cfdiId: checkData.facturamaId
+            });
+          }
+        } catch (checkErr) {
+          console.error('gasCheckError', { ticketKey, error: String(checkErr?.message || checkErr) });
+        }
       }
     } catch (reserveErr) {
       console.error('gasReserveError', { ticketKey, error: String(reserveErr?.message || reserveErr) });
@@ -495,21 +573,53 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } catch (err: any) {
       if (err?.name === 'AbortError') {
         console.error('facturamaTimeout', { ticketKey });
-        try {
-          await gasPost({
-            action: 'fail',
-            ticket: ticketValue,
-            storeId,
-            rfc: normalizedRfc,
-            errorMsg: 'Facturama timeout'.slice(0, 500)
+        const recovery = await findExistingCfdiAfterTimeout();
+        if (recovery.found && recovery.cfdiId) {
+          try {
+            await gasPost({
+              action: 'finalize',
+              ticket: ticketValue,
+              storeId,
+              rfc: normalizedRfc,
+              email: normalizedEmail,
+              facturamaId: recovery.cfdiId,
+              errorMsg: ''
+            });
+          } catch (finalizeErr) {
+            console.error('gasFinalizeError', { ticketKey, error: String(finalizeErr?.message || finalizeErr) });
+          }
+          return res.status(200).json({
+            ok: true,
+            recoveredAfterTimeout: true,
+            message: 'Factura emitida correctamente',
+            facturamaId: recovery.cfdiId,
+            cfdiId: recovery.cfdiId
           });
-        } catch (failErr) {
-          console.error('gasFailError', { ticketKey, error: String(failErr?.message || failErr) });
         }
+
+        if (recovery.hadSuccessfulLookup) {
+          try {
+            await gasPost({
+              action: 'fail',
+              ticket: ticketValue,
+              storeId,
+              rfc: normalizedRfc,
+              errorMsg: 'Facturama timeout sin CFDI encontrado'.slice(0, 500)
+            });
+          } catch (failErr) {
+            console.error('gasFailError', { ticketKey, error: String(failErr?.message || failErr) });
+          }
+          return res.status(504).json({
+            ok: false,
+            code: 'TIMEOUT',
+            message: 'La operación tardó demasiado y no se encontró CFDI; reintenta.'
+          });
+        }
+
         return res.status(504).json({
           ok: false,
-          code: 'TIMEOUT',
-          message: 'La operación tardó demasiado, reintenta.'
+          code: 'TIMEOUT_UNCERTAIN',
+          message: 'La operación tardó demasiado y no fue posible confirmar el estado; intenta consultar antes de reintentar.'
         });
       }
       throw err;
@@ -571,81 +681,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         storeId,
         rfc: normalizedRfc,
         email: normalizedEmail,
-        facturamaId: cfdiId
+        facturamaId: cfdiId,
+        errorMsg: ''
       });
     } catch (finalizeErr) {
       console.error('gasFinalizeError', { ticketKey, error: String(finalizeErr?.message || finalizeErr) });
     }
 
-    let emailSent: boolean | null = null;
-    const [pdfResult, xmlResult] = await Promise.all([
-      fetchWithRetry(`${baseUrl}/cfdi/pdf/issued/${cfdiId}`),
-      fetchWithRetry(`${baseUrl}/cfdi/xml/issued/${cfdiId}`)
-    ]);
-
-    try {
-      const registerPayload = {
-        ticket: ticketDigits,
-        cfdiId,
-        uuid,
-        email: receiver.Email,
-        fecha: new Date().toISOString()
-      };
-      const registerRes = await fetch(GAS_FACTURAS_POST_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(registerPayload)
-      });
-      if (!registerRes.ok && process.env.NODE_ENV !== 'production') {
-        const registerText = await registerRes.text().catch(() => '');
-        console.log('facturaRegistroError', { status: registerRes.status, body: registerText });
-      }
-    } catch (registerErr) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('facturaRegistroError', registerErr);
-      }
-    }
-
-    if (pdfResult.ok && xmlResult.ok) {
-      const subject = `Factura – Puerto Copy | Ticket ${ticketValue}`;
-      try {
-        await sendInvoiceEmail({
-          to: receiver.Email,
-          subject,
-          pdfBase64: pdfResult.body,
-          xmlBase64: xmlResult.body,
-          issuerRfc: String(process.env.FACTURAMA_ISSUER_RFC || ''),
-          issuerName: String(process.env.FACTURAMA_ISSUER_NAME || ''),
-          uuid: String(uuid || cfdiId),
-          total: totalAmount.toFixed(2),
-          ticket: ticketValue
-        });
-        emailSent = true;
-      } catch (emailErr: any) {
-        emailSent = false;
-        console.error('invoiceEmailError', {
-          cfdiId,
-          error: String(emailErr?.message || emailErr)
-        });
-      }
-    } else {
-      console.error('facturamaFilesNotReady', {
-        cfdiId,
-        pdfStatus: pdfResult.status,
-        xmlStatus: xmlResult.status
-      });
-    }
-
-    const message = emailSent
-      ? 'Factura emitida correctamente'
-      : 'Factura emitida. El envío por correo falló; puedes descargar PDF/XML aquí.';
-
     return res.status(200).json({
-      message,
+      ok: true,
+      message: 'Factura emitida correctamente',
       cfdiId,
-      uuid,
-      emailSent,
-      status: emailSent === true ? 'emailed:true' : 'emailed:false'
+      uuid
     });
   } catch (error: any) {
     try {
