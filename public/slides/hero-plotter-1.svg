@@ -1,0 +1,8 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1920" height="1080" fill="#003082"/>
+  <path d="M0 100H1920M0 200H1920M0 300H1920M0 400H1920M0 500H1920M0 600H1920M0 700H1920M0 800H1920M0 900H1920M0 1000H1920" stroke="white" stroke-opacity="0.05"/>
+  <path d="M100 0V1080M200 0V1080M300 0V1080M400 0V1080M500 0V1080M600 0V1080M700 0V1080M800 0V1080M900 0V1080M1000 0V1080M1100 0V1080M1200 0V1080M1300 0V1080M1400 0V1080M1500 0V1080M1600 0V1080M1700 0V1080M1800 0V1080M1900 0V1080" stroke="white" stroke-opacity="0.05"/>
+  <circle cx="1600" cy="200" r="300" stroke="#00AEEF" stroke-width="2" stroke-opacity="0.2"/>
+  <rect x="200" y="200" width="600" height="400" stroke="#EC008C" stroke-width="2" stroke-opacity="0.2"/>
+  <path d="M100 900L1820 100" stroke="white" stroke-width="1" stroke-opacity="0.1"/>
+</svg>

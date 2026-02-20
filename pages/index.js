@@ -73,9 +73,9 @@ const Contacto = () => (
 
 export default function Home() {
   const slides = [
-    '/slides/plotter-01.svg', // Planos
-    '/slides/plotter-02.svg', // Impresora
-    '/slides/plotter-03.svg'  // Revisión de planos
+    '/slides/hero-plotter-1.svg', // Precisión Técnica (Líneas de planos)
+    '/slides/hero-plotter-2.svg', // Flujo CMYK (Calidad de impresión)
+    '/slides/hero-plotter-3.svg'  // Movimiento de Papel (Rapidez de entrega)
   ];
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fading, setFading] = useState(true);
@@ -141,15 +141,34 @@ export default function Home() {
                 {/* Overlay Degradado */}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#003082]/90 via-[#003082]/30 to-black/30" />
                 
-                {/* Texto Hero */}
-                <div className={`absolute bottom-32 left-0 w-full text-center px-4 transition-all duration-1000 transform ${active ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-                    <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 drop-shadow-lg tracking-tight">
-                        {index === 0 && "Impresión de Planos"}
-                        {index === 1 && "Calidad Profesional"}
-                        {index === 2 && "Soluciones Rápidas"}
-                    </h1>
-                    <p className="text-white/90 text-lg md:text-xl font-medium max-w-2xl mx-auto">
-                        Tu centro de copiado e impresión de confianza en Puerto Vallarta.
+                {/* Contenedor del Logo y Texto Hero */}
+                <div className={`absolute inset-0 flex flex-col items-center justify-center text-center px-4 transition-all duration-1000 transform ${active ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+                    
+                    {/* LOGO PUERTO COPY CENTRADO */}
+                    <div className="mb-8">
+                      <h1 className="text-6xl md:text-8xl font-brand font-bold text-white mb-0 drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] tracking-tight">
+                        Puerto <span className="text-blue-100/90">Copy</span>
+                      </h1>
+                      <div className="flex items-center justify-center gap-4 mt-1">
+                        <div className="h-[1px] w-8 md:w-16 bg-white/40" />
+                        <p className="text-white/80 text-sm md:text-lg font-light tracking-[0.2em] uppercase">
+                          Centro de impresiones
+                        </p>
+                        <div className="h-[1px] w-8 md:w-16 bg-white/40" />
+                      </div>
+                    </div>
+
+                    {/* TITULO DEL SERVICIO ACTUAL */}
+                    <div className="bg-white/10 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 shadow-lg mb-4">
+                      <h2 className="text-xl md:text-3xl font-extrabold text-white drop-shadow-lg tracking-tight">
+                          {index === 0 && "Impresión de Planos"}
+                          {index === 1 && "Calidad Profesional"}
+                          {index === 2 && "Soluciones Rápidas"}
+                      </h2>
+                    </div>
+
+                    <p className="text-white/90 text-lg md:text-xl font-medium max-w-2xl mx-auto opacity-80">
+                        Tu socio de confianza en Puerto Vallarta para todo tipo de proyectos.
                     </p>
                 </div>
               </div>

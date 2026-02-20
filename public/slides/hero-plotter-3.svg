@@ -1,0 +1,9 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1920" height="1080" fill="#003082"/>
+  <path d="M-100 540Q480 340 960 540T2020 540" stroke="white" stroke-width="40" stroke-opacity="0.05"/>
+  <path d="M-100 600Q480 400 960 600T2020 600" stroke="white" stroke-width="40" stroke-opacity="0.03"/>
+  <path d="M-100 480Q480 280 960 480T2020 480" stroke="white" stroke-width="40" stroke-opacity="0.02"/>
+  <path d="M1920 100L0 100" stroke="#00AEEF" stroke-width="2" stroke-opacity="0.2"/>
+  <path d="M1920 150L0 150" stroke="#EC008C" stroke-width="2" stroke-opacity="0.2"/>
+  <circle cx="960" cy="1080" r="400" fill="white" fill-opacity="0.05"/>
+</svg>

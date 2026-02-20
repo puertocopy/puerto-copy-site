@@ -1228,37 +1228,25 @@ export default function Facturar() {
                     <UserCheck className="text-[#0B63B2]" /> Datos fiscales
                   </h2>
                   
-                  {/* Opción Cargar Cliente */}
-                  <div className="bg-[#F3F7FC] p-4 rounded-2xl mb-6">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <input 
-                        type="checkbox" 
-                        id="yaSoyClienteCheckbox" 
-                        checked={showClientCodeInput} 
-                        onChange={(e) => setShowClientCodeInput(e.target.checked)} 
-                        className="w-5 h-5 text-base md:text-sm text-[#0B63B2] rounded focus:ring-[#0B63B2]" 
-                      />
-                      <label htmlFor="yaSoyClienteCheckbox" className="text-sm font-semibold text-gray-700 cursor-pointer">Ya soy cliente</label>
-                    </div>
-                    {showClientCodeInput && (
-                    <div className="flex flex-col md:flex-row gap-2 mt-3">
-                      <input 
-                        type="text" 
-                        value={codigoCliente} 
-                        onChange={(e) => setCodigoCliente(e.target.value.toUpperCase())} 
-                        placeholder="Ej. CLI172" 
-                        className="w-full md:flex-1 border border-gray-200 rounded-xl px-4 py-3 text-base md:text-sm focus:outline-none focus:border-[#0B63B2]" 
-                      />
-                      <button 
-                        type="button" 
-                        onClick={handleCargarDatosCliente} 
-                        className="w-full md:w-auto px-4 py-3 bg-[#0B63B2] text-white rounded-xl text-sm font-bold" 
-                        disabled={loading}
-                      >
-                        Cargar
-                      </button>
+                  {/* Opción Cargar Cliente (Bloqueado Temporalmente) */}
+                  <div className="bg-[#F3F7FC]/50 p-4 rounded-2xl mb-6 border border-dashed border-gray-200 relative group">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center space-x-3 opacity-50">
+                        <input 
+                          type="checkbox" 
+                          id="yaSoyClienteCheckbox" 
+                          disabled
+                          className="w-5 h-5 rounded border-gray-300 text-gray-400 cursor-not-allowed" 
+                        />
+                        <label htmlFor="yaSoyClienteCheckbox" className="text-sm font-semibold text-gray-500 cursor-not-allowed">Ya soy cliente</label>
                       </div>
-                    )}
+                      <span className="bg-[#0B63B2]/10 text-[#0B63B2] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border border-[#0B63B2]/20">
+                        Próximamente
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-400 italic ml-8">
+                      Estamos trabajando en esta nueva función para ti.
+                    </p>
                   </div>
 
                   {/* Campos del Formulario */}
