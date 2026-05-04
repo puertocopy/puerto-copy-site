@@ -1,5 +1,10 @@
+const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
 export default async function handler(req, res) {
     const { ticket } = req.query;
+    console.log("AUDITORÍA LOYVERSE - BACKEND RECIBE:", ticket);
+    console.log("AUDITORÍA LOYVERSE - TIPO DE VALOR:", isUUID(ticket) ? "UUID" : "RECEIPT_NUMBER (o formato corto)");
+    console.log("AUDITORÍA LOYVERSE - LONGITUD:", ticket?.length);
   
     if (!ticket) {
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -10,7 +15,10 @@ export default async function handler(req, res) {
       // Timeout anterior: ninguno explícito. Nuevo timeout: 300,000 ms.
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 300000);
-      const response = await fetch(`https://api.loyverse.com/v1.0/receipts/${ticket}`, {
+      const urlFinal = `https://api.loyverse.com/v1.0/receipts/${ticket}`;
+      console.log("AUDITORÍA LOYVERSE - REQUEST A LOYVERSE:", urlFinal);
+
+      const response = await fetch(urlFinal, {
         headers: {
           Authorization: `Bearer ${process.env.LOYVERSE_API_TOKEN}`,
           'Content-Type': 'application/json',
@@ -18,6 +26,8 @@ export default async function handler(req, res) {
         signal: controller.signal
       });
       clearTimeout(timeoutId);
+
+      console.log("AUDITORÍA LOYVERSE - STATUS RESPUESTA:", response.status);
   
       if (!response.ok) {
         await new Promise((resolve) => setTimeout(resolve, 500));
@@ -25,6 +35,8 @@ export default async function handler(req, res) {
       }
   
       const data = await response.json();
+      console.log("AUDITORÍA LOYVERSE - DATA RECIBIDA (receipt_id):", data?.receipt_id);
+      console.log("AUDITORÍA LOYVERSE - DATA RECIBIDA (receipt_number):", data?.receipt_number);
   
       // ⚠️ Validación por fecha
       const fechaTicket = new Date(data.created_at);

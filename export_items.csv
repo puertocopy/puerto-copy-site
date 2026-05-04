@@ -1,0 +1,158 @@
+Handle,REF,Nombre,Categoria,Descripción,Vendido por peso,Opción 1 nombre,Opción 1 valor,Opción 2 nombre,Opción 2 valor,Opción 3 nombre,Opción 3 valor,Coste,Codigo de barras,REF del componente,Cantidad del componente,Seguir el Inventario,Disponibles para la venta [Puerto Copy],Precio [Puerto Copy],En inventario [Puerto Copy],Existencias bajas [Puerto Copy],"impuesto - ""IVA"" (16%)"
+carpeta,10127,CARPETA,PAPELERÍA,,N,T/CARTA,T/CARTA,,,,,0.00,,,,N,Y,6.00,,,Y
+carpeta,10128,,,,,,T/OFICIO,,,,,0.00,,,,,Y,7.00,,,
+cd/dvd,10133,CD/DVD,PAPELERÍA,,N,,,,,,,0.00,,,,N,Y,37.00,,,Y
+clip,10143,CLIP,PAPELERÍA,,N,,,,,,,0.12,,,,N,Y,0.50,,,Y
+copia-de-ine,10064,COPIA DE INE,COPIA T/ESTANDAR,,N,,,,,,,0.00,,,,N,Y,2.00,,,Y
+copia-plano-img/fondo,10080,COPIA PLANO IMG/FONDO B/N,PLANOS,,N,45X60,45X60,,,,,0.00,,,,N,Y,39.00,,,Y
+copia-plano-img/fondo,10082,,,,,,60X120,,,,,0.00,,,,,Y,60.00,,,
+copia-plano-img/fondo,10081,,,,,,60X90,,,,,0.00,,,,,Y,48.00,,,
+copia-plano-img/fondo,10083,,,,,,90X120,,,,,0.00,,,,,Y,85.00,,,
+copia-plano-img/fondo,10084,,,,,,90X150,,,,,0.00,,,,,Y,95.00,,,
+copia-plano-img/fondo-color,10100,COPIA PLANO IMG/FONDO COLOR,PLANOS,,N,45X60,45X60,,,,,0.00,,,,N,Y,45.00,,,Y
+copia-plano-img/fondo-color,10102,,,,,,60X120,,,,,0.00,,,,,Y,85.00,,,
+copia-plano-img/fondo-color,10101,,,,,,60X90,,,,,0.00,,,,,Y,70.00,,,
+copia-plano-img/fondo-color,10103,,,,,,90X120,,,,,0.00,,,,,Y,125.00,,,
+copia-plano-img/fondo-color,10104,,,,,,90X150,,,,,0.00,,,,,Y,145.00,,,
+copia-plano-lineas/texto,10075,COPIA PLANO LINEAS/TEXTO B/N,PLANOS,,N,45X60,45X60,,,,,0.00,,,,N,Y,24.00,,,Y
+copia-plano-lineas/texto,10077,,,,,,60X120,,,,,0.00,,,,,Y,42.00,,,
+copia-plano-lineas/texto,10076,,,,,,60X90,,,,,0.00,,,,,Y,29.00,,,
+copia-plano-lineas/texto,10078,,,,,,90X120,,,,,0.00,,,,,Y,55.00,,,
+copia-plano-lineas/texto,10079,,,,,,90X150,,,,,0.00,,,,,Y,75.00,,,
+copia-plano-lineas/texto-color,10095,COPIA PLANO LINEAS/TEXTO COLOR,PLANOS,,N,45X60,45X60,,,,,0.00,,,,N,Y,28.00,,,Y
+copia-plano-lineas/texto-color,10097,,,,,,60X120,,,,,0.00,,,,,Y,48.00,,,
+copia-plano-lineas/texto-color,10096,,,,,,60X90,,,,,0.00,,,,,Y,48.00,,,
+copia-plano-lineas/texto-color,10098,,,,,,90X120,,,,,0.00,,,,,Y,80.00,,,
+copia-plano-lineas/texto-color,10099,,,,,,90X150,,,,,0.00,,,,,Y,85.00,,,
+copia-t/carta-a-color,10048,COPIA T/CARTA A COLOR,COPIA T/ESTANDAR,,N,1-30,1-50,,,,,0.00,,,,N,Y,6.00,,,Y
+copia-t/carta-a-color,10050,,,,,,101-350,,,,,0.00,,,,,Y,3.50,,,
+copia-t/carta-a-color,10051,,,,,,351+,,,,,0.00,,,,,Y,3.00,,,
+copia-t/carta-a-color,10049,,,,,,51-100,,,,,0.00,,,,,Y,5.00,,,
+copia-t/carta-b/n,10027,COPIA T/CARTA B/N,COPIA T/ESTANDAR,,N,1-30,1-50,,,,,0.00,,,,N,Y,1.00,,,Y
+copia-t/carta-b/n,10029,,,,,,101-350,,,,,0.00,,,,,Y,0.75,,,
+copia-t/carta-b/n,10030,,,,,,351+,,,,,0.00,,,,,Y,0.65,,,
+copia-t/carta-b/n,10028,,,,,,51-100,,,,,0.00,,,,,Y,0.89,,,
+copia-t/doble-carta-a-color,10056,COPIA T/DOBLE CARTA A COLOR,COPIA T/ESTANDAR,,N,1-30,1-50,,,,,0.00,,,,N,Y,12.00,,,Y
+copia-t/doble-carta-a-color,10058,,,,,,101-350,,,,,0.00,,,,,Y,8.50,,,
+copia-t/doble-carta-a-color,10059,,,,,,351+,,,,,0.00,,,,,Y,8.00,,,
+copia-t/doble-carta-a-color,10057,,,,,,51-100,,,,,0.00,,,,,Y,9.50,,,
+copia-t/doble-carta-b/n,10001,COPIA T/DOBLE CARTA B/N,COPIA T/ESTANDAR,,N,1-30,1-50,,,,,0.00,,,,N,Y,4.50,,,Y
+copia-t/doble-carta-b/n,10006,,,,,,151-300,,,,,0.00,,,,,Y,3.50,,,
+copia-t/doble-carta-b/n,10007,,,,,,351+,,,,,0.00,,,,,Y,3.00,,,
+copia-t/doble-carta-b/n,10005,,,,,,51-100,,,,,0.00,,,,,Y,4.00,,,
+copia-t/oficio-a-color,10052,COPIA T/OFICIO A COLOR,COPIA T/ESTANDAR,,N,1-30,1-50,,,,,0.00,,,,N,Y,7.00,,,Y
+copia-t/oficio-a-color,10054,,,,,,101-350,,,,,0.00,,,,,Y,4.50,,,
+copia-t/oficio-a-color,10055,,,,,,351+,,,,,0.00,,,,,Y,4.00,,,
+copia-t/oficio-a-color,10053,,,,,,51-100,,,,,0.00,,,,,Y,5.50,,,
+copia-t/oficio-b/n,10000,COPIA T/OFICIO B/N,COPIA T/ESTANDAR,,N,1-30,1-50,,,,,0.00,,,,N,Y,1.50,,,Y
+copia-t/oficio-b/n,10003,,,,,,101-350,,,,,0.00,,,,,Y,1.15,,,
+copia-t/oficio-b/n,10004,,,,,,351+,,,,,0.00,,,,,Y,0.95,,,
+copia-t/oficio-b/n,10002,,,,,,51-100,,,,,0.00,,,,,Y,1.40,,,
+doblado-de-plano,10018,DOBLADO DE PLANO,PLANOS,,N,1-100,1-100,,,,,0.00,,,,N,Y,5.00,,,Y
+doblado-de-plano,10022,,,,,,101+,,,,,0.00,,,,,N,4.00,,,
+eng-t/carta,10145,ENG T/CARTA,ENGARGOLADOS,,N,carta,1-100,,,,,0.00,,,,N,Y,20.00,,,Y
+eng-t/carta,10158,,,,,,101-299,,,,,0.00,,,,,Y,25.00,,,
+eng-t/carta,10150,,,,,,300+,,,,,0.00,,,,,Y,30.00,,,
+eng-t/doble-carta,10020,ENG T/DOBLE CARTA,ENGARGOLADOS,,N,DC,1-100,,,,,0.00,,,,N,Y,35.00,,,Y
+eng-t/doble-carta,10153,,,,,,101-299,,,,,0.00,,,,,Y,40.00,,,
+eng-t/doble-carta,10154,,,,,,300+,,,,,0.00,,,,,Y,45.00,,,
+eng-t/oficio,10019,ENG T/OFICIO,ENGARGOLADOS,,N,oficio,1-100,,,,,0.00,,,,N,Y,25.00,,,Y
+eng-t/oficio,10149,,,,,,101-299,,,,,0.00,,,,,Y,30.00,,,
+eng-t/oficio,10152,,,,,,300+,,,,,0.00,,,,,Y,35.00,,,
+enmicado-t/carta,10015,ENMICADO T/CARTA,ENMICADOS,,N,,,,,,,0.00,,,,N,Y,20.00,,,Y
+imp-t/doble-carta-1,10017,ENMICADO T/DOBLE CARTA,ENMICADOS,,N,,,,,,,3.00,,,,N,Y,35.00,,,Y
+enmicado-t/oficio,10016,ENMICADO T/OFICIO,ENMICADOS,,N,,,,,,,0.00,,,,N,Y,25.00,,,Y
+escaneo-de-plano,10060,ESCANEO DE PLANO,ESCANEO,,N,1-30,1-30,,,,,0.00,,,,N,Y,15.00,,,Y
+escaneo-de-plano,10062,,,,,,101-300,,,,,0.00,,,,,Y,13.00,,,
+escaneo-de-plano,10063,,,,,,300+,,,,,0.00,,,,,Y,12.00,,,
+escaneo-de-plano,10061,,,,,,31-100,,,,,0.00,,,,,Y,14.00,,,
+escaneo-t/estandar,10008,ESCANEO T/ESTANDAR,ESCANEO,,N,1-30,1-30,,,,,0.00,,,,N,Y,5.00,,,Y
+escaneo-t/estandar,10010,,,,,,101-300,,,,,0.00,,,,,Y,2.00,,,
+escaneo-t/estandar,10011,,,,,,300+,,,,,0.00,,,,,Y,1.00,,,
+escaneo-t/estandar,10009,,,,,,31-100,,,,,0.00,,,,,Y,3.00,,,
+grabado-de-archivos,10134,GRABADO DE ARCHIVOS,PAPELERÍA,,N,,,,,,,0.00,,,,N,Y,17.00,,,Y
+grapa-grande,10151,GRAPA GRANDE,PAPELERÍA,,N,Grapa,Chica 1-5,,,,,1.00,,,,N,Y,variable,,,Y
+grapa-grande,10147,,,,,,Grande,,,,,1.00,,,,,Y,variable,,,
+imp-metro-lineal-vinil-blanco,10106,IMP METRO LINEAL VINIL BLANCO,IMP GRAN FORMATO,,N,,,,,,,0.00,,,,N,Y,variable,,,Y
+imp-metro-lineal-vinil-microperforado,10108,IMP METRO LINEAL VINIL MICROPERFORADO,IMP GRAN FORMATO,,N,,,,,,,0.00,,,,N,Y,490.00,,,Y
+imp-metro-lineal-vinil-transparente,10107,IMP METRO LINEAL VINIL TRANSPARENTE,IMP GRAN FORMATO,,N,,,,,,,0.00,,,,N,Y,490.00,,,Y
+imp-plano-lineas/texto-color,10085,IMP PLANO LINEAS/TEXTO COLOR,PLANOS,,N,45X60,45X60,,,,,0.00,,,,N,Y,28.00,,,Y
+imp-plano-lineas/texto-color,10087,,,,,,60X120,,,,,0.00,,,,,Y,40.00,,,
+imp-plano-lineas/texto-color,10086,,,,,,60X90,,,,,0.00,,,,,Y,35.00,,,
+imp-plano-lineas/texto-color,10088,,,,,,90X120,,,,,0.00,,,,,Y,59.00,,,
+imp-plano-lineas/texto-color,10089,,,,,,90X150,,,,,0.00,,,,,Y,80.00,,,
+imp-t/carta-a-color,10023,IMP T/CARTA A COLOR,IMP T/ESTÁNDAR,,N,1-30,1-50,,,,,0.00,,,,N,Y,5.50,,,Y
+imp-t/carta-a-color,10025,,,,,,101-350,,,,,0.00,,,,,Y,3.00,,,
+imp-t/carta-a-color,10026,,,,,,351+,,,,,0.00,,,,,Y,2.00,,,
+imp-t/carta-a-color,10024,,,,,,51-100,,,,,0.00,,,,,Y,4.50,,,
+imp-t/carta-b/n,10031,IMP T/CARTA B/N,IMP T/ESTÁNDAR,,N,1-30,1-50,,,,,0.00,,,,N,Y,1.00,,,Y
+imp-t/carta-b/n,10033,,,,,,101-350,,,,,0.00,,,,,Y,0.69,,,
+imp-t/carta-b/n,10034,,,,,,351+,,,,,0.00,,,,,Y,0.49,,,
+imp-t/carta-b/n,10032,,,,,,51-100,,,,,0.00,,,,,Y,0.85,,,
+imp-t/doble-carta-a-color,10044,IMP T/DOBLE CARTA A COLOR,IMP T/ESTÁNDAR,,N,1-30,1-50,,,,,0.00,,,,N,Y,12.00,,,Y
+imp-t/doble-carta-a-color,10046,,,,,,101-350,,,,,0.00,,,,,Y,8.00,,,
+imp-t/doble-carta-a-color,10047,,,,,,351+,,,,,0.00,,,,,Y,7.00,,,
+imp-t/doble-carta-a-color,10045,,,,,,51-100,,,,,0.00,,,,,Y,10.00,,,
+imp-t/doble-carta,10012,IMP T/DOBLE CARTA B/N,IMP T/ESTÁNDAR,,N,1-30,1-50,,,,,0.00,,,,N,Y,4.00,,,Y
+imp-t/doble-carta,10035,,,,,,101-350,,,,,0.00,,,,,Y,3.00,,,
+imp-t/doble-carta,10036,,,,,,351+,,,,,0.00,,,,,Y,2.50,,,
+imp-t/doble-carta,10014,,,,,,51-100,,,,,0.00,,,,,Y,3.50,,,
+imp-t/oficio-a-color,10040,IMP T/OFICIO A COLOR,IMP T/ESTÁNDAR,,N,1-30,1-50,,,,,0.00,,,,N,Y,7.00,,,Y
+imp-t/oficio-a-color,10042,,,,,,101-350,,,,,0.00,,,,,Y,4.00,,,
+imp-t/oficio-a-color,10043,,,,,,351+,,,,,0.00,,,,,Y,3.00,,,
+imp-t/oficio-a-color,10041,,,,,,51-100,,,,,0.00,,,,,Y,6.00,,,
+imp-t/oficio,10037,IMP T/OFICIO B/N,IMP T/ESTÁNDAR,,N,1-30,1-50,,,,,0.00,,,,N,Y,1.50,,,Y
+imp-t/oficio,10038,,,,,,101-350,,,,,0.00,,,,,Y,1.00,,,
+imp-t/oficio,10039,,,,,,351+,,,,,0.00,,,,,Y,0.85,,,
+imp-t/oficio,10013,,,,,,51-100,,,,,0.00,,,,,Y,1.30,,,
+impresión-curp,10132,IMPRESIÓN CURP,PAPELERÍA,,N,,,,,,,0.00,,,,N,Y,15.00,,,Y
+imp-plano-img/fondo,10070,IMPRESION PLANO IMG/FONDO B/N,PLANOS,,N,45X60,45X60,,,,,0.00,,,,N,Y,33.00,,,Y
+imp-plano-img/fondo,10072,,,,,,60X120,,,,,0.00,,,,,Y,52.00,,,
+imp-plano-img/fondo,10071,,,,,,60X90,,,,,0.00,,,,,Y,42.00,,,
+imp-plano-img/fondo,10073,,,,,,90X120,,,,,0.00,,,,,Y,65.00,,,
+imp-plano-img/fondo,10074,,,,,,90X150,,,,,0.00,,,,,Y,85.00,,,
+imp-plano-img/fondo-color,10090,IMPRESION PLANO IMG/FONDO COLOR,PLANOS,,N,45X60,45X60,,,,,0.00,,,,N,Y,45.00,,,Y
+imp-plano-img/fondo-color,10092,,,,,,60X120,,,,,0.00,,,,,Y,80.00,,,
+imp-plano-img/fondo-color,10091,,,,,,60X90,,,,,0.00,,,,,Y,65.00,,,
+imp-plano-img/fondo-color,10093,,,,,,90X120,,,,,0.00,,,,,Y,120.00,,,
+imp-plano-img/fondo-color,10094,,,,,,90X150,,,,,0.00,,,,,Y,140.00,,,
+imp-plano-lineas/texto,10065,IMPRESION PLANO LINEAS/TEXTO B/N,PLANOS,,N,45X60,45X60,,,,,0.00,,,,N,Y,20.00,,,Y
+imp-plano-lineas/texto,10067,,,,,,60X120,,,,,0.00,,,,,Y,34.00,,,
+imp-plano-lineas/texto,10066,,,,,,60X90,,,,,0.00,,,,,Y,24.00,,,
+imp-plano-lineas/texto,10068,,,,,,90X120,,,,,0.00,,,,,Y,50.00,,,
+imp-plano-lineas/texto,10069,,,,,,90X150,,,,,0.00,,,,,Y,72.00,,,
+imp-plano-lineas/texto,10144,,,,,,KB TEL 60x90,,,,,0.00,,,,,Y,20.00,,,
+impresión/copia-con-fondo-b/n-carta,10135,IMPRESIÓN/COPIA CON FONDO B/N CARTA,COP/IMP T/ESTÁNDAR CON FONDO O IMAGEN,,N,1-30,1-30,,,,,0.00,,,,N,Y,2.00,,,Y
+impresión/copia-con-fondo-b/n-carta,10137,,,,,,101-300,,,,,0.00,,,,,Y,1.30,,,
+impresión/copia-con-fondo-b/n-carta,10138,,,,,,300+,,,,,0.00,,,,,Y,1.10,,,
+impresión/copia-con-fondo-b/n-carta,10136,,,,,,31-100,,,,,0.00,,,,,Y,1.50,,,
+impresión/copia-con-fondo-b/n-oficio,10139,IMPRESIÓN/COPIA CON FONDO B/N OFICIO,COP/IMP T/ESTÁNDAR CON FONDO O IMAGEN,,N,1-30,1-30,,,,,0.00,,,,N,Y,2.50,,,Y
+impresión/copia-con-fondo-b/n-oficio,10141,,,,,,101-300,,,,,0.00,,,,,Y,2.00,,,
+impresión/copia-con-fondo-b/n-oficio,10140,,,,,,30-100,,,,,0.00,,,,,Y,2.30,,,
+impresión/copia-con-fondo-b/n-oficio,10142,,,,,,300+,,,,,0.00,,,,,Y,1.90,,,
+lapicera,10124,LAPICERA,PAPELERÍA,,N,TINTA NEGRA,TINTA AZUL,,,,,0.00,,,,N,Y,6.00,,,Y
+lapicera,10123,,,,,,TINTA NEGRA,,,,,0.00,,,,,Y,6.00,,,
+lona-m2,10105,LONA M2,IMP GRAN FORMATO,,N,,,,,,,0.00,,,,N,Y,160.00,,,Y
+papel-especial-t/45x60,10118,PAPEL ESPECIAL T/45X60,PAPEL ESPECIAL,,N,OPALINA,FOTOGRAFICO,,,,,0.00,,,,N,Y,60.00,,,Y
+papel-especial-t/45x60,10117,,,,,,OPALINA,,,,,0.00,,,,,Y,28.00,,,
+papel-especial-t/60x120,10122,PAPEL ESPECIAL T/60X120,PAPEL ESPECIAL,,N,OPALINA,FOTOGRAFICO,,,,,0.00,,,,N,Y,130.00,,,Y
+papel-especial-t/60x120,10121,,,,,,OPALINA,,,,,0.00,,,,,Y,65.00,,,
+papel-especial-t/60x90,10120,PAPEL ESPECIAL T/60X90,PAPEL ESPECIAL,,N,OPALINA,FOTOGRAFICO,,,,,0.00,,,,N,Y,130.00,,,Y
+papel-especial-t/60x90,10119,,,,,,OPALINA,,,,,0.00,,,,,Y,55.00,,,
+papel-especial-t/carta,10111,PAPEL ESPECIAL T/CARTA,PAPEL ESPECIAL,,N,OPALINA,ADHERIBLE,,,,,0.00,,,,N,Y,5.00,,,Y
+papel-especial-t/carta,10110,,,,,,COUCHE,,,,,0.00,,,,,Y,3.00,,,
+papel-especial-t/carta,10112,,,,,,FOTOGRAFICO,,,,,0.00,,,,,Y,5.00,,,
+papel-especial-t/carta,10109,,,,,,OPALINA,,,,,0.00,,,,,Y,3.00,,,
+papel-especial-t/doble-carta,10115,PAPEL ESPECIAL T/DOBLE CARTA,PAPEL ESPECIAL,,N,OPALINA,ADHERIBLE,,,,,0.00,,,,N,Y,7.00,,,Y
+papel-especial-t/doble-carta,10113,,,,,,COUCHE,,,,,0.00,,,,,Y,6.00,,,
+papel-especial-t/doble-carta,10116,,,,,,FOTOGRAFICO,,,,,0.00,,,,,Y,7.00,,,
+papel-especial-t/doble-carta,10114,,,,,,OPALINA,,,,,0.00,,,,,Y,6.00,,,
+sobre,10125,SOBRE,PAPELERÍA,,N,T/CARTA,T/CARTA,,,,,0.00,,,,N,Y,7.00,,,Y
+sobre,10126,,,,,,T/OFICIO,,,,,0.00,,,,,Y,8.00,,,
+sujeta-documentos,10129,SUJETA DOCUMENTOS,PAPELERÍA,,N,CHICO,CHICO,,,,,0.00,,,,N,Y,2.50,,,Y
+sujeta-documentos,10131,,,,,,GRANDE,,,,,0.00,,,,,Y,10.00,,,
+sujeta-documentos,10130,,,,,,MEDIANO,,,,,0.00,,,,,Y,5.00,,,
+testcosto,10155,testcosto,COPIA T/ESTANDAR,<p>test</p>,N,,,,,,,50.00,,,,N,Y,variable,,,Y
+usb,10146,USB,PAPELERÍA,,N,,,,,,,32.00,,,,N,Y,80.00,,,Y
+vinil-sobre-pvc,10021,Vinil sobre PVC,,,Y,,,,,,,0.00,,,,N,Y,variable,,,Y
+z,10148,z,,<p>ajuste</p>,N,,,,,,,0.00,,,,N,Y,1.00,,,Y

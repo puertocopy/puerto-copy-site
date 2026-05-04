@@ -1,0 +1,28 @@
+{
+  "escalas_impresion": {
+    "CARTA_BN": [
+      {"min": 1, "max": 50, "precio": 1.00},
+      {"min": 51, "max": 100, "precio": 0.85},
+      {"min": 101, "max": 350, "precio": 0.69},
+      {"min": 351, "max": 999999, "precio": 0.49}
+    ],
+    "CARTA_COLOR": [
+      {"min": 1, "max": 50, "precio": 5.50},
+      {"min": 51, "max": 100, "precio": 4.50},
+      {"min": 101, "max": 350, "precio": 3.00},
+      {"min": 351, "max": 999999, "precio": 2.00}
+    ],
+    "OFICIO_BN": [
+      {"min": 1, "max": 50, "precio": 1.50},
+      {"min": 51, "max": 100, "precio": 1.30},
+      {"min": 101, "max": 350, "precio": 1.00},
+      {"min": 351, "max": 999999, "precio": 0.85}
+    ]
+  },
+  "planos_precios": {
+    "90x120_LINEAS_BN": 50.00,
+    "90x120_FONDO_BN": 65.00,
+    "90x120_LINEAS_COLOR": 59.00,
+    "90x120_FONDO_COLOR": 120.00
+  }
+}

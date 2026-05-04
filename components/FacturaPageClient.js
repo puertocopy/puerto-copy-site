@@ -461,6 +461,7 @@ export default function Facturar() {
         }
       }
 
+      console.log("AUDITORÍA LOYVERSE - FRONTEND (handleVerifyTicket) ENVÍA:", ticket);
       const res = await fetch(`/api/consultar-ticket?ticket=${encodeURIComponent(ticket)}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {

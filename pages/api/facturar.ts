@@ -81,6 +81,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const {
     ticket,
+    folio: folioFromReq,
+    serie: serieFromReq,
     rfc,
     razonSocial,
     regimenFiscal,
@@ -90,8 +92,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     payments,
     storeId: rawStoreId,
     fechaTicket,
-    total: totalFromBody
+    total: totalFromBody,
+    metodoPago,
+    globalInfo: globalInfoFromReq,
+    usuario,
+    uuidRelacionado,
+    fechaPago
   } = body;
+
+  const ticketValue = String(ticket || '').trim();
+  const folio = folioFromReq || ticketValue.replace(/\D+/g, '') || String(Date.now()).slice(-6);
+  const serie = serieFromReq || 'A';
 
   if (!productosFinal || productosFinal.length === 0) {
     return res.status(400).json({ message: 'No se proporcionaron productos' });
@@ -147,7 +158,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
-  const ticketValue = String(ticket || '').trim();
   const storeId = String(rawStoreId || 'PV').trim() || 'PV';
   const ticketKey = `${storeId}:${ticketValue}`;
   const ticketDigits = normalizeTicket(ticketValue);
@@ -325,16 +335,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const now = new Date();
   const globalInformation = esPublicoGeneral
     ? {
-        Periodicity: '01',
-        Months: String(now.getMonth() + 1).padStart(2, '0'),
-        Year: now.getFullYear()
+        Periodicity: globalInfoFromReq?.periodicity || '01',
+        Months: globalInfoFromReq?.months || String(now.getMonth() + 1).padStart(2, '0'),
+        Year: globalInfoFromReq?.year || now.getFullYear()
       }
     : undefined;
 
   const payload = {
     CfdiType: 'I',
+    Serie: serie,
+    Folio: folio,
     PaymentForm: '01',
-    PaymentMethod: 'PUE',
+    PaymentMethod: metodoPago || 'PUE',
     ExpeditionPlace: process.env.FACTURAMA_EXPEDITION_PLACE,
     Currency: 'MXN',
     SendEmail: true,
@@ -349,9 +361,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     Notes: `Registro de ticket ${ticket}. Emision manual.`,
     ...(globalInformation ? { GlobalInformation: globalInformation } : {})
   };
-  const paymentForm = resolvePaymentForm(payments);
+  const paymentForm = (metodoPago === 'PPD') ? '99' : resolvePaymentForm(payments);
   payload.PaymentForm = paymentForm;
-  payload.PaymentMethod = 'PUE';
+  // payload.PaymentMethod ya está asignado arriba
   if (process.env.NODE_ENV !== 'production') {
     console.log('paymentResolved', { payments, paymentForm });
   }
@@ -510,7 +522,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       fechaTicket: fechaTicket || new Date().toISOString(),
       total: Number.isFinite(totalForReserve) ? totalForReserve : 0,
       rfc: normalizedRfc,
+      razonSocial: normalizedRazon,
       email: normalizedEmail,
+      usuario: usuario || '',
+      metodoPago: metodoPago || 'PUE',
+      uuidRelacion: uuidRelacionado || '',
+      fechaPago: fechaPago || '',
       payload
     };
 
@@ -680,8 +697,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ticket: ticketValue,
         storeId,
         rfc: normalizedRfc,
+        razonSocial: normalizedRazon,
         email: normalizedEmail,
         facturamaId: cfdiId,
+        uuid: uuid || cfdiId,
+        usuario: usuario || '',
+        metodoPago: metodoPago || 'PUE',
+        uuidRelacion: uuidRelacionado || '',
+        fechaPago: fechaPago || '',
         errorMsg: ''
       });
     } catch (finalizeErr) {

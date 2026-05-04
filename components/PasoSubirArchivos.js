@@ -7,13 +7,77 @@ export default function PasoSubirArchivos({ productos, archivosAsignados, setArc
   const [generando, setGenerando] = useState(false);
   const [form, setForm] = useState({ nombre: '', telefono: '', correo: '', domicilio: '' });
 
-  const manejarArchivo = (e) => {
+  const [analizando, setAnalizando] = useState(false);
+
+  const manejarArchivo = async (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-    const asignaciones = productos.map(() => 0);
-    const nuevoArchivo = { nombre: file.name, asignaciones };
-    setArchivosAsignados([...archivosAsignados, nuevoArchivo]);
-    inputRef.current.value = null;
+    if (!file || file.type !== 'application/pdf') {
+      alert('Por favor selecciona un archivo PDF válido.');
+      return;
+    }
+
+    try {
+      setAnalizando(true);
+      const formData = new FormData();
+      formData.append('archivo', file);
+      
+      // Por defecto intentamos con Carta B/N si no hay selección previa, 
+      // la API nos dará error si el formato no coincide, lo cual es correcto.
+      formData.append('tipoServicio', 'Carta B/N');
+
+      const response = await fetch('/api/pedido/validar-pdf', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const resultado = await response.json();
+
+      if (resultado.success) {
+        const nuevoArchivo = { 
+          nombre: file.name, 
+          analisis: resultado.data,
+          presupuesto: resultado.data.presupuesto,
+          cobertura: 'lineas', // default
+          asignaciones: productos.map(() => 0)
+        };
+        setArchivosAsignados([...archivosAsignados, nuevoArchivo]);
+      } else {
+        // Si el error es por formato (Carta vs Plano), permitimos subirlo pero marcamos la advertencia
+        const nuevoArchivo = { 
+          nombre: file.name, 
+          error: resultado.error,
+          analisis: null,
+          asignaciones: productos.map(() => 0)
+        };
+        setArchivosAsignados([...archivosAsignados, nuevoArchivo]);
+        alert(resultado.error);
+      }
+    } catch (error) {
+      console.error('Error al validar PDF:', error);
+      alert('No se pudo analizar el PDF. Intenta de nuevo.');
+    } finally {
+      setAnalizando(false);
+      inputRef.current.value = null;
+    }
+  };
+
+  const cambiarCobertura = async (archivoIndex, nuevaCobertura) => {
+    const arch = archivosAsignados[archivoIndex];
+    if (!arch.analisis) return;
+
+    try {
+      const formData = new FormData();
+      // Re-validamos con la nueva cobertura
+      // En un flujo real, aquí enviaríamos de nuevo a la API o calcularíamos localmente
+      // Para este ejemplo, actualizamos el estado localmente asumiendo que el usuario sabe lo que hace
+      const nuevos = [...archivosAsignados];
+      nuevos[archivoIndex].cobertura = nuevaCobertura;
+      setArchivosAsignados(nuevos);
+      
+      // Aquí podrías disparar una nueva petición a la API si quieres el precio exacto del JSON
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const actualizarAsignacion = (archivoIndex, productoIndex, cantidad) => {
@@ -66,26 +130,86 @@ export default function PasoSubirArchivos({ productos, archivosAsignados, setArc
       <h2 className="text-2xl font-bold text-blue-700 mb-6 text-center">Sube tus archivos</h2>
 
       <div className="text-center mb-6">
-  <div className="inline-block relative">
-    <button
-      disabled
-      className="bg-gray-300 text-gray-500 px-6 py-2 rounded-xl text-sm font-medium shadow-md cursor-not-allowed"
-    >
-      Agregar archivo
-    </button>
-    <span className="absolute -top-2 -right-2 bg-yellow-400 text-xs font-bold px-2 py-0.5 rounded-bl-xl">
-      Próximamente
-    </span>
-  </div>
-</div>
-
-
+        <input
+          type="file"
+          ref={inputRef}
+          onChange={manejarArchivo}
+          className="hidden"
+          accept="application/pdf"
+        />
+        <button
+          onClick={() => inputRef.current.click()}
+          disabled={analizando}
+          className={`bg-blue-700 text-white px-6 py-2 rounded-xl text-sm font-medium shadow-md transition ${
+            analizando ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-800'
+          }`}
+        >
+          {analizando ? 'Analizando PDF...' : 'Agregar archivo PDF'}
+        </button>
+      </div>
 
       {archivosAsignados.map((arch, i) => (
-        <div key={i} className="border rounded-xl p-4 mb-4">
-          <h3 className="text-md font-semibold text-blue-600 mb-3 truncate max-w-full">
-            {arch.nombre.length > 25 ? arch.nombre.slice(0, 20) + '...' : arch.nombre}
-          </h3>
+        <div key={i} className="border-2 border-blue-100 rounded-2xl p-5 mb-6 bg-blue-50/30">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
+            <div>
+              <h3 className="text-lg font-bold text-blue-800 truncate max-w-xs md:max-w-md">
+                {arch.nombre}
+              </h3>
+              {arch.analisis && (
+                <div className="flex flex-wrap gap-2 mt-1">
+                  <span className="bg-white border border-blue-200 text-blue-700 px-2 py-0.5 rounded-lg text-xs font-semibold">
+                    📄 {arch.analisis.numeroDePaginas} páginas
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-lg text-xs font-semibold ${
+                    arch.analisis.formato === 'Carta' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                  }`}>
+                    📐 {arch.analisis.formato}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            {arch.presupuesto && (
+              <div className="bg-blue-700 text-white px-4 py-2 rounded-xl text-center shadow-sm">
+                <p className="text-xs uppercase opacity-80">Subtotal Sugerido</p>
+                <p className="text-xl font-bold">${arch.presupuesto.total.toFixed(2)} MXN</p>
+              </div>
+            )}
+          </div>
+
+          {arch.analisis?.formato === 'Plano' && (
+            <div className="mb-4 p-3 bg-white rounded-xl border border-blue-200">
+              <label className="block text-sm font-bold text-blue-800 mb-2">
+                Tipo de Cobertura para el Plano:
+              </label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={arch.cobertura === 'lineas'}
+                    onChange={() => cambiarCobertura(i, 'lineas')}
+                    className="accent-blue-700"
+                  />
+                  <span className="text-sm">Líneas / Texto (poca tinta)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={arch.cobertura === 'fondo'}
+                    onChange={() => cambiarCobertura(i, 'fondo')}
+                    className="accent-blue-700"
+                  />
+                  <span className="text-sm">Imagen / Fondo (mucha tinta)</span>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {arch.error && (
+            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-xl border border-red-200 text-sm">
+              ⚠️ {arch.error}
+            </div>
+          )}
           <div className="space-y-4">
             {productos.map((prod, j) => {
               const restante = calcularRestante(j);

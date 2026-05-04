@@ -1,9 +1,11 @@
 import Head from 'next/head';
 import '../styles/globals.css';
+import { CartProvider } from '../context/CartContext';
+import { FileUploadModal } from '../components/FileUploadModal';
 
 function MyApp({ Component, pageProps }) {
   return (
-    <>
+    <CartProvider>
       <Head>
         <title>Puerto Copy | Centro de Impresiones</title>
         <meta name="description" content="Centro de copias e impresión de planos en Puerto Vallarta. Copias en carta, oficio, doble carta y gran formato. Servicio rápido, calidad profesional y atención personalizada en Puerto Copy."/>
@@ -22,7 +24,8 @@ function MyApp({ Component, pageProps }) {
       </Head>
 
       <Component {...pageProps} />
-    </>
+      <FileUploadModal />
+    </CartProvider>
   );
 }
 

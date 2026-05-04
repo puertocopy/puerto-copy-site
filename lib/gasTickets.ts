@@ -62,3 +62,9 @@ export async function failTicket(payload: Omit<GasActionPayload, 'action'>) {
   });
   return readJson(res);
 }
+
+export async function listInvoices(params: { month?: string; year?: string; rfc?: string }) {
+  const query = new URLSearchParams(params as any).toString();
+  const res = await fetch(`/api/gas-ticket?action=list&${query}`);
+  return readJson(res);
+}
