@@ -58,9 +58,137 @@ const periodicidades = [
 ];
 
 export default function AdminPortal() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [loginData, setLoginData] = useState({ username: '', password: '' });
+  const [loginError, setLoginError] = useState('');
   const [activeTab, setActiveTab] = useState('emitir'); // 'emitir' | 'facturado' | 'clientes'
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState({ type: '', text: '' });
+
+  // --- LÓGICA DE INACTIVIDAD (5 MIN) ---
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutos en segundos
+  const [showInactivityModal, setShowInactivityModal] = useState(false);
+  const [reauthData, setReauthData] = useState('');
+  const [countdownToLogout, setCountdownToLogout] = useState(60); // 1 minuto para decidir
+
+  useEffect(() => {
+    let timer;
+    if (isAuthenticated && !showInactivityModal) {
+      timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            setShowInactivityModal(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [isAuthenticated, showInactivityModal]);
+
+  useEffect(() => {
+    let logoutTimer;
+    if (showInactivityModal) {
+      logoutTimer = setInterval(() => {
+        setCountdownToLogout(prev => {
+          if (prev <= 1) {
+            handleLogout();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(logoutTimer);
+  }, [showInactivityModal]);
+
+  const resetInactivity = () => {
+    if (!showInactivityModal) setTimeLeft(300);
+  };
+
+  const handleLogout = async () => {
+    // Para cerrar sesión, simplemente borramos la cookie (opcionalmente en el servidor)
+    // O simplemente recargamos la página ya que la cookie expirará o será inválida si implementamos un logout API
+    // Por simplicidad, forzamos recarga para limpiar estados
+    document.cookie = "admin_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.location.reload();
+  };
+
+  const handleRenewSession = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: 'isaact', password: reauthData })
+      });
+      if (res.ok) {
+        setShowInactivityModal(false);
+        setTimeLeft(300);
+        setCountdownToLogout(60);
+        setReauthData('');
+      } else {
+        alert('Contraseña incorrecta');
+      }
+    } catch (err) {
+      alert('Error al renovar sesión');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Detectar actividad para resetear el timer (solo si no estamos en el modal de bloqueo)
+  useEffect(() => {
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    activityEvents.forEach(e => window.addEventListener(e, resetInactivity));
+    return () => activityEvents.forEach(e => window.removeEventListener(e, resetInactivity));
+  }, [showInactivityModal]);
+
+  // --- ESTADO PARA DIRECTORIO ---
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const res = await fetch('/api/auth/verify');
+      const data = await res.json();
+      if (data.authenticated) {
+        setIsAuthenticated(true);
+      }
+    } catch (err) {
+      console.error('Error verificando auth', err);
+    } finally {
+      setCheckingAuth(false);
+    }
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setLoginError('');
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loginData)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setIsAuthenticated(true);
+      } else {
+        setLoginError(data.message || 'Error de acceso');
+      }
+    } catch (err) {
+      setLoginError('Error de conexión');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // --- ESTADO PARA DIRECTORIO ---
   const [showDirectory, setShowDirectory] = useState(false);
@@ -302,6 +430,77 @@ export default function AdminPortal() {
       setLoading(false);
     }
   };
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+        <Loader2 className="animate-spin text-blue-600" size={48} />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100">
+          <div className="bg-[#003082] p-10 text-white text-center">
+            <div className="inline-flex p-4 bg-white/10 rounded-2xl mb-4">
+              <ShieldCheck size={40} />
+            </div>
+            <h2 className="text-2xl font-black">Acceso Restringido</h2>
+            <p className="text-blue-100 text-sm font-bold uppercase tracking-widest opacity-80 mt-2">Puerto Copy Admin</p>
+          </div>
+          <form onSubmit={handleLogin} className="p-10 space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Usuario</label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                <input 
+                  type="text" 
+                  required
+                  value={loginData.username}
+                  onChange={(e) => setLoginData({...loginData, username: e.target.value})}
+                  className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl border-none font-bold text-gray-700 focus:ring-2 focus:ring-blue-500"
+                  placeholder="Usuario"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Contraseña</label>
+              <div className="relative">
+                <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                <input 
+                  type="password" 
+                  required
+                  value={loginData.password}
+                  onChange={(e) => setLoginData({...loginData, password: e.target.value})}
+                  className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl border-none font-bold text-gray-700 focus:ring-2 focus:ring-blue-500"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            {loginError && (
+              <div className="bg-red-50 border border-red-100 text-red-600 p-4 rounded-2xl text-xs font-black flex items-center gap-2">
+                <AlertCircle size={16} /> {loginError}
+              </div>
+            )}
+
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full py-5 bg-[#003082] text-white rounded-[2rem] font-black text-lg shadow-xl shadow-blue-100 hover:bg-blue-700 active:scale-95 transition-all flex justify-center items-center gap-3 mt-4"
+            >
+              {loading ? <Loader2 className="animate-spin" /> : <><ShieldCheck size={20} /> ENTRAR AL PANEL</>}
+            </button>
+          </form>
+          <div className="p-6 bg-gray-50 text-center">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Acceso monitoreado y protegido - Puerto Copy 2024</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -861,6 +1060,56 @@ export default function AdminPortal() {
                     title="PDF Preview"
                     onLoad={() => console.log('PDF Cargado')}
                   />
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* --- MODAL DE INACTIVIDAD / RENOVACIÓN --- */}
+        <AnimatePresence>
+          {showInactivityModal && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-[#003082]/80 backdrop-blur-xl">
+              <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden">
+                <div className="bg-orange-500 p-10 text-white text-center">
+                  <div className="inline-flex p-4 bg-white/10 rounded-2xl mb-4">
+                    <RefreshCw size={40} className="animate-spin-slow" />
+                  </div>
+                  <h2 className="text-2xl font-black">¿Sigues ahí?</h2>
+                  <p className="text-orange-100 text-sm font-bold uppercase tracking-widest opacity-80 mt-2">Tu sesión expirará en {countdownToLogout} segundos</p>
+                </div>
+                <div className="p-10 space-y-6">
+                  <p className="text-sm font-bold text-gray-500 text-center uppercase tracking-tight">Para continuar sin perder tus datos, ingresa tu contraseña:</p>
+                  <form onSubmit={handleRenewSession} className="space-y-4">
+                    <div className="relative">
+                      <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                      <input 
+                        type="password" 
+                        required
+                        autoFocus
+                        value={reauthData}
+                        onChange={(e) => setReauthData(e.target.value)}
+                        className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl border-none font-bold text-gray-700 focus:ring-2 focus:ring-orange-500"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button 
+                        type="button"
+                        onClick={handleLogout}
+                        className="py-4 bg-gray-100 text-gray-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 transition-all"
+                      >
+                        No, Salir
+                      </button>
+                      <button 
+                        type="submit"
+                        disabled={loading}
+                        className="py-4 bg-orange-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-orange-100 hover:bg-orange-600 transition-all flex justify-center items-center gap-2"
+                      >
+                        {loading ? <Loader2 className="animate-spin" size={16} /> : 'Sí, Continuar'}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </motion.div>
             </motion.div>

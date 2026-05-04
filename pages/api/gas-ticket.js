@@ -14,6 +14,13 @@ function getFacturamaAuth() {
 }
 
 export default async function handler(req, res) {
+  // Verificación de seguridad
+  const cookies = req.headers.cookie;
+  const isAuthenticated = cookies && cookies.includes('admin_session=true');
+  if (!isAuthenticated) {
+    return res.status(401).json({ ok: false, error: 'No autorizado' });
+  }
+
   const GAS_URL = process.env.GAS_WEBAPP_URL;
   const GAS_TOKEN = process.env.GAS_API_TOKEN;
 

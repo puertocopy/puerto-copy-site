@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { isAuthenticated } from '../../lib/auth';
 
 const SANDBOX_BASE_URL = 'https://apisandbox.facturama.mx';
 const PROD_BASE_URL = 'https://api.facturama.mx';
@@ -12,6 +13,11 @@ function getAuthHeader() {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Verificación de seguridad
+  if (!isAuthenticated(req)) {
+    return res.status(401).json({ message: 'No autorizado' });
+  }
+
   if (req.method !== 'POST') return res.status(405).json({ message: 'Método no permitido' });
 
   const auth = getAuthHeader();
