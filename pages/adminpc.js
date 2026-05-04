@@ -120,7 +120,7 @@ export default function AdminPortal() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('/api/login-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: 'isaact', password: reauthData })
@@ -155,7 +155,7 @@ export default function AdminPortal() {
 
   const checkAuth = async () => {
     try {
-      const res = await fetch('/api/auth/verify');
+      const res = await fetch('/api/verify-admin');
       const data = await res.json();
       if (data.authenticated) {
         setIsAuthenticated(true);
@@ -172,7 +172,7 @@ export default function AdminPortal() {
     setLoading(true);
     setLoginError('');
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('/api/login-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loginData)
