@@ -7,3 +7,4 @@ const FacturaPageClient = dynamic(() => import('../components/FacturaPageClient'
 export default function FacturaPage() {
   return <FacturaPageClient />;
 }
+//hola
