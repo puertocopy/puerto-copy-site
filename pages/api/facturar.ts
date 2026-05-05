@@ -132,6 +132,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!authHeader) {
     return res.status(500).json({ message: 'Faltan credenciales de Facturama (usuario y password)' });
   }
+
+  // LOG de diagnóstico de entorno
+  console.log(`>>> FACTURAMA ENV: ${baseUrl.includes('sandbox') ? 'SANDBOX' : 'PRODUCCIÓN'} | URL: ${baseUrl}`);
+
   if (process.env.NODE_ENV !== 'production') {
     const maskedUser = authHeader.user ? `${authHeader.user.slice(0, 2)}***` : '??';
     console.log('facturamaBaseUrl', baseUrl);

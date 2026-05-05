@@ -531,7 +531,7 @@ export default function Facturar() {
     setLoading(true);
     setLoadingAction('recuperar');
     try {
-      const filesRes = await fetch(`/api/cfdi/${cfdiId}/files`);
+      const filesRes = await fetch(`/api/cfdi/descargar?id=${cfdiId}`);
       const filesData = await filesRes.json().catch(() => ({}));
       applyFacturaData({
         cfdiId,
@@ -562,7 +562,7 @@ export default function Facturar() {
     setError('');
     setErrorDetails(null);
     try {
-      const res = await fetch(`/api/cfdi/${facturaGenerada.cfdiId}/email`, {
+      const res = await fetch(`/api/cfdi/enviar-correo?id=${facturaGenerada.cfdiId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -609,7 +609,7 @@ export default function Facturar() {
     const interval = setInterval(async () => {
       attempts += 1;
       try {
-        const pollRes = await fetch(`/api/cfdi/${cfdiId}/files`);
+        const pollRes = await fetch(`/api/cfdi/descargar?id=${cfdiId}`);
         const pollData = await pollRes.json().catch(() => ({}));
         const newPdf = pollData?.pdf || '';
         const newXml = pollData?.xml || '';
