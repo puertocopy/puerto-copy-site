@@ -2,7 +2,12 @@ export default async function handler(req, res) {
   const GAS_URL = process.env.GAS_WEBAPP_URL;
   const GAS_TOKEN = process.env.GAS_API_TOKEN;
   if (!GAS_URL || !GAS_TOKEN) {
-    return res.status(500).json({ ok: false, error: 'Missing env GAS_WEBAPP_URL/GAS_API_TOKEN' });
+    console.error('>>> ERROR: Faltan variables de entorno GAS_WEBAPP_URL o GAS_API_TOKEN');
+    return res.status(500).json({ 
+      ok: false, 
+      error: 'Error de configuración del servidor (GAS)',
+      details: process.env.NODE_ENV !== 'production' ? 'Missing env GAS_WEBAPP_URL/GAS_API_TOKEN' : undefined
+    });
   }
 
   const { ticket = '', storeId = 'PV' } = req.query;

@@ -14,12 +14,9 @@ function getFacturamaAuth() {
 }
 
 export default async function handler(req, res) {
-  // Verificación de seguridad
+  // Verificación de seguridad: Movida a acciones específicas (list, listClients)
   const cookies = req.headers.cookie;
   const isAuthenticated = cookies && cookies.includes('admin_session=true');
-  if (!isAuthenticated) {
-    return res.status(401).json({ ok: false, error: 'No autorizado' });
-  }
 
   const GAS_URL = process.env.GAS_WEBAPP_URL;
   const GAS_TOKEN = process.env.GAS_API_TOKEN;
@@ -51,6 +48,7 @@ export default async function handler(req, res) {
 
     // Si la acción es listClients, usamos Facturama directamente
     if (action === 'listClients') {
+      if (!isAuthenticated) return res.status(401).json({ ok: false, error: 'No autorizado' });
       try {
         const auth = getFacturamaAuth();
         if (!auth) return res.status(500).json({ ok: false, error: 'Faltan credenciales de Facturama' });
@@ -87,6 +85,7 @@ export default async function handler(req, res) {
 
     // Si la acción es LIST, usamos Facturama directamente ya que GAS no lo soporta
     if (action === 'list') {
+      if (!isAuthenticated) return res.status(401).json({ ok: false, error: 'No autorizado' });
       try {
         const auth = getFacturamaAuth();
         if (!auth) {

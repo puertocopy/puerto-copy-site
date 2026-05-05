@@ -12,6 +12,14 @@ export default async function handler(req, res) {
     }
   
     try {
+      if (!process.env.LOYVERSE_API_TOKEN) {
+        console.error('>>> ERROR: Faltan LOYVERSE_API_TOKEN en variables de entorno');
+        return res.status(500).json({ 
+          message: 'Error de configuración (Loyverse).',
+          details: process.env.NODE_ENV !== 'production' ? 'Missing LOYVERSE_API_TOKEN' : undefined
+        });
+      }
+
       // Timeout anterior: ninguno explícito. Nuevo timeout: 300,000 ms.
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 300000);
@@ -30,8 +38,14 @@ export default async function handler(req, res) {
       console.log("AUDITORÍA LOYVERSE - STATUS RESPUESTA:", response.status);
   
       if (!response.ok) {
+        if (response.status === 401) {
+          console.error('>>> ERROR: Token de Loyverse no autorizado (401)');
+        }
         await new Promise((resolve) => setTimeout(resolve, 500));
-        return res.status(response.status).json({ message: 'No se pudo verificar el ticket.' });
+        return res.status(response.status).json({ 
+          message: 'No se pudo verificar el ticket.',
+          details: process.env.NODE_ENV !== 'production' ? `Loyverse returned ${response.status}` : undefined
+        });
       }
   
       const data = await response.json();

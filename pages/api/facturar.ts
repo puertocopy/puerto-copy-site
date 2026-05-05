@@ -62,10 +62,12 @@ const fetchWithTimeout = async (url: string, options: any, timeoutMs = 300000) =
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Verificación de seguridad
+  // Verificación de seguridad: Se deshabilita para permitir facturación desde el portal público (Autoservicio)
+  /*
   if (!isAuthenticated(req)) {
     return res.status(401).json({ message: 'No autorizado' });
   }
+  */
 
   console.log('>>> HIT /api/facturar', {
     method: req.method,
