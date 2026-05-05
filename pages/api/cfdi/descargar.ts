@@ -1,10 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const SANDBOX_BASE_URL = 'https://apisandbox.facturama.mx';
 const PROD_BASE_URL = 'https://api.facturama.mx';
 
 function getBaseUrl() {
-  let url = process.env.FACTURAMA_API_BASE_URL || (process.env.FACTURAMA_SANDBOX === 'true' ? SANDBOX_BASE_URL : PROD_BASE_URL);
+  let url = process.env.FACTURAMA_API_BASE_URL || PROD_BASE_URL;
   if (url.endsWith('/api-lite')) return 'https://api.facturama.mx';
   return url;
 }

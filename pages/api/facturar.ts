@@ -1,13 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { isAuthenticated } from '../../lib/auth';
 
-const SANDBOX_BASE_URL = 'https://apisandbox.facturama.mx';
 const PROD_BASE_URL = 'https://api.facturama.mx';
+
 function getBaseUrl() {
   if (process.env.FACTURAMA_API_BASE_URL) {
     return process.env.FACTURAMA_API_BASE_URL;
   }
-  return process.env.FACTURAMA_SANDBOX === 'true' ? SANDBOX_BASE_URL : PROD_BASE_URL;
+  return PROD_BASE_URL;
 }
 
 function getAuthHeader() {
