@@ -4,7 +4,22 @@ const PROD_BASE_URL = 'https://api.facturama.mx';
 
 function getBaseUrl() {
   let url = process.env.FACTURAMA_API_BASE_URL || PROD_BASE_URL;
-  if (url.endsWith('/api-lite')) return 'https://api.facturama.mx';
+  
+  // Limpieza robusta: si el usuario puso la URL completa del endpoint o incluye paths, extraemos solo la base
+  if (url.includes('/api-lite') || url.includes('/3/') || url.includes('/cfdi/')) {
+    try {
+      const parsed = new URL(url);
+      url = `${parsed.protocol}//${parsed.host}`;
+    } catch (e) {
+      url = PROD_BASE_URL;
+    }
+  }
+  
+  // Eliminar barra diagonal final si existe
+  if (url.endsWith('/')) {
+    url = url.slice(0, -1);
+  }
+  
   return url;
 }
 
@@ -29,6 +44,15 @@ async function fetchWithRetry(url: string, authHeader: string) {
   return { ok: false, body: '', status: 404 };
 }
 
+async function fetchCfdiFile(baseUrl: string, type: string, cfdiId: string, authHeader: string) {
+  // Intentamos primero con issuedLite (Multiemisor)
+  const liteRes = await fetchWithRetry(`${baseUrl}/cfdi/${type}/issuedLite/${cfdiId}`, authHeader);
+  if (liteRes.ok) return liteRes;
+
+  // Fallback a issued (Estándar)
+  return await fetchWithRetry(`${baseUrl}/cfdi/${type}/issued/${cfdiId}`, authHeader);
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const cfdiId = String(req.query.id || req.query.cfdiId || '').trim();
   const type = String(req.query.type || 'json').toLowerCase();
@@ -41,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const baseUrl = getBaseUrl();
 
   if (type === 'pdf' || type === 'xml') {
-    const result = await fetchWithRetry(`${baseUrl}/cfdi/${type}/issued/${cfdiId}`, authHeader);
+    const result = await fetchCfdiFile(baseUrl, type, cfdiId, authHeader);
     if (!result.ok) return res.status(404).send('Archivo no encontrado');
 
     const buffer = Buffer.from(result.body, 'base64');
@@ -51,8 +75,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const [pdfResult, xmlResult] = await Promise.all([
-    fetchWithRetry(`${baseUrl}/cfdi/pdf/issued/${cfdiId}`, authHeader),
-    fetchWithRetry(`${baseUrl}/cfdi/xml/issued/${cfdiId}`, authHeader)
+    fetchCfdiFile(baseUrl, 'pdf', cfdiId, authHeader),
+    fetchCfdiFile(baseUrl, 'xml', cfdiId, authHeader)
   ]);
 
   return res.status(200).json({

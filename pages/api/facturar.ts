@@ -4,10 +4,24 @@ import { isAuthenticated } from '../../lib/auth';
 const PROD_BASE_URL = 'https://api.facturama.mx';
 
 function getBaseUrl() {
-  if (process.env.FACTURAMA_API_BASE_URL) {
-    return process.env.FACTURAMA_API_BASE_URL;
+  let url = process.env.FACTURAMA_API_BASE_URL || PROD_BASE_URL;
+  
+  // Limpieza robusta: si el usuario puso la URL completa del endpoint o incluye paths, extraemos solo la base
+  if (url.includes('/api-lite') || url.includes('/3/') || url.includes('/cfdi/')) {
+    try {
+      const parsed = new URL(url);
+      url = `${parsed.protocol}//${parsed.host}`;
+    } catch (e) {
+      url = PROD_BASE_URL;
+    }
   }
-  return PROD_BASE_URL;
+  
+  // Eliminar barra diagonal final si existe
+  if (url.endsWith('/')) {
+    url = url.slice(0, -1);
+  }
+  
+  return url;
 }
 
 function getAuthHeader() {
@@ -147,6 +161,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const normalizedRfc = String(rfc || '').trim().toUpperCase();
   const normalizedRazon = String(razonSocial || '').trim().toUpperCase();
+  const normalizedIssuerName = String(process.env.FACTURAMA_ISSUER_NAME || '').trim().toUpperCase();
   const esPublicoGeneral =
     normalizedRfc === 'XAXX010101000' && normalizedRazon === 'PUBLICO EN GENERAL';
 
@@ -332,12 +347,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Name: 'PUBLICO EN GENERAL',
         CfdiUse: 'S01',
         FiscalRegime: '616',
-        TaxZipCode: String(codigoPostal || '').trim(),
+        TaxZipCode: process.env.FACTURAMA_EXPEDITION_PLACE || String(codigoPostal || '').trim(),
         Email: normalizedEmail
       }
     : {
         Rfc: rfc,
-        Name: razonSocial,
+        Name: normalizedRazon,
         CfdiUse: cfdiUse,
         FiscalRegime: fiscalRegime,
         TaxZipCode: String(codigoPostal || '').trim(),
@@ -357,20 +372,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     CfdiType: 'I',
     Serie: serie,
     Folio: folio,
+    LogoUrl: 'https://puertocopy.com/img/LOGONUEVOblanco.png',
     PaymentForm: '01',
     PaymentMethod: metodoPago || 'PUE',
     ExpeditionPlace: process.env.FACTURAMA_EXPEDITION_PLACE,
+    Exportation: '01',
     Currency: 'MXN',
     SendEmail: true,
     Issuer: {
       Rfc: process.env.FACTURAMA_ISSUER_RFC,
-      Name: process.env.FACTURAMA_ISSUER_NAME,
+      Name: normalizedIssuerName,
       FiscalRegime: process.env.FACTURAMA_ISSUER_REGIMEN
     },
     Receiver: receiver,
     Items: items,
     OrderNumber: ticket,
-    Notes: `Registro de ticket ${ticket}. Emision manual.`,
+    Observations: `Registro de ticket ${ticket}. Emision manual.`,
     ...(globalInformation ? { GlobalInformation: globalInformation } : {})
   };
   const paymentForm = (metodoPago === 'PPD') ? '99' : resolvePaymentForm(payments);
@@ -422,21 +439,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const extractDate = (item: any) =>
       toComparableDate(item?.Date ?? item?.date ?? item?.IssueDate ?? item?.CreatedAt ?? item?.createdAt);
     const readIssuedCfdis = async (params: URLSearchParams) => {
-      const listUrl = `${baseUrl}/cfdi?${params.toString()}`;
-      const response = await fetch(listUrl, {
+      // Intentamos primero en api-lite ya que es el flujo principal actual
+      const apiLiteUrl = `${baseUrl}/api-lite/cfdis?${params.toString()}`;
+      const response = await fetch(apiLiteUrl, {
         headers: { Authorization: authHeader.header, Accept: 'application/json' }
       });
-      if (!response.ok) {
-        return { ok: false, status: response.status, items: [] as any[] };
+      
+      if (response.ok) {
+        const text = await response.text().catch(() => '');
+        let parsed: any = [];
+        try {
+          parsed = text ? JSON.parse(text) : [];
+        } catch {
+          parsed = [];
+        }
+        const items = extractArray(parsed);
+        if (items.length > 0) return { ok: true, status: response.status, items };
       }
-      const text = await response.text().catch(() => '');
-      let parsed: any = [];
+
+      // Fallback a cfdi estándar
+      const listUrl = `${baseUrl}/cfdi?${params.toString()}`;
+      const responseStd = await fetch(listUrl, {
+        headers: { Authorization: authHeader.header, Accept: 'application/json' }
+      });
+      if (!responseStd.ok) {
+        return { ok: false, status: responseStd.status, items: [] as any[] };
+      }
+      const textStd = await responseStd.text().catch(() => '');
+      let parsedStd: any = [];
       try {
-        parsed = text ? JSON.parse(text) : [];
+        parsedStd = textStd ? JSON.parse(textStd) : [];
       } catch {
-        parsed = [];
+        parsedStd = [];
       }
-      return { ok: true, status: response.status, items: extractArray(parsed) };
+      return { ok: true, status: responseStd.status, items: extractArray(parsedStd) };
     };
     const findExistingCfdiAfterTimeout = async () => {
       const externalId = toTrimmed(body?.externalId ?? body?.ExternalId);
@@ -587,7 +623,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let createData: any = {};
     try {
       createRes = await fetchWithTimeout(
-        `${baseUrl}/3/cfdis`,
+        `${baseUrl}/api-lite/3/cfdis`,
         {
           method: 'POST',
           headers: {

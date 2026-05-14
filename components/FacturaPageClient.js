@@ -598,9 +598,27 @@ export default function Facturar() {
       setDatosFiscales((prev) => ({ ...prev, [name]: value }));
       return;
     }
+
     const upperValue = value.toUpperCase();
+    
+    if (name === 'rfc') {
+      const normalized = normalizeRFC(upperValue);
+      if (normalized === 'XAXX010101000') {
+        setDatosFiscales((prev) => ({ 
+          ...prev, 
+          rfc: normalized,
+          regimenFiscal: '616',
+          usoCfdi: 'S01',
+          codigoPostal: '48315'
+        }));
+        return;
+      }
+    }
+
     setDatosFiscales((prev) => ({ ...prev, [name]: upperValue }));
   };
+
+  const isPublicoGeneral = normalizeRFC(datosFiscales.rfc) === 'XAXX010101000';
 
   const startFilesPoll = (cfdiId) => {
     if (!cfdiId) return;
@@ -1262,15 +1280,28 @@ export default function Facturar() {
                       placeholder="CP Receptor (domicilio fiscal)"
                       type="text"
                       maxLength={5}
-                      className="w-full text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm"
+                      disabled={isPublicoGeneral}
+                      className={`w-full text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm ${isPublicoGeneral ? 'opacity-60 cursor-not-allowed' : ''}`}
                     />
                     
-                    <select name="regimenFiscal" value={datosFiscales.regimenFiscal} onChange={handleChange} className="w-full text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm">
+                    <select 
+                      name="regimenFiscal" 
+                      value={datosFiscales.regimenFiscal} 
+                      onChange={handleChange} 
+                      disabled={isPublicoGeneral}
+                      className={`w-full text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm ${isPublicoGeneral ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
                       <option value="">Régimen Fiscal</option>
                       {regimenes.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                     </select>
                     
-                    <select name="usoCfdi" value={datosFiscales.usoCfdi} onChange={handleChange} className="w-full text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm">
+                    <select 
+                      name="usoCfdi" 
+                      value={datosFiscales.usoCfdi} 
+                      onChange={handleChange} 
+                      disabled={isPublicoGeneral}
+                      className={`w-full text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm ${isPublicoGeneral ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    >
                       <option value="">Uso CFDI</option>
                       {usosCFDI.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
                     </select>

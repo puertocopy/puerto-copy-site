@@ -5,7 +5,22 @@ const PROD_BASE_URL = 'https://api.facturama.mx';
 
 function getBaseUrl() {
   let url = process.env.FACTURAMA_API_BASE_URL || PROD_BASE_URL;
-  if (url.endsWith('/api-lite')) return 'https://api.facturama.mx';
+  
+  // Limpieza robusta: si el usuario puso la URL completa del endpoint o incluye paths, extraemos solo la base
+  if (url.includes('/api-lite') || url.includes('/3/') || url.includes('/cfdi/')) {
+    try {
+      const parsed = new URL(url);
+      url = `${parsed.protocol}//${parsed.host}`;
+    } catch (e) {
+      url = PROD_BASE_URL;
+    }
+  }
+  
+  // Eliminar barra diagonal final si existe
+  if (url.endsWith('/')) {
+    url = url.slice(0, -1);
+  }
+  
   return url;
 }
 
@@ -44,8 +59,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const baseUrl = getBaseUrl();
     const [pdfBase64, xmlBase64] = await Promise.all([
-      fetchFromFacturama(`${baseUrl}/cfdi/pdf/issued/${cfdiId}`, authHeader),
-      fetchFromFacturama(`${baseUrl}/cfdi/xml/issued/${cfdiId}`, authHeader)
+      fetchFromFacturama(`${baseUrl}/cfdi/pdf/issuedLite/${cfdiId}`, authHeader),
+      fetchFromFacturama(`${baseUrl}/cfdi/xml/issuedLite/${cfdiId}`, authHeader)
     ]);
 
     if (!pdfBase64 || !xmlBase64) {

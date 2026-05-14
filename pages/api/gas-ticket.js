@@ -1,8 +1,24 @@
 const PROD_BASE_URL = 'https://api.facturama.mx';
 
 function getFacturamaBaseUrl() {
-  if (process.env.FACTURAMA_API_BASE_URL) return process.env.FACTURAMA_API_BASE_URL;
-  return PROD_BASE_URL;
+  let url = process.env.FACTURAMA_API_BASE_URL || PROD_BASE_URL;
+  
+  // Limpieza robusta: si el usuario puso la URL completa del endpoint o incluye paths, extraemos solo la base
+  if (url.includes('/api-lite') || url.includes('/3/') || url.includes('/cfdi/')) {
+    try {
+      const parsed = new URL(url);
+      url = `${parsed.protocol}//${parsed.host}`;
+    } catch (e) {
+      url = PROD_BASE_URL;
+    }
+  }
+  
+  // Eliminar barra diagonal final si existe
+  if (url.endsWith('/')) {
+    url = url.slice(0, -1);
+  }
+  
+  return url;
 }
 
 function getFacturamaAuth() {
@@ -52,8 +68,7 @@ export default async function handler(req, res) {
         const auth = getFacturamaAuth();
         if (!auth) return res.status(500).json({ ok: false, error: 'Faltan credenciales de Facturama' });
 
-        let baseUrl = getFacturamaBaseUrl();
-        if (baseUrl.endsWith('/api-lite')) baseUrl = 'https://api.facturama.mx';
+        const baseUrl = getFacturamaBaseUrl();
 
         console.log('>>> Consultando Directorio a Facturama...');
 
@@ -91,11 +106,7 @@ export default async function handler(req, res) {
           return res.status(500).json({ ok: false, error: 'Faltan credenciales de Facturama (FACTURAMA_USER/PASSWORD)' });
         }
 
-        let baseUrl = getFacturamaBaseUrl();
-        // Si la URL termina en /api-lite, para el listado necesitamos la base o /api
-        if (baseUrl.endsWith('/api-lite')) {
-          baseUrl = 'https://api.facturama.mx';
-        }
+        const baseUrl = getFacturamaBaseUrl();
 
         const { month = '01', year = '2024', rfc } = req.query;
         
@@ -112,23 +123,33 @@ export default async function handler(req, res) {
         
         if (rfc) params.set('keyword', rfc);
 
-        const fetchUrl = `${baseUrl}/cfdi?${params.toString()}`;
-        console.log('>>> Consultando lista a Facturama:', fetchUrl);
+        // Intentamos primero con api-lite (Multiemisor)
+        const fetchUrlLite = `${baseUrl}/api-lite/cfdis?${params.toString()}`;
+        console.log('>>> Consultando lista a Facturama (Lite):', fetchUrlLite);
 
-        const r = await fetch(fetchUrl, {
-          headers: { 
-            'Authorization': auth, 
-            'Accept': 'application/json' 
-          }
+        const rLite = await fetch(fetchUrlLite, {
+          headers: { 'Authorization': auth, 'Accept': 'application/json' }
         });
 
-        if (!r.ok) {
-          throw new Error(`Facturama error ${r.status}`);
+        let rawItems = [];
+        if (rLite.ok) {
+          const data = await rLite.json();
+          rawItems = Array.isArray(data) ? data : (data.Data || data.data || (Array.isArray(data.items) ? data.items : []));
         }
 
-        const data = await r.json();
-        // Facturama puede devolver el array directamente o dentro de una propiedad (Data o data)
-        const rawItems = Array.isArray(data) ? data : (data.Data || data.data || (Array.isArray(data.items) ? data.items : []));
+        // Si no hay resultados o falló, intentamos con la lista estándar
+        if (rawItems.length === 0) {
+          const fetchUrlStd = `${baseUrl}/cfdi?${params.toString()}`;
+          console.log('>>> Consultando lista a Facturama (Std):', fetchUrlStd);
+          const rStd = await fetch(fetchUrlStd, {
+            headers: { 'Authorization': auth, 'Accept': 'application/json' }
+          });
+          if (rStd.ok) {
+            const dataStd = await rStd.json();
+            const stdItems = Array.isArray(dataStd) ? dataStd : (dataStd.Data || dataStd.data || (Array.isArray(dataStd.items) ? dataStd.items : []));
+            rawItems = [...rawItems, ...stdItems];
+          }
+        }
         
         console.log(`>>> Se encontraron ${rawItems.length} facturas`);
 

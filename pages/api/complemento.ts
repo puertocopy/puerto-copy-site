@@ -12,6 +12,23 @@ function getAuthHeader() {
   return `Basic ${base64}`;
 }
 
+function getBaseUrl() {
+  const isSandbox = process.env.FACTURAMA_SANDBOX === 'true';
+  let url = process.env.FACTURAMA_API_BASE_URL || (isSandbox ? SANDBOX_BASE_URL : PROD_BASE_URL);
+  
+  if (url.includes('/api-lite') || url.includes('/3/') || url.includes('/cfdi/')) {
+    try {
+      const parsed = new URL(url);
+      url = `${parsed.protocol}//${parsed.host}`;
+    } catch (e) {
+      url = isSandbox ? SANDBOX_BASE_URL : PROD_BASE_URL;
+    }
+  }
+  
+  if (url.endsWith('/')) url = url.slice(0, -1);
+  return url;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Verificación de seguridad
   if (!isAuthenticated(req)) {
@@ -25,24 +42,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { factura, monto, formaPago, fechaPago, folio } = req.body;
 
+  const normalizedIssuerName = String(process.env.FACTURAMA_ISSUER_NAME || '').trim().toUpperCase();
+  const normalizedReceiverName = String(factura.razonSocial || '').trim().toUpperCase();
+
   // Estructura para Complemento de Pago (CFDI Tipo P)
   const payload = {
     CfdiType: 'P',
     Serie: 'CP',
     Folio: folio || String(Date.now()).slice(-6),
+    LogoUrl: 'https://puertocopy.com/img/LOGONUEVOblanco.png',
     ExpeditionPlace: process.env.FACTURAMA_EXPEDITION_PLACE,
     Issuer: {
       Rfc: process.env.FACTURAMA_ISSUER_RFC,
-      Name: process.env.FACTURAMA_ISSUER_NAME,
+      Name: normalizedIssuerName,
       FiscalRegime: process.env.FACTURAMA_ISSUER_REGIMEN
     },
     Receiver: {
       Rfc: factura.rfc,
-      Name: factura.razonSocial,
+      Name: normalizedReceiverName,
       CfdiUse: 'CP01',
       FiscalRegime: factura.regimenFiscal || '616',
       TaxZipCode: factura.codigoPostal || process.env.FACTURAMA_EXPEDITION_PLACE
     },
+    Items: [
+      {
+        ProductCode: '84111506',
+        Quantity: 1,
+        UnitCode: 'ACT',
+        Description: 'Pago',
+        UnitPrice: 0,
+        Subtotal: 0,
+        TaxObject: '01',
+        Total: 0
+      }
+    ],
+    Exportation: '01',
     Complemento: {
       Pagos: [
         {
@@ -68,8 +102,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   try {
-    const baseUrl = process.env.FACTURAMA_SANDBOX === 'true' ? SANDBOX_BASE_URL : PROD_BASE_URL;
-    const response = await fetch(`${baseUrl}/3/cfdis`, {
+    const baseUrl = getBaseUrl();
+    const response = await fetch(`${baseUrl}/api-lite/3/cfdis`, {
       method: 'POST',
       headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
