@@ -6,11 +6,12 @@ import {
   ChevronRight, Package, Calculator, Loader2,
   FileText, Globe, Settings, Hash, ShieldCheck,
   Calendar, UserCheck, Link, Search, Filter,
-  ArrowRightLeft, Download, Eye, RefreshCw
+  ArrowRightLeft, Download, Eye, RefreshCw, Printer
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { listInvoices } from '../lib/gasTickets';
+import { generarCotizacionPDF } from '../utils/generarCotizacionPDF';
 
 // === CATALOGOS ===
 const regimenes = [
@@ -62,7 +63,7 @@ export default function AdminPortal() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [loginData, setLoginData] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
-  const [activeTab, setActiveTab] = useState('emitir'); // 'emitir' | 'facturado' | 'clientes'
+  const [activeTab, setActiveTab] = useState('emitir'); // 'emitir' | 'facturado' | 'clientes' | 'cotizacion'
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState({ type: '', text: '' });
 
@@ -208,6 +209,12 @@ export default function AdminPortal() {
   const [productos, setProductos] = useState([{ id: Date.now(), nombre: '', cantidad: 1, precio_unitario: 0 }]);
   const [facturaGenerada, setFacturaGenerada] = useState(null);
 
+  // --- ESTADO PARA COTIZACIÓN ---
+  const [datosCotizacion, setDatosCotizacion] = useState({
+    nombre: '', atencion: '', telefono: '', correo: '', domicilio: ''
+  });
+  const [productosCotizacion, setProductosCotizacion] = useState([{ id: Date.now(), nombre: '', variante: '', cantidad: 1, precio: 0 }]);
+
   // --- ESTADO PARA LISTADO ---
   const [facturas, setFacturas] = useState([]);
   const [filtros, setFiltros] = useState({
@@ -218,6 +225,34 @@ export default function AdminPortal() {
   const [showCPModal, setShowCPModal] = useState(null); 
   const [showEmailModal, setShowEmailModal] = useState(null);
   const [previewPdf, setPreviewPdf] = useState(null);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  useEffect(() => {
+    if (previewPdf) {
+      fetchPdf(previewPdf.facturamaId);
+    } else {
+      if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl);
+      setPdfBlobUrl(null);
+    }
+  }, [previewPdf]);
+
+  const fetchPdf = async (id) => {
+    setPdfLoading(true);
+    try {
+      // Añadimos un timestamp para evitar que el navegador use una respuesta cacheada (304)
+      const res = await fetch(`/api/cfdi/descargar?id=${id}&type=pdf&t=${Date.now()}`);
+      if (!res.ok) throw new Error('No se pudo recuperar el PDF');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setPdfBlobUrl(url);
+    } catch (err) {
+      console.error(err);
+      alert('Error al cargar el PDF de Facturama');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
   const [emailToSend, setEmailToSend] = useState('');
   const [emailLoading, setEmailLoading] = useState(false);
   const [cpLoading, setCpLoading] = useState(false);
@@ -299,17 +334,28 @@ export default function AdminPortal() {
   };
 
   const seleccionarCliente = (c) => {
-    setDatosFiscales({
-      ...datosFiscales,
+    const commonData = {
       rfc: c.rfc || '',
       razonSocial: c.razonSocial || '',
       codigoPostal: c.cp || '',
       email: c.email || '',
       regimenFiscal: c.regimenFiscal || '',
       usoCfdi: c.usoCfdi || ''
+    };
+    
+    setDatosFiscales({
+      ...datosFiscales,
+      ...commonData
     });
-    setActiveTab('emitir');
-    setMensaje({ type: 'success', text: `Cliente ${c.rfc} seleccionado` });
+
+    setDatosCotizacion({
+      ...datosCotizacion,
+      nombre: c.razonSocial || '',
+      telefono: c.telefono || '',
+      correo: c.email || ''
+    });
+
+    setMensaje({ type: 'success', text: `Cliente ${c.rfc || c.razonSocial} seleccionado` });
   };
 
   const cargarFacturas = async () => {
@@ -347,7 +393,10 @@ export default function AdminPortal() {
   const formatFechaCDMX = (isoStr) => {
     if (!isoStr) return '---';
     try {
+      // Si recibimos el formato de GAS (ej. 2026-02-12T21:57:12.000Z)
       const date = new Date(isoStr);
+      if (isNaN(date.getTime())) return String(isoStr).split('T')[0];
+      
       return new Intl.DateTimeFormat('es-MX', {
         timeZone: 'America/Mexico_City',
         day: '2-digit',
@@ -358,7 +407,8 @@ export default function AdminPortal() {
         hour12: true
       }).format(date);
     } catch (e) {
-      return isoStr.split('T')[0];
+      console.error('Error formateando fecha:', e, isoStr);
+      return String(isoStr).split('T')[0];
     }
   };
 
@@ -430,6 +480,50 @@ export default function AdminPortal() {
       setLoading(false);
     }
   };
+
+  // --- HANDLERS COTIZACIÓN ---
+  const handleAddProductoCotizacion = () => {
+    setProductosCotizacion([...productosCotizacion, { id: Date.now(), nombre: '', variante: '', cantidad: 1, precio: 0 }]);
+  };
+
+  const handleRemoveProductoCotizacion = (id) => {
+    if (productosCotizacion.length > 1) {
+      setProductosCotizacion(productosCotizacion.filter(p => p.id !== id));
+    }
+  };
+
+  const handleChangeProductoCotizacion = (id, field, value) => {
+    setProductosCotizacion(productosCotizacion.map(p => 
+      p.id === id ? { ...p, [field]: value } : p
+    ));
+  };
+
+  const handleDescargarCotizacion = async () => {
+    if (!datosCotizacion.nombre) return alert('Ingresa el nombre del cliente');
+    setLoading(true);
+    try {
+      const pdfBlob = await generarCotizacionPDF(datosCotizacion, productosCotizacion);
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Cotizacion_${datosCotizacion.nombre.replace(/\s+/g, '_')}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setMensaje({ type: 'success', text: '¡Cotización generada con éxito!' });
+    } catch (err) {
+      console.error(err);
+      setMensaje({ type: 'error', text: 'Error al generar el PDF' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalesCotizacion = (() => {
+    const total = productosCotizacion.reduce((acc, p) => acc + (p.cantidad * p.precio), 0);
+    const subtotal = total / 1.16;
+    const iva = total - subtotal;
+    return { subtotal, iva, total };
+  })();
 
   if (checkingAuth) {
     return (
@@ -527,6 +621,12 @@ export default function AdminPortal() {
                 className={`px-8 py-3 rounded-xl font-bold transition-all ${activeTab === 'emitir' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 Emitir
+              </button>
+              <button 
+                onClick={() => setActiveTab('cotizacion')}
+                className={`px-8 py-3 rounded-xl font-bold transition-all ${activeTab === 'cotizacion' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Cotizar
               </button>
               <button 
                 onClick={() => setActiveTab('facturado')}
@@ -696,6 +796,169 @@ export default function AdminPortal() {
           </div>
         )}
 
+        {/* --- PESTAÑA COTIZACIÓN --- */}
+        {activeTab === 'cotizacion' && (
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+            <div className="xl:col-span-8 space-y-8">
+              {/* Información del Cliente */}
+              <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+                <div className="flex justify-between items-center border-b border-gray-50 pb-4">
+                  <h2 className="text-xl font-black text-[#002D56] flex items-center gap-3">
+                    <div className="p-2 bg-blue-50 rounded-lg"><User className="text-blue-600" size={20} /></div>
+                    Datos del Cliente
+                  </h2>
+                  <button 
+                    onClick={() => {
+                      setShowDirectory(true);
+                      cargarClientes();
+                    }}
+                    className="px-4 py-2 bg-[#002D56] text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-blue-900 transition-all shadow-lg shadow-blue-100"
+                  >
+                    <Search size={14} /> Buscar en Directorio
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1">Nombre o Empresa</label>
+                    <input 
+                      value={datosCotizacion.nombre} 
+                      onChange={(e) => setDatosCotizacion({...datosCotizacion, nombre: e.target.value.toUpperCase()})} 
+                      className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white transition-all font-bold text-gray-700" 
+                      placeholder="ARQUITECTURA VALLARTA S.A."
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1">Atención a</label>
+                    <input 
+                      value={datosCotizacion.atencion} 
+                      onChange={(e) => setDatosCotizacion({...datosCotizacion, atencion: e.target.value.toUpperCase()})} 
+                      className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white transition-all font-bold text-gray-700" 
+                      placeholder="ARQ. ROBERTO JIMÉNEZ"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1">Teléfono de Contacto</label>
+                    <input 
+                      value={datosCotizacion.telefono} 
+                      onChange={(e) => setDatosCotizacion({...datosCotizacion, telefono: e.target.value})} 
+                      className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white transition-all font-bold text-gray-700" 
+                      placeholder="322 123 4567"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1">Correo Electrónico</label>
+                    <input 
+                      type="email" 
+                      value={datosCotizacion.correo} 
+                      onChange={(e) => setDatosCotizacion({...datosCotizacion, correo: e.target.value})} 
+                      className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-blue-500 focus:bg-white transition-all font-bold text-gray-700" 
+                      placeholder="contacto@cliente.com"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Conceptos de Cotización */}
+              <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+                <div className="flex justify-between items-center border-b border-gray-50 pb-4">
+                  <h2 className="text-xl font-black text-gray-800 flex items-center gap-3">
+                    <div className="p-2 bg-emerald-50 rounded-lg"><Package className="text-emerald-600" size={20} /></div>
+                    Conceptos a Cotizar
+                  </h2>
+                  <button 
+                    onClick={handleAddProductoCotizacion} 
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-100 transition-all"
+                  >
+                    <Plus size={14} /> Añadir Concepto
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {productosCotizacion.map((p, index) => (
+                    <div key={p.id} className="group relative bg-gray-50 hover:bg-white p-6 rounded-[2rem] border-2 border-transparent hover:border-blue-100 transition-all shadow-sm hover:shadow-md">
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                        <div className="md:col-span-5 space-y-1">
+                          <label className="text-[9px] font-black text-gray-400 uppercase ml-1">Descripción del Servicio</label>
+                          <input 
+                            placeholder="Ej. Impresión de Planos" 
+                            value={p.nombre} 
+                            onChange={(e) => handleChangeProductoCotizacion(p.id, 'nombre', e.target.value)} 
+                            className="w-full px-4 py-2.5 rounded-xl border-none font-bold text-sm bg-white shadow-inner" 
+                          />
+                        </div>
+                        <div className="md:col-span-3 space-y-1">
+                          <label className="text-[9px] font-black text-gray-400 uppercase ml-1">Variante / Detalle</label>
+                          <input 
+                            placeholder="Ej. Bond 90g" 
+                            value={p.variante} 
+                            onChange={(e) => handleChangeProductoCotizacion(p.id, 'variante', e.target.value)} 
+                            className="w-full px-4 py-2.5 rounded-xl border-none font-bold text-sm bg-white shadow-inner" 
+                          />
+                        </div>
+                        <div className="md:col-span-1 space-y-1">
+                          <label className="text-[9px] font-black text-gray-400 uppercase text-center block">Cant.</label>
+                          <input 
+                            type="number" 
+                            value={p.cantidad} 
+                            onChange={(e) => handleChangeProductoCotizacion(p.id, 'cantidad', parseFloat(e.target.value) || 0)} 
+                            className="w-full px-2 py-2.5 rounded-xl border-none font-bold text-sm bg-white text-center shadow-inner" 
+                          />
+                        </div>
+                        <div className="md:col-span-2 space-y-1">
+                          <label className="text-[9px] font-black text-gray-400 uppercase text-right block">Precio Neto</label>
+                          <input 
+                            type="number" 
+                            value={p.precio} 
+                            onChange={(e) => handleChangeProductoCotizacion(p.id, 'precio', parseFloat(e.target.value) || 0)} 
+                            className="w-full px-4 py-2.5 rounded-xl border-none font-bold text-sm bg-white text-right text-blue-600 shadow-inner" 
+                          />
+                        </div>
+                        <div className="md:col-span-1 flex justify-end">
+                          <button 
+                            onClick={() => handleRemoveProductoCotizacion(p.id)} 
+                            className="p-2.5 bg-red-50 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition-all group-hover:opacity-100 md:opacity-0"
+                          >
+                            <Trash2 size={18}/>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Resumen y Acción */}
+            <div className="xl:col-span-4 space-y-8">
+              <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 sticky top-28">
+                <h3 className="text-xl font-black mb-8 flex items-center gap-2"><Calculator className="text-blue-600" /> Resumen de Cotización</h3>
+                <div className="space-y-4 mb-8 bg-gray-50 p-6 rounded-3xl font-bold text-sm">
+                  <div className="flex justify-between text-gray-400 font-black"><span>SUBTOTAL</span><span>${totalesCotizacion.subtotal.toFixed(2)}</span></div>
+                  <div className="flex justify-between text-gray-400 font-black"><span>IVA (16%)</span><span>${totalesCotizacion.iva.toFixed(2)}</span></div>
+                  <div className="pt-4 border-t-2 border-dashed flex justify-between items-end">
+                    <span className="text-gray-900 font-black">TOTAL</span>
+                    <span className="text-4xl font-black text-blue-600 leading-none">${totalesCotizacion.total.toFixed(2)}</span>
+                  </div>
+                </div>
+                
+                <button 
+                  onClick={handleDescargarCotizacion} 
+                  disabled={loading} 
+                  className="w-full py-5 bg-[#003082] text-white rounded-[2rem] font-black text-xl shadow-xl shadow-blue-100 hover:bg-blue-700 active:scale-95 transition-all flex justify-center items-center gap-3"
+                >
+                  {loading ? <Loader2 className="animate-spin" /> : <><Printer size={24} /> GENERAR PDF (CARTA)</>}
+                </button>
+
+                {mensaje.text && (
+                  <div className={`mt-6 p-4 rounded-2xl flex items-start gap-3 border-2 ${mensaje.type === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-red-50 border-red-100 text-red-700'}`}>
+                    {mensaje.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+                    <p className="text-xs font-black">{mensaje.text}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* --- PESTAÑA FACTURADO (TABLA Y FILTROS) --- */}
         {activeTab === 'facturado' && (
           <div className="space-y-6">
@@ -740,7 +1003,7 @@ export default function AdminPortal() {
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Fecha / Ticket</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Receptor</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Receptor / Usuario</th>
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Importe</th>
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Método / Pago</th>
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Acciones</th>
@@ -752,25 +1015,40 @@ export default function AdminPortal() {
                         !filtros.busqueda || 
                         f.rfc?.toLowerCase().includes(filtros.busqueda.toLowerCase()) || 
                         f.razonSocial?.toLowerCase().includes(filtros.busqueda.toLowerCase()) ||
-                        f.ticket?.toLowerCase().includes(filtros.busqueda.toLowerCase())
+                        f.ticket?.toLowerCase().includes(filtros.busqueda.toLowerCase()) ||
+                        f.usuario?.toLowerCase().includes(filtros.busqueda.toLowerCase())
                       )
                       .map((f, i) => (
                       <tr 
                         key={i} 
                         className="hover:bg-blue-50/30 transition-all group cursor-pointer"
                         onClick={(e) => {
-                          // Evitar que el clic en botones dispare la vista previa
                           if (e.target.closest('button') || e.target.closest('a')) return;
                           setPreviewPdf(f);
                         }}
                       >
                         <td className="px-6 py-4">
-                          <p className="text-xs font-black text-blue-600 uppercase tracking-tight">{f.ticket}</p>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase">{formatFechaCDMX(f.fechaTicket || f.createdAt)}</p>
+                          <p className="text-sm font-black text-[#003082] uppercase tracking-tight leading-tight mb-0.5">
+                            {f.ticket}
+                          </p>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                            {formatFechaCDMX(f.fechaTicket)}
+                          </p>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-xs font-black text-blue-600 uppercase tracking-tight font-mono">{f.rfc || 'S/RFC'}</p>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase">{f.razonSocial || 'PÚBLICO EN GENERAL'}</p>
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <p className="text-xs font-black text-blue-600 uppercase tracking-tight line-clamp-1">
+                              {f.razonSocial || 'PÚBLICO EN GENERAL'}
+                            </p>
+                            {f.usuario && (
+                              <span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-md font-black flex items-center gap-1">
+                                <User size={8} /> {f.usuario}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase font-mono tracking-widest">
+                            {f.rfc || 'S/RFC'}
+                          </p>
                         </td>
                         <td className="px-6 py-4">
                           <p className="text-sm font-black text-gray-900">${Number(f.total || 0).toFixed(2)}</p>
@@ -785,15 +1063,16 @@ export default function AdminPortal() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex justify-center gap-2 transition-all">
-                            <a 
-                              href={`/api/cfdi/descargar?id=${f.facturamaId}&type=pdf`} 
-                              target="_blank" 
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPreviewPdf(f);
+                              }}
                               className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 shadow-sm" 
-                              title="Descargar PDF"
-                              onClick={(e) => e.stopPropagation()}
+                              title="Ver PDF"
                             >
                               <FileText size={16}/>
-                            </a>
+                            </button>
                             <a 
                               href={`/api/cfdi/descargar?id=${f.facturamaId}&type=xml`} 
                               download
@@ -1025,41 +1304,79 @@ export default function AdminPortal() {
         {/* --- MODAL PARA VISTA PREVIA PDF --- */}
         <AnimatePresence>
           {previewPdf && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-10 bg-[#003082]/60 backdrop-blur-md">
-              <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-white w-full h-full max-w-5xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col relative">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-[#003082]/60 backdrop-blur-md">
+              <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-white w-full max-w-4xl h-[85vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col relative border border-white/20">
                 
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 z-10">
-                  <div>
-                    <h3 className="text-xl font-black text-gray-800 tracking-tight flex items-center gap-2">
-                      <FileText className="text-red-500" /> Vista Previa: {previewPdf.ticket}
-                    </h3>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Recuperando archivo desde Facturama...</p>
+                <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 backdrop-blur-md z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="p-2.5 bg-red-50 text-red-600 rounded-xl">
+                      <FileText size={24} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-gray-800 tracking-tight leading-none mb-1">
+                        Vista Previa: {previewPdf.ticket}
+                      </h3>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                        {pdfLoading ? 'Recuperando desde Facturama...' : 'Archivo listo para visualizar'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex gap-3">
-                    <a 
-                      href={`/api/cfdi/descargar?id=${previewPdf.facturamaId}&type=pdf`} 
-                      download
-                      className="px-6 py-2.5 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase flex items-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
-                    >
-                      <Download size={16} /> Descargar
-                    </a>
-                    <button onClick={() => setPreviewPdf(null)} className="p-2.5 bg-gray-200 text-gray-600 rounded-2xl hover:bg-gray-300 transition-all"><Plus className="rotate-45" /></button>
+                  <div className="flex items-center gap-3">
+                    {pdfBlobUrl && (
+                      <button 
+                        onClick={() => {
+                          const a = document.createElement('a');
+                          a.href = pdfBlobUrl;
+                          a.download = `Factura_${previewPdf.ticket}.pdf`;
+                          a.click();
+                        }}
+                        className="px-5 py-2.5 bg-[#003082] text-white rounded-2xl text-[10px] font-black uppercase flex items-center gap-2 hover:bg-blue-800 transition-all shadow-lg shadow-blue-100"
+                      >
+                        <Download size={14} /> Descargar PDF
+                      </button>
+                    )}
+                    <button onClick={() => setPreviewPdf(null)} className="p-2.5 bg-gray-200 text-gray-600 rounded-2xl hover:bg-gray-300 transition-all">
+                      <Plus className="rotate-45" size={20} />
+                    </button>
                   </div>
                 </div>
 
                 <div className="flex-1 bg-gray-100 flex items-center justify-center relative">
-                  {/* Loader de fondo mientras el iframe carga */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-blue-600/30">
-                    <Loader2 size={48} className="animate-spin" />
-                    <p className="font-black text-sm uppercase tracking-tighter">Conectando con Facturama...</p>
-                  </div>
+                  {(pdfLoading || !pdfBlobUrl) && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-blue-600 z-20 bg-gray-50/80 backdrop-blur-sm">
+                      <Loader2 size={48} className="animate-spin" />
+                      <p className="font-black text-sm uppercase tracking-tighter">
+                        {pdfLoading ? 'Conectando con Facturama...' : 'Preparando visualización...'}
+                      </p>
+                    </div>
+                  )}
                   
-                  <iframe 
-                    src={`/api/cfdi/descargar?id=${previewPdf.facturamaId}&type=pdf#toolbar=0`} 
-                    className="w-full h-full border-none relative z-10"
-                    title="PDF Preview"
-                    onLoad={() => console.log('PDF Cargado')}
-                  />
+                  {pdfBlobUrl && (
+                    <iframe 
+                      src={`${pdfBlobUrl}#toolbar=0`} 
+                      className="w-full h-full border-none relative z-10"
+                      title="PDF Preview"
+                    />
+                  )}
+                </div>
+
+                <div className="p-5 bg-white border-t border-gray-100 flex flex-col md:flex-row justify-center gap-4 shadow-2xl">
+                   <button 
+                      onClick={() => {
+                        setEmailToSend(previewPdf.email || '');
+                        setShowEmailModal(previewPdf);
+                      }}
+                      className="px-8 py-3 bg-blue-50 text-blue-600 rounded-2xl text-[10px] font-black uppercase flex items-center justify-center gap-2 hover:bg-blue-100 transition-all"
+                    >
+                      <Mail size={16}/> Enviar por Correo
+                    </button>
+                    <a 
+                      href={`/api/cfdi/descargar?id=${previewPdf.facturamaId}&type=xml`} 
+                      download
+                      className="px-8 py-3 bg-amber-50 text-amber-600 rounded-2xl text-[10px] font-black uppercase flex items-center justify-center gap-2 hover:bg-amber-100 transition-all"
+                    >
+                      <Hash size={16}/> Descargar XML
+                    </a>
                 </div>
               </motion.div>
             </motion.div>

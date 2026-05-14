@@ -32,28 +32,62 @@ function getAuthHeader() {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function fetchWithRetry(url: string, authHeader: string) {
+async function fetchWithRetry(url: string, authHeader: string, type: string) {
   for (let attempt = 1; attempt <= 6; attempt += 1) {
-    const response = await fetch(url, { headers: { Authorization: authHeader } });
-    const body = await response.text().catch(() => '');
-    if (response.ok && body.trim().length > 0) {
-      return { ok: true, body, status: response.status };
+    try {
+      const response = await fetch(url, { 
+        headers: { 
+          Authorization: authHeader,
+          'Accept': type === 'pdf' ? 'application/pdf, application/octet-stream' : 'application/xml, text/xml, application/json'
+        } 
+      });
+      
+      const status = response.status;
+      if (status === 200) {
+        const text = await response.text();
+        if (text && text.trim().length > 10) {
+          // Facturama a veces devuelve un JSON { "Content": "base64..." } 
+          // y otras veces el base64 directo.
+          try {
+            const parsed = JSON.parse(text);
+            if (parsed.Content) {
+              return { ok: true, body: parsed.Content, status };
+            }
+          } catch (e) {
+            // No es JSON, asumimos que es el base64 directo
+          }
+          return { ok: true, body: text, status };
+        }
+      }
+      
+      console.log(`>>> Intento ${attempt} fallido para ${type}: ${status} en ${url}`);
+    } catch (err) {
+      console.error(`>>> Error en intento ${attempt} para ${type}:`, err.message);
     }
-    if (attempt < 6) await sleep(1000);
+    
+    if (attempt < 6) await sleep(1500);
   }
   return { ok: false, body: '', status: 404 };
 }
 
 async function fetchCfdiFile(baseUrl: string, type: string, cfdiId: string, authHeader: string) {
-  // Intentamos primero con issuedLite (Multiemisor)
-  const liteRes = await fetchWithRetry(`${baseUrl}/cfdi/${type}/issuedLite/${cfdiId}`, authHeader);
+  // 1. Intentar issuedLite (Prioridad absoluta según requerimiento del usuario)
+  // URL: api.facturama.mx/cfdi/pdf/issuedLite/{id}
+  console.log(`>>> Intentando recuperación via issuedLite para ${type}: ${cfdiId}`);
+  const liteRes = await fetchWithRetry(`${baseUrl}/cfdi/${type}/issuedLite/${cfdiId}`, authHeader, type);
   if (liteRes.ok) return liteRes;
 
-  // Fallback a issued (Estándar)
-  return await fetchWithRetry(`${baseUrl}/cfdi/${type}/issued/${cfdiId}`, authHeader);
+  // 2. Fallback: issued (Estándar) si el anterior falla
+  console.log(`>>> Fallback a issued estándar para ${type}: ${cfdiId}`);
+  return await fetchWithRetry(`${baseUrl}/cfdi/${type}/issued/${cfdiId}`, authHeader, type);
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Deshabilitar caché para asegurar recuperación fresca de Facturama
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   const cfdiId = String(req.query.id || req.query.cfdiId || '').trim();
   const type = String(req.query.type || 'json').toLowerCase();
 
@@ -70,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const buffer = Buffer.from(result.body, 'base64');
     res.setHeader('Content-Type', type === 'pdf' ? 'application/pdf' : 'application/xml');
-    res.setHeader('Content-Disposition', `${type === 'pdf' ? 'inline' : 'attachment'}; filename=factura_${cfdiId}.${type}`);
+    res.setHeader('Content-Disposition', `attachment; filename=factura_${cfdiId}.${type}`);
     return res.send(buffer);
   }
 

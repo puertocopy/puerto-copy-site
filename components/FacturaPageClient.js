@@ -704,6 +704,10 @@ export default function Facturar() {
         total: round2(total),
         rfc: datosFiscales.rfc,
         email: datosFiscales.email,
+        razonSocial: datosFiscales.razonSocial,
+        codigoPostal: datosFiscales.codigoPostal,
+        usoCfdi: datosFiscales.usoCfdi,
+        regimenFiscal: datosFiscales.regimenFiscal,
         payload: {
           productos,
           payments,
@@ -794,7 +798,14 @@ export default function Facturar() {
           storeId: 'PV',
           rfc: datosFiscales.rfc,
           email: datosFiscales.email,
-          facturamaId: cfdiId
+          razonSocial: datosFiscales.razonSocial,
+          codigoPostal: datosFiscales.codigoPostal,
+          usoCfdi: datosFiscales.usoCfdi,
+          regimenFiscal: datosFiscales.regimenFiscal,
+          facturamaId: cfdiId,
+          uuid: cfdiId,
+          usuario: '', // El usuario en autoservicio suele ser vacío o 'CLIENTE'
+          metodoPago: 'PUE'
         }).catch((finalizeErr) => {
           if (process.env.NODE_ENV !== 'production') {
             console.log('gasFinalizeError', finalizeErr);

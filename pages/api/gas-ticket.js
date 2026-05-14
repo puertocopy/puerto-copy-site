@@ -29,9 +29,9 @@ function getFacturamaAuth() {
 }
 
 export default async function handler(req, res) {
-  // Verificación de seguridad: Movida a acciones específicas (list, listClients)
-  const cookies = req.headers.cookie;
-  const isAuthenticated = cookies && cookies.includes('admin_session=true');
+  // Verificación de seguridad robusta
+  const cookies = req.headers.cookie || '';
+  const isAuthenticated = cookies.split(';').some(c => c.trim().startsWith('admin_session=true'));
 
   const GAS_URL = process.env.GAS_WEBAPP_URL;
   const GAS_TOKEN = process.env.GAS_API_TOKEN;
@@ -97,84 +97,108 @@ export default async function handler(req, res) {
       }
     }
 
-    // Si la acción es LIST, usamos Facturama directamente ya que GAS no lo soporta
+    // Si la acción es LIST, consultamos a GAS para obtener el histórico real con todos los campos (Usuario, UUID, etc.)
     if (action === 'list') {
       if (!isAuthenticated) return res.status(401).json({ ok: false, error: 'No autorizado' });
+      
+      const { month = String(new Date().getMonth() + 1).padStart(2, '0'), year = String(new Date().getFullYear()), rfc } = req.query;
+
       try {
-        const auth = getFacturamaAuth();
-        if (!auth) {
-          return res.status(500).json({ ok: false, error: 'Faltan credenciales de Facturama (FACTURAMA_USER/PASSWORD)' });
+        // 1. Consultar a GAS primero (Fuente de verdad transaccional)
+        if (!GAS_URL || !GAS_TOKEN) {
+          throw new Error('Faltan variables de entorno GAS_WEBAPP_URL o GAS_API_TOKEN');
         }
 
-        const baseUrl = getFacturamaBaseUrl();
-
-        const { month = '01', year = '2024', rfc } = req.query;
-        
-        // Construir rango de fechas para el mes (YYYY-MM-DD)
-        const start = `${year}-${month}-01`;
-        const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-        const end = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
-
-        const params = new URLSearchParams({
-          type: 'issued',
-          DateStart: start,
-          DateEnd: end
+        const gasParams = new URLSearchParams({
+          action: 'list',
+          month,
+          year,
+          token: GAS_TOKEN
         });
-        
-        if (rfc) params.set('keyword', rfc);
+        if (rfc) gasParams.set('rfc', rfc);
 
-        // Intentamos primero con api-lite (Multiemisor)
-        const fetchUrlLite = `${baseUrl}/api-lite/cfdis?${params.toString()}`;
-        console.log('>>> Consultando lista a Facturama (Lite):', fetchUrlLite);
+        console.log('>>> Consultando historial a GAS:', month, year);
+        const gasRes = await fetch(`${GAS_URL}?${gasParams.toString()}`, {
+          redirect: 'follow'
+        });
+        const gasData = await gasRes.json();
 
-        const rLite = await fetch(fetchUrlLite, {
+        if (gasData.ok && Array.isArray(gasData.items) && gasData.items.length > 0) {
+          console.log(`>>> Se encontraron ${gasData.items.length} registros en GAS`);
+          
+          // Mapeamos los datos de GAS (Estructura de 23 columnas)
+          const items = gasData.items.map(f => ({
+            fechaTicket: f.fechaTicket || f.createdAt,
+            createdAt: f.createdAt,
+            updatedAt: f.updatedAt,
+            ticket: f.ticket || 'S/N',
+            storeId: f.storeId,
+            razonSocial: f['Razon Social'] || f.razonSocial || f.razon || 'PÚBLICO EN GENERAL',
+            rfc: f.rfc,
+            email: f.Correo || f.email,
+            total: f.total,
+            status: f.status,
+            facturamaId: f.facturamaId,
+            uuid: f.UUID || f.uuid || f.facturamaId,
+            usuario: f.Usuario || f.usuario || '',
+            metodoPago: f.MetodoPago || f.metodoPago || 'PUE',
+            uuidRelacion: f.UUIDRelacion || '',
+            fechaPago: f['Fecha de pago'] || f.fechaPago || '',
+            codigoPostal: f['Codigo Postal'] || f.codigoPostal || '',
+            usoCfdi: f['Uso de CFDI'] || f.usoCfdi || '',
+            regimenFiscal: f['Regimen Fiscal'] || f.regimenFiscal || '',
+            errorMsg: f.errorMsg || ''
+          }));
+
+          return res.status(200).json({ ok: true, items });
+        }
+
+        // 2. Fallback: Si GAS no devuelve nada, intentamos Facturama (como respaldo)
+        console.log('>>> GAS no devolvió datos o está vacío, usando Facturama como fallback...');
+        const auth = getFacturamaAuth();
+        if (!auth) return res.status(200).json({ ok: true, items: [] });
+
+        const baseUrl = getFacturamaBaseUrl();
+        const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+        const start = `01/${month}/${year}`;
+        const end = `${String(lastDay).padStart(2, '0')}/${month}/${year}`;
+
+        const params = new URLSearchParams({ 
+          type: 'issuedLite', 
+          dateStart: start, 
+          dateEnd: end, 
+          page: '0' 
+        });
+        if (rfc) params.set('rfc', rfc);
+
+        const response = await fetch(`${baseUrl}/cfdi?${params.toString()}`, {
           headers: { 'Authorization': auth, 'Accept': 'application/json' }
         });
 
         let rawItems = [];
-        if (rLite.ok) {
-          const data = await rLite.json();
-          rawItems = Array.isArray(data) ? data : (data.Data || data.data || (Array.isArray(data.items) ? data.items : []));
+        if (response.ok) {
+          const data = await response.json();
+          rawItems = Array.isArray(data) ? data : (data.Data || data.data || []);
         }
 
-        // Si no hay resultados o falló, intentamos con la lista estándar
-        if (rawItems.length === 0) {
-          const fetchUrlStd = `${baseUrl}/cfdi?${params.toString()}`;
-          console.log('>>> Consultando lista a Facturama (Std):', fetchUrlStd);
-          const rStd = await fetch(fetchUrlStd, {
-            headers: { 'Authorization': auth, 'Accept': 'application/json' }
-          });
-          if (rStd.ok) {
-            const dataStd = await rStd.json();
-            const stdItems = Array.isArray(dataStd) ? dataStd : (dataStd.Data || dataStd.data || (Array.isArray(dataStd.items) ? dataStd.items : []));
-            rawItems = [...rawItems, ...stdItems];
-          }
-        }
-        
-        console.log(`>>> Se encontraron ${rawItems.length} facturas`);
+        const itemsFallback = rawItems.map(f => ({
+          fechaTicket: f.Date,
+          createdAt: f.Date,
+          ticket: f.OrderNumber || f.Folio || 'S/N',
+          razonSocial: f.Receiver?.Name || f.ReceiverName || 'PÚBLICO EN GENERAL',
+          rfc: f.Receiver?.Rfc || f.ReceiverRfc || 'XAXX010101000',
+          total: f.Total,
+          metodoPago: f.PaymentMethod,
+          formaPago: f.PaymentForm,
+          facturamaId: f.Id,
+          uuid: f.Uuid || f.Id,
+          status: 'TIMBRADO'
+        }));
 
-        const items = rawItems.map(f => {
-          // El RFC suele estar en f.Receiver.Rfc
-          const rfc = f.Receiver?.Rfc || f.Rfc || f.rfc || 'XAXX010101000';
-          const cliente = f.Receiver?.Name || f.Name || f.nombre || 'PÚBLICO EN GENERAL';
-          
-          return {
-            fechaTicket: f.Date,
-            createdAt: f.Date,
-            ticket: f.OrderNumber || 'S/N',
-            razonSocial: cliente,
-            rfc: rfc,
-            total: f.Total,
-            metodoPago: f.PaymentMethod,
-            formaPago: f.PaymentForm,
-            facturamaId: f.Id,
-            uuid: f.Uuid || f.Id
-          };
-        });
+        return res.status(200).json({ ok: true, items: itemsFallback });
 
-        return res.status(200).json({ ok: true, items });
       } catch (e) {
-        console.error('>>> Error listando facturas de Facturama:', e.message);
+        console.error('>>> Error en listado consolidado:', e.message);
         return res.status(500).json({ ok: false, error: e.message });
       }
     }

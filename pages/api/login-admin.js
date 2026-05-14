@@ -10,10 +10,14 @@ export default function handler(req, res) {
   const VALID_PASS = 'ISACTisact07';
 
   if (username === VALID_USER && password === VALID_PASS) {
-    // Establecemos la cookie manualmente para evitar dependencias externas
-    // Max-Age ajustado a 300 segundos (5 minutos) según solicitud
+    // Aumentamos el tiempo de sesión a 8 horas (28800 segundos) para evitar cierres inesperados
+    const SESSION_TIME = 28800;
     const isProd = process.env.NODE_ENV === 'production';
-    const cookieValue = `admin_session=true; HttpOnly; Path=/; Max-Age=300; SameSite=Strict${isProd ? '; Secure' : ''}`;
+    
+    // Solo usamos Secure si estamos en producción y NO es una prueba local
+    const useSecure = isProd && !process.env.DISABLE_SECURE_COOKIE;
+    
+    const cookieValue = `admin_session=true; HttpOnly; Path=/; Max-Age=${SESSION_TIME}; SameSite=Lax${useSecure ? '; Secure' : ''}`;
 
     res.setHeader('Set-Cookie', cookieValue);
     return res.status(200).json({ ok: true });

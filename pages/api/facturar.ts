@@ -53,7 +53,8 @@ const gasPost = async (body: any) => {
   const res = await fetch(`${gasUrl}?token=${encodeURIComponent(gasToken)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(body || {})
+    body: JSON.stringify(body || {}),
+    redirect: 'follow'
   });
   const text = await res.text().catch(() => '');
   const trimmed = text.trim();
@@ -572,6 +573,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       rfc: normalizedRfc,
       razonSocial: normalizedRazon,
       email: normalizedEmail,
+      codigoPostal: String(codigoPostal || '').trim(),
+      usoCfdi: cfdiUse,
+      regimenFiscal: fiscalRegime,
       usuario: usuario || '',
       metodoPago: metodoPago || 'PUE',
       uuidRelacion: uuidRelacionado || '',
@@ -747,6 +751,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         rfc: normalizedRfc,
         razonSocial: normalizedRazon,
         email: normalizedEmail,
+        codigoPostal: String(codigoPostal || '').trim(),
+        usoCfdi: cfdiUse,
+        regimenFiscal: fiscalRegime,
         facturamaId: cfdiId,
         uuid: uuid || cfdiId,
         usuario: usuario || '',
