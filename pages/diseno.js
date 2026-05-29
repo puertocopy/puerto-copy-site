@@ -131,7 +131,8 @@ export default function EditorDisenoV29() {
   return (
     <div className="h-screen w-full bg-[#f8fafc] text-slate-800 font-brand flex flex-col overflow-hidden select-none">
       <Head>
-        <title>Plotter Pro V29 | Puerto Copy</title>
+        <title>Diseñador de Lonas y Vinilos | Puerto Copy</title>
+        <meta name="description" content="Diseña tus lonas y vinilos personalizados con nuestra herramienta profesional. Exportación en alta calidad lista para impresión." />
       </Head>
 
       {/* NAVBAR */}

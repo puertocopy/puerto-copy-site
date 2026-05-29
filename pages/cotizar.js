@@ -1,3 +1,4 @@
+import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
@@ -57,6 +58,10 @@ export default function Cotizar() {
 
   return (
     <div className="bg-[#FDFDFD] min-h-screen flex flex-col font-sans text-gray-900">
+      <Head>
+        <title>Cotizador en Línea | Puerto Copy Puerto Vallarta</title>
+        <meta name="description" content="Calcula el costo de tus impresiones de planos, copias y servicios de oficina al instante con nuestro cotizador en línea." />
+      </Head>
       {/* Navbar forzando fondo blanco para consistencia con el diseño nuevo */}
       <Navbar /> 
       <FloatingBubbles />

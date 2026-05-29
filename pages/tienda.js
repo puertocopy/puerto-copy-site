@@ -1,3 +1,4 @@
+import Head from 'next/head';
 import React, { useState, useMemo } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -149,6 +150,10 @@ export default function Tienda() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans selection:bg-blue-100 selection:text-[#003399]">
+      <Head>
+        <title>Catálogo de Servicios e Impresiones | Puerto Copy</title>
+        <meta name="description" content="Explora nuestro catálogo de servicios de impresión, papelería y soluciones digitales en Puerto Vallarta. Calidad garantizada en cada trabajo." />
+      </Head>
       <Navbar />
       
       <main className="container mx-auto px-4 py-16">

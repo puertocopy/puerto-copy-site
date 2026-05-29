@@ -113,10 +113,11 @@ export default function Home() {
       {/* Componentes reutilizables importados */}
       <Navbar /> 
 
-      {/* SEO oculto */}
-      <section aria-hidden="true" className="sr-only">
-        <h1>Copias, Impresiones de Planos y Documentos en Puerto Vallarta</h1>
-        <p>Calidad profesional, servicio rápido y atención personalizada en Puerto Copy.</p>
+      {/* SEO para buscadores (No visible pero indexable) */}
+      <section className="sr-only">
+        <h1>Puerto Copy | Centro de Impresiones y Planos en Puerto Vallarta</h1>
+        <h2>Copias a color, blanco y negro, impresión de planos gran formato y engargolados.</h2>
+        <p>Calidad profesional, servicio rápido y atención personalizada en Puerto Copy Puerto Vallarta. Especialistas en planos técnicos, documentos de oficina y servicios digitales.</p>
       </section>
 
       {/* SLIDER HERO SECTION */}
