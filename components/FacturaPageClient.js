@@ -533,6 +533,12 @@ export default function Facturar() {
     try {
       const filesRes = await fetch(`/api/cfdi/descargar?id=${cfdiId}`);
       const filesData = await filesRes.json().catch(() => ({}));
+      
+      // Disparar animación de ¡GOOOL! al recuperar con éxito
+      window.dispatchEvent(new CustomEvent('soccer-goal', { 
+        detail: { x: window.innerWidth / 2, y: window.innerHeight / 2 } 
+      }));
+
       applyFacturaData({
         cfdiId,
         pdf: filesData?.pdf || null,
@@ -779,6 +785,12 @@ export default function Facturar() {
       const pdf = data?.pdf || null;
       const xml = data?.xml || null;
       const isAlreadyInvoiced = data?.alreadyInvoiced === true;
+
+      // Disparar animación de ¡GOOOL! al tener éxito
+      window.dispatchEvent(new CustomEvent('soccer-goal', { 
+        detail: { x: window.innerWidth / 2, y: window.innerHeight / 2 } 
+      }));
+
       if (isAlreadyInvoiced) {
         applyFacturaData({ cfdiId, pdf, xml, message: 'Este ticket ya fue facturado', already: true });
         return;
@@ -949,7 +961,7 @@ export default function Facturar() {
     <>
       <Navbar forceWhite={true} />
       
-      <div className="min-h-screen bg-[#FDFDFD] pt-24 md:pt-28 pb-16 font-sans overflow-x-hidden">
+      <div className="min-h-screen bg-soccer-pattern pt-24 md:pt-28 pb-16 font-sans overflow-x-hidden">
         <div className="mx-auto w-full max-w-screen-2xl px-4 grid grid-cols-1 xl:grid-cols-[200px_minmax(0,1fr)_200px] 2xl:grid-cols-[300px_minmax(0,1fr)_300px] gap-6">
           
           {/* Panel Izquierdo (banners removidos) */}

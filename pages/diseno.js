@@ -5,7 +5,7 @@ import html2canvas from 'html2canvas';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Download, Type, Maximize, Palette, Image as ImageIcon, 
-  PlusCircle, Trash2, ArrowLeft, ZoomIn, ZoomOut, Maximize2, Move 
+  PlusCircle, Trash2, ArrowLeft, ZoomIn, ZoomOut, Maximize2, Move, Sparkles 
 } from 'lucide-react';
 
 /**
@@ -39,6 +39,9 @@ export default function EditorDisenoV29() {
   const [colorFondo, setColorFondo] = useState('#ffffff');
   const [zoom, setZoom] = useState(0.7);
   const [exporting, setExporting] = useState(false);
+  const [iaPrompt, setIaPrompt] = useState('');
+  const [generatingIa, setGeneratingIa] = useState(false);
+  const [showIaInput, setShowIaInput] = useState(false);
 
   // --- 3. DEFINICIÓN DE ELEMENTO ACTIVO (REPARADO) ---
   const activeElement = elementos.find(el => el.id === selectedId);
@@ -77,6 +80,35 @@ export default function EditorDisenoV29() {
         setSelectedId(newId);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const generarConIA = async () => {
+    if (!iaPrompt) return;
+    setGeneratingIa(true);
+    try {
+      const res = await fetch('/api/ia/generar-imagen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: iaPrompt })
+      });
+      const data = await res.json();
+      if (data.url) {
+        const newId = Math.random().toString(36).substr(2, 9);
+        setElementos([...elementos, { 
+          id: newId, type: 'image', src: data.url, 
+          x: 100, y: 100, width: 400, rotation: 0
+        }]);
+        setSelectedId(newId);
+        setShowIaInput(false);
+        setIaPrompt('');
+      } else {
+        alert(data.message || "Error al generar imagen");
+      }
+    } catch (err) {
+      alert("Error de conexión con la IA");
+    } finally {
+      setGeneratingIa(false);
     }
   };
 
@@ -187,6 +219,43 @@ export default function EditorDisenoV29() {
               <span className="text-[9px] font-bold uppercase text-slate-500 tracking-tighter">Imagen</span>
               <input type="file" ref={fileInputRef} accept="image/*" onChange={addImage} className="hidden" />
             </label>
+          </section>
+
+          <section>
+            <button 
+              onClick={() => setShowIaInput(!showIaInput)}
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white p-3 rounded-xl shadow-md transition-all active:scale-95"
+            >
+              <Sparkles size={16} />
+              <span className="text-[10px] font-black uppercase tracking-widest">Generar con IA</span>
+            </button>
+
+            <AnimatePresence>
+              {showIaInput && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden mt-3"
+                >
+                  <div className="bg-blue-50 p-3 rounded-xl border border-blue-100 space-y-2">
+                    <textarea 
+                      placeholder="Describe lo que quieres ver... (ej: Un logo de taquería con un taco caricatura)"
+                      value={iaPrompt}
+                      onChange={(e) => setIaPrompt(e.target.value)}
+                      className="w-full bg-white border border-blue-200 rounded-lg p-2 text-[10px] outline-none h-20 font-medium"
+                    />
+                    <button 
+                      onClick={generarConIA}
+                      disabled={generatingIa || !iaPrompt}
+                      className="w-full bg-blue-700 text-white p-2 rounded-lg text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                    >
+                      {generatingIa ? 'Creando Magia...' : 'Generar Imagen'}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </section>
 
           {/* PANEL DE AJUSTES (REPARADO) */}

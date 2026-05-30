@@ -2,6 +2,8 @@ import Head from 'next/head';
 import '../styles/globals.css';
 import { CartProvider } from '../context/CartContext';
 import { FileUploadModal } from '../components/FileUploadModal';
+import WorldCupDecorations from '../components/WorldCupDecorations';
+import GoalClickEffect from '../components/GoalClickEffect';
 
 function MyApp({ Component, pageProps }) {
   return (
@@ -75,8 +77,11 @@ function MyApp({ Component, pageProps }) {
             }),
           }}
         />
+        {/* Script de Lottie Player para animaciones de alta calidad */}
+        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js" async></script>
       </Head>
 
+      <GoalClickEffect />
       <Component {...pageProps} />
       <FileUploadModal />
     </CartProvider>

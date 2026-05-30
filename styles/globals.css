@@ -19,6 +19,35 @@ html, body {
   }
 .font-brand { font-family: "Product Sans", "Outfit", sans-serif; }
 
+/* Papel Tapiz Personalizado "Puerto Copy Mundialista" - Optimizado para legibilidad */
+.bg-soccer-pattern {
+  position: relative;
+  background-color: #ffffff;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), /* Capa de suavizado blanca */
+    url("/soccer-pattern.png");
+  background-repeat: repeat;
+  background-size: 400px;
+  background-attachment: fixed;
+}
+
+/* Sombras para textos y contenedores de alta legibilidad */
+.text-shadow-sm {
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.glass-card {
+  @apply bg-white/90 backdrop-blur-sm border border-white/50 shadow-xl;
+}
+
+h1, h2, h3 {
+  @apply text-shadow-sm;
+}
+
+body {
+  @apply bg-soccer-pattern;
+}
+
 @keyframes shimmer {
   0% { background-position: -200% center; }
   100% { background-position: 200% center; }

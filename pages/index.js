@@ -50,7 +50,7 @@ const Contacto = () => (
     Estamos actualizando nuestro sistema de pedidos web para darte un mejor servicio. Por el momento, atendemos todas tus cotizaciones directamente por WhatsApp.
   </p>
 
-  {/* Botón de WhatsApp */}
+  // Botón de WhatsApp
   <a 
     href="https://wa.me/5213221916038?text=Hola%20Puerto%20Copy,%20quisiera%20hacer%20una%20cotización..." 
     target="_blank" 
@@ -109,7 +109,7 @@ export default function Home() {
   }, [slides.length]);
 
   return (
-    <div className="bg-white text-gray-900 overflow-x-hidden font-sans">
+    <div className="bg-soccer-pattern text-gray-900 overflow-x-hidden font-sans">
       {/* Componentes reutilizables importados */}
       <Navbar /> 
 
@@ -197,7 +197,7 @@ export default function Home() {
       {/* MENU DE HERRAMIENTAS RÁPIDAS (Dropdown style) */}
       <section className="relative z-20 px-4 md:px-12 -mt-20 mb-8">
         <div className="max-w-xl mx-auto">
-          <div className="fade-in-up bg-white rounded-[2rem] shadow-2xl shadow-blue-900/15 border border-white/50 backdrop-blur-sm relative overflow-hidden">
+          <div className="fade-in-up glass-card rounded-[2rem] relative overflow-hidden">
             
             {/* Botón Principal (Trigger) */}
             <button 
@@ -266,7 +266,7 @@ export default function Home() {
       </section>
 
       {/* SERVICIOS */}
-      <section id="servicios" className="relative bg-[#FDFDFD] py-20 md:py-28 px-4 md:px-12">
+      <section id="servicios" className="relative bg-soccer-pattern py-20 md:py-28 px-4 md:px-12">
         <div className="max-w-7xl mx-auto">
           
           <div className="text-center mb-16 md:mb-20 fade-in-up">
@@ -352,7 +352,7 @@ export default function Home() {
       </section>
 
       {/* CONTACTO */}
-      <div className="bg-white pt-10">
+      <div className="bg-soccer-pattern pt-10">
           <Contacto />
       </div>
 
