@@ -731,8 +731,33 @@ export default function AdminPortal() {
                     )}
                   </AnimatePresence>
 
-                  <div className="space-y-1">                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">C.P. Fiscal</label>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">C.P. Fiscal</label>
                     <input name="codigoPostal" value={datosFiscales.codigoPostal} onChange={handleInputChange} className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-none font-bold" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Uso CFDI</label>
+                    <select 
+                      name="usoCfdi" 
+                      value={datosFiscales.usoCfdi} 
+                      onChange={handleInputChange} 
+                      className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-none font-bold text-gray-700"
+                    >
+                      <option value="">Seleccionar Uso...</option>
+                      {usosCFDI.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Régimen Fiscal</label>
+                    <select 
+                      name="regimenFiscal" 
+                      value={datosFiscales.regimenFiscal} 
+                      onChange={handleInputChange} 
+                      className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-none font-bold text-gray-700"
+                    >
+                      <option value="">Seleccionar Régimen...</option>
+                      {regimenes.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                    </select>
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Email</label>
