@@ -50,7 +50,7 @@ const Contacto = () => (
     Estamos actualizando nuestro sistema de pedidos web para darte un mejor servicio. Por el momento, atendemos todas tus cotizaciones directamente por WhatsApp.
   </p>
 
-  // Botón de WhatsApp
+  {/* Botón de WhatsApp */}
   <a 
     href="https://wa.me/5213221916038?text=Hola%20Puerto%20Copy,%20quisiera%20hacer%20una%20cotización..." 
     target="_blank" 
@@ -135,8 +135,6 @@ export default function Home() {
                 <img
                   src={slideUrl}
                   alt={`Slide ${index + 1}`}
-                  width={1920}
-                  height={1080}
                   className={`absolute inset-0 w-full h-full object-cover ${
                     active ? 'animate-[kenburns_7s_ease-in-out_forwards]' : ''
                   }`}

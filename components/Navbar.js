@@ -22,7 +22,7 @@ export default function Navbar({ forceWhite = false }) {
 
   const brandClass = forceWhite || scrolled
     ? 'text-[#003082]'
-    : 'text-[#003082] md:text-white';
+    : 'text-white';
 
   const iconBgClass = forceWhite || scrolled
     ? 'bg-[#0B63B2] text-white'
@@ -30,7 +30,7 @@ export default function Navbar({ forceWhite = false }) {
 
   const menuButtonClass = forceWhite || scrolled
     ? 'text-gray-800'
-    : 'text-[#003082] md:text-white';
+    : 'text-white';
 
   // Enlaces de navegación con rutas absolutas
   const navLinks = [
