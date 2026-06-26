@@ -50,8 +50,9 @@ async function fetchWithRetry(url: string, authHeader: string, type: string) {
           // y otras veces el base64 directo.
           try {
             const parsed = JSON.parse(text);
-            if (parsed.Content) {
-              return { ok: true, body: parsed.Content, status };
+            const content = parsed.Content || parsed.content || parsed.data || parsed.Data;
+            if (content) {
+              return { ok: true, body: content, status };
             }
           } catch (e) {
             // No es JSON, asumimos que es el base64 directo
@@ -97,6 +98,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!authHeader) return res.status(500).json({ message: 'Faltan credenciales' });
 
   const baseUrl = getBaseUrl();
+
+  if (type === 'details') {
+    try {
+      // 1. Intentar issuedLite (Multiemisor de Facturama)
+      let response = await fetch(`${baseUrl}/cfdi/issuedLite/${cfdiId}`, {
+        headers: { Authorization: authHeader, Accept: 'application/json' }
+      });
+      
+      if (!response.ok) {
+        // Fallback: api-lite/3/cfdis/{id}
+        response = await fetch(`${baseUrl}/api-lite/3/cfdis/${cfdiId}`, {
+          headers: { Authorization: authHeader, Accept: 'application/json' }
+        });
+      }
+      
+      if (!response.ok) {
+        // Fallback: issued (Estándar)
+        response = await fetch(`${baseUrl}/cfdi/issued/${cfdiId}`, {
+          headers: { Authorization: authHeader, Accept: 'application/json' }
+        });
+      }
+      
+      if (!response.ok) {
+        return res.status(response.status).json({ message: `No se pudieron obtener los detalles del CFDI (${response.status})` });
+      }
+      
+      const data = await response.json();
+      return res.status(200).json(data);
+    } catch (err: any) {
+      return res.status(500).json({ message: err.message || 'Error al conectar con Facturama' });
+    }
+  }
 
   if (type === 'pdf' || type === 'xml') {
     const result = await fetchCfdiFile(baseUrl, type, cfdiId, authHeader);

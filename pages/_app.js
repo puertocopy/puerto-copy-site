@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import '../styles/globals.css';
 import { CartProvider } from '../context/CartContext';
@@ -6,6 +7,12 @@ import WorldCupDecorations from '../components/WorldCupDecorations';
 import GoalClickEffect from '../components/GoalClickEffect';
 
 function MyApp({ Component, pageProps }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <CartProvider>
       <Head>
@@ -81,9 +88,9 @@ function MyApp({ Component, pageProps }) {
         <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js" async></script>
       </Head>
 
-      <GoalClickEffect />
+      {mounted && <GoalClickEffect />}
       <Component {...pageProps} />
-      <FileUploadModal />
+      {mounted && <FileUploadModal />}
     </CartProvider>
   );
 }

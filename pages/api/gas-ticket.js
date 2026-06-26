@@ -61,38 +61,42 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const { action } = req.query;
 
-    // Si la acción es listClients, usamos Facturama directamente
+    // Si la acción es listClients, usamos Google Sheets
     if (action === 'listClients') {
       if (!isAuthenticated) return res.status(401).json({ ok: false, error: 'No autorizado' });
       try {
-        const auth = getFacturamaAuth();
-        if (!auth) return res.status(500).json({ ok: false, error: 'Faltan credenciales de Facturama' });
+        if (!GAS_URL || !GAS_TOKEN) {
+          throw new Error('Faltan variables de entorno GAS_WEBAPP_URL o GAS_API_TOKEN');
+        }
 
-        const baseUrl = getFacturamaBaseUrl();
+        console.log('>>> Consultando Directorio de Clientes a Google Sheets...');
 
-        console.log('>>> Consultando Directorio a Facturama...');
-
-        const r = await fetch(`${baseUrl}/client`, {
-          headers: { 'Authorization': auth, 'Accept': 'application/json' }
+        const r = await fetch(`${GAS_URL}?token=${encodeURIComponent(GAS_TOKEN)}&action=listarclientes`, {
+          headers: { 'Accept': 'application/json' },
+          redirect: 'follow'
         });
 
-        if (!r.ok) throw new Error(`Error de Facturama: ${r.status}`);
+        if (!r.ok) throw new Error(`Error de Google Sheets: ${r.status}`);
 
-        const rawClients = await r.json();
-        // Mapeamos al formato que espera el Directorio
-        const items = (Array.isArray(rawClients) ? rawClients : []).map(c => ({
-          rfc: c.Rfc,
-          razonSocial: c.Name,
-          email: c.Email,
-          cp: c.Address?.ZipCode || '',
-          direccion: `${c.Address?.Street || ''} ${c.Address?.ExteriorNumber || ''}`.trim(),
-          regimenFiscal: c.FiscalRegime || '',
-          usoCfdi: c.CfdiUse || 'G03'
+        const text = await r.text();
+        const data = JSON.parse(text);
+
+        if (!data.ok) throw new Error(data.error || 'Error al listar clientes de GAS');
+
+        const items = (Array.isArray(data.items) ? data.items : []).map(c => ({
+          rfc: c.rfc || '',
+          razonSocial: c.razonSocial || '',
+          regimen: c.regimen || '',
+          cp: c.cp || '',
+          regimenFiscal: c.regimenFiscal || '',
+          email: c.email || '',
+          usoCfdi: c.usoCfdi || 'G03',
+          code: c.code || ''
         }));
 
         return res.status(200).json({ ok: true, items });
       } catch (e) {
-        console.error('>>> Error en Directorio Facturama:', e.message);
+        console.error('>>> Error en Directorio Sheets:', e.message);
         return res.status(500).json({ ok: false, error: e.message });
       }
     }
@@ -131,9 +135,9 @@ export default async function handler(req, res) {
             fechaTicket: f.fechaTicket || f.createdAt,
             createdAt: f.createdAt,
             updatedAt: f.updatedAt,
-            ticket: f.ticket || 'S/N',
+            ticket: f.ticket || f.Ticket || (f.ticketKey ? String(f.ticketKey).split(':').pop() : 'S/N'),
             storeId: f.storeId,
-            razonSocial: f['Razon Social'] || f.razonSocial || f.razon || 'PÚBLICO EN GENERAL',
+            razonSocial: f['Razon Social'] || f.razonSocial || f.razon || (f.rfc === 'XAXX010101000' ? 'PÚBLICO EN GENERAL' : ''),
             rfc: f.rfc,
             email: f.Correo || f.email,
             total: f.total,
@@ -185,7 +189,7 @@ export default async function handler(req, res) {
           fechaTicket: f.Date,
           createdAt: f.Date,
           ticket: f.OrderNumber || f.Folio || 'S/N',
-          razonSocial: f.Receiver?.Name || f.ReceiverName || 'PÚBLICO EN GENERAL',
+          razonSocial: f.Receiver?.Name || f.ReceiverName || ((f.Receiver?.Rfc === 'XAXX010101000' || f.ReceiverRfc === 'XAXX010101000') ? 'PÚBLICO EN GENERAL' : ''),
           rfc: f.Receiver?.Rfc || f.ReceiverRfc || 'XAXX010101000',
           total: f.Total,
           metodoPago: f.PaymentMethod,

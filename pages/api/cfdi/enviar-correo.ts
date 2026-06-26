@@ -35,10 +35,23 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function fetchFromFacturama(url: string, authHeader: string) {
   for (let attempt = 1; attempt <= 3; attempt += 1) {
-    const response = await fetch(url, { headers: { Authorization: authHeader } });
-    if (response.ok) {
-      const body = await response.text().catch(() => '');
-      if (body.trim().length > 0) return body;
+    try {
+      const response = await fetch(url, { headers: { Authorization: authHeader } });
+      if (response.ok) {
+        const text = await response.text();
+        if (text && text.trim().length > 0) {
+          try {
+            const parsed = JSON.parse(text);
+            const content = parsed.Content || parsed.content || parsed.data || parsed.Data;
+            if (content) return content;
+          } catch (_) {
+            // Si no es JSON, asumimos que es el base64 directo
+            return text;
+          }
+        }
+      }
+    } catch (err) {
+      console.error('>>> Error fetching from Facturama:', err);
     }
     await sleep(1000);
   }

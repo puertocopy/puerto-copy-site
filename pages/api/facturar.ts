@@ -433,6 +433,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           item?.Complement?.Id ??
           item?.Complement?.CfdiId
       );
+    const extractUuid = (item: any) =>
+      toTrimmed(
+        item?.Uuid ??
+          item?.uuid ??
+          item?.UUID ??
+          item?.Complemento?.TimbreFiscalDigital?.UUID ??
+          item?.Complemento?.TimbreFiscalDigital?.Uuid ??
+          item?.Complement?.TimbreFiscalDigital?.UUID ??
+          item?.Complement?.TimbreFiscalDigital?.Uuid ??
+          item?.Complement?.UUID ??
+          item?.Complement?.Uuid ??
+          extractCfdiId(item)
+      );
     const extractExternalId = (item: any) => toTrimmed(item?.ExternalId ?? item?.externalId);
     const extractOrderNumber = (item: any) => toTrimmed(item?.OrderNumber ?? item?.orderNumber);
     const extractTotal = (item: any) =>
@@ -530,14 +543,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const matchByExternal = collected.find((item) => extractExternalId(item) === externalId);
           const externalCfdiId = extractCfdiId(matchByExternal);
           if (externalCfdiId) {
-            return { found: true, cfdiId: externalCfdiId, hadSuccessfulLookup };
+            return { found: true, cfdiId: externalCfdiId, uuid: extractUuid(matchByExternal), hadSuccessfulLookup };
           }
         }
 
         const matchByOrder = collected.find((item) => extractOrderNumber(item) === expectedOrder);
         const orderCfdiId = extractCfdiId(matchByOrder);
         if (orderCfdiId) {
-          return { found: true, cfdiId: orderCfdiId, hadSuccessfulLookup };
+          return { found: true, cfdiId: orderCfdiId, uuid: extractUuid(matchByOrder), hadSuccessfulLookup };
         }
 
         const matchByCombo = collected.find((item) => {
@@ -553,7 +566,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
         const comboCfdiId = extractCfdiId(matchByCombo);
         if (comboCfdiId) {
-          return { found: true, cfdiId: comboCfdiId, hadSuccessfulLookup };
+          return { found: true, cfdiId: comboCfdiId, uuid: extractUuid(matchByCombo), hadSuccessfulLookup };
         }
 
         if (attempt < 4) {
@@ -561,7 +574,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
 
-      return { found: false, cfdiId: '', hadSuccessfulLookup };
+      return { found: false, cfdiId: '', uuid: '', hadSuccessfulLookup };
     };
 
     const reservePayload = {
@@ -593,7 +606,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ok: true,
           alreadyInvoiced: true,
           facturamaId: reserveData.facturamaId,
-          cfdiId: reserveData.facturamaId
+          cfdiId: reserveData.facturamaId,
+          uuid: reserveData.uuid || reserveData.facturamaId
         });
       }
       if (reserveData?.ok === true && reserveData?.status === 'PENDING') {
@@ -609,7 +623,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               ok: true,
               alreadyInvoiced: true,
               facturamaId: checkData.facturamaId,
-              cfdiId: checkData.facturamaId
+              cfdiId: checkData.facturamaId,
+              uuid: checkData.uuid || checkData.facturamaId
             });
           }
         } catch (checkErr) {
@@ -652,6 +667,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               rfc: normalizedRfc,
               email: normalizedEmail,
               facturamaId: recovery.cfdiId,
+              uuid: recovery.uuid || recovery.cfdiId,
               errorMsg: ''
             });
           } catch (finalizeErr) {
@@ -662,7 +678,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             recoveredAfterTimeout: true,
             message: 'Factura emitida correctamente',
             facturamaId: recovery.cfdiId,
-            cfdiId: recovery.cfdiId
+            cfdiId: recovery.cfdiId,
+            uuid: recovery.uuid || recovery.cfdiId
           });
         }
 
@@ -716,8 +733,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } catch (failErr) {
         console.error('gasFailError', { ticketKey, error: String(failErr?.message || failErr) });
       }
+
+      let errorMessage = 'Error al generar CFDI';
+      if (createData) {
+        errorMessage = obtenerMensajeAmigable(createData) || errorMessage;
+      }
+
       return res.status(createRes.status).json({
-        message: 'Error al generar CFDI',
+        message: errorMessage,
         facturamaStatus: createRes.status,
         facturamaResponse: createData,
         facturamaBaseUrl: baseUrl,
@@ -733,6 +756,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       createData?.Complement?.CfdiId ||
       createData?.Complement?.UUID;
     const uuid =
+      createData?.Complemento?.TimbreFiscalDigital?.UUID ||
+      createData?.Complemento?.TimbreFiscalDigital?.Uuid ||
+      createData?.Complement?.TimbreFiscalDigital?.UUID ||
+      createData?.Complement?.TimbreFiscalDigital?.Uuid ||
       createData?.Complement?.UUID ||
       createData?.Complement?.Uuid ||
       createData?.UUID ||
@@ -787,3 +814,95 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ message: 'Error interno del servidor', error: String(error?.message || error) });
   }
 }
+
+function traducirErrorSAT(errorText: string, campo: string = ''): string {
+  const texto = String(errorText || '').toLowerCase();
+  const c = String(campo || '').toLowerCase();
+
+  // Errores de Nombre / Razón Social
+  if (
+    texto.includes('nombre del receptor') || 
+    texto.includes('debe pertenecer al nombre asociado al rfc') ||
+    texto.includes('nombre o razón social') ||
+    c.includes('receiver.name') ||
+    c.includes('name')
+  ) {
+    return 'La razón social (nombre) no coincide con el RFC registrado en el SAT. Recuerda escribirla exactamente como aparece en tu Constancia de Situación Fiscal (en MAYÚSCULAS y sin el tipo de sociedad como S.A. de C.V., S. de R.L., etc.).';
+  }
+
+  // Errores de RFC
+  if (
+    (texto.includes('rfc') && (texto.includes('no es válido') || texto.includes('inválido') || texto.includes('no registrado') || texto.includes('no se encuentra en la lista'))) ||
+    c.includes('receiver.rfc') ||
+    c.includes('rfc')
+  ) {
+    return 'El RFC ingresado no es válido o no está registrado ante el SAT.';
+  }
+
+  // Errores de Código Postal
+  if (
+    texto.includes('código postal') || 
+    texto.includes('domiciliofiscalreceptor') || 
+    texto.includes('zipcode') || 
+    texto.includes('postalcode') ||
+    texto.includes('lugar de expedición') ||
+    c.includes('zipcode') ||
+    c.includes('taxzipcode')
+  ) {
+    return 'El código postal no corresponde al domicilio fiscal registrado ante el SAT para este RFC.';
+  }
+
+  // Errores de Régimen Fiscal
+  if (
+    texto.includes('régimen fiscal') || 
+    texto.includes('regimenfiscalreceptor') ||
+    texto.includes('régimen') ||
+    c.includes('fiscalregime')
+  ) {
+    return 'El régimen fiscal seleccionado no corresponde con los registros del SAT para este RFC.';
+  }
+
+  // Errores de Uso de CFDI
+  if (
+    texto.includes('usocfdi') || 
+    texto.includes('uso de cfdi') ||
+    texto.includes('usocfdi del receptor no es válido') ||
+    c.includes('cfdiuse')
+  ) {
+    return 'El Uso de CFDI seleccionado no es válido para tu régimen fiscal.';
+  }
+
+  return errorText;
+}
+
+function obtenerMensajeAmigable(facturamaResponse: any): string | null {
+  if (!facturamaResponse) return null;
+
+  // 1. Verificar si viene un ModelState/modelState (errores de validación de campos específicos de la API)
+  const modelState = facturamaResponse.ModelState || facturamaResponse.modelState;
+  if (modelState && typeof modelState === 'object') {
+    const mensajes: string[] = [];
+    for (const key in modelState) {
+      if (Object.prototype.hasOwnProperty.call(modelState, key)) {
+        const errores = modelState[key];
+        if (Array.isArray(errores) && errores.length > 0) {
+          errores.forEach(err => {
+            mensajes.push(traducirErrorSAT(String(err), key));
+          });
+        }
+      }
+    }
+    if (mensajes.length > 0) {
+      return Array.from(new Set(mensajes)).join(' | ');
+    }
+  }
+
+  // 2. Verificar si viene un Message/message general
+  const message = facturamaResponse.Message || facturamaResponse.message;
+  if (message && typeof message === 'string') {
+    return traducirErrorSAT(message);
+  }
+
+  return null;
+}
+

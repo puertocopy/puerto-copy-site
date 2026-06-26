@@ -5,18 +5,29 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ⚠️ Pega aquí tu URL /exec del Apps Script que tiene el doPost:
-    const GAS_POST_URL = 'https://script.google.com/macros/s/AKfycbzf_-GMn9ZGNrNWZOFcDSHfX_Kc4DdXsXQjACOr4AVj8SjPGJSsOFasApCeZMQeOW9r/exec';
+    const GAS_POST_URL = process.env.GAS_WEBAPP_URL;
+    const token = process.env.GAS_API_TOKEN;
 
-    const r = await fetch(GAS_POST_URL, {
+    if (!GAS_POST_URL || !token) {
+      throw new Error('Faltan variables de entorno GAS_WEBAPP_URL/GAS_API_TOKEN');
+    }
+
+    const payload = {
+      ...req.body,
+      action: 'registrarcliente'
+    };
+
+    const r = await fetch(`${GAS_POST_URL}?token=${encodeURIComponent(token)}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }, // importante
-      body: JSON.stringify(req.body),
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+      redirect: 'follow'
     });
 
-    const text = await r.text(); // Apps Script siempre responde texto
+    const text = await r.text();
     let json;
     try { json = JSON.parse(text); } catch { json = { raw: text }; }
+
     if (process.env.NODE_ENV !== 'production') {
       console.log('GAS response', { status: r.status, text });
     }

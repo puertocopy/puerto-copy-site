@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, Trash2, Send, CheckCircle, AlertCircle, 
@@ -6,7 +6,8 @@ import {
   ChevronRight, Package, Calculator, Loader2,
   FileText, Globe, Settings, Hash, ShieldCheck,
   Calendar, UserCheck, Link, Search, Filter,
-  ArrowRightLeft, Download, Eye, RefreshCw, Printer
+  ArrowRightLeft, Download, Eye, RefreshCw, Printer,
+  Edit, UserPlus, X, ArrowUp, ArrowDown, ArrowUpDown
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -57,6 +58,15 @@ const periodicidades = [
   { value: '04', label: 'Mensual' },
   { value: '05', label: 'Bimestral' },
 ];
+
+const safeParseJson = async (res) => {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    throw new Error(`Respuesta no válida del servidor (${res.status}): ${text.substring(0, 150)}`);
+  }
+};
 
 export default function AdminPortal() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -157,7 +167,7 @@ export default function AdminPortal() {
   const checkAuth = async () => {
     try {
       const res = await fetch('/api/verify-admin');
-      const data = await res.json();
+      const data = await safeParseJson(res);
       if (data.authenticated) {
         setIsAuthenticated(true);
       }
@@ -178,7 +188,7 @@ export default function AdminPortal() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loginData)
       });
-      const data = await res.json();
+      const data = await safeParseJson(res);
       if (res.ok) {
         setIsAuthenticated(true);
       } else {
@@ -195,6 +205,104 @@ export default function AdminPortal() {
   const [showDirectory, setShowDirectory] = useState(false);
   const [clientes, setClientes] = useState([]);
   const [filtroCliente, setFiltroCliente] = useState('');
+
+  // --- ESTADOS PARA CLIENTES CRUD ---
+  const [filtroClientesTab, setFiltroClientesTab] = useState('');
+  const [showClientModal, setShowClientModal] = useState(false);
+  const [editingClient, setEditingClient] = useState(null);
+  const [clientFormData, setClientFormData] = useState({
+    rfc: '',
+    razonSocial: '',
+    regimen: '',
+    cp: '',
+    email: '',
+    usoCfdi: '',
+    code: ''
+  });
+
+  const openCreateClientModal = () => {
+    setEditingClient(null);
+    setClientFormData({
+      rfc: '',
+      razonSocial: '',
+      regimen: '',
+      cp: '',
+      email: '',
+      usoCfdi: '',
+      code: ''
+    });
+    setShowClientModal(true);
+  };
+
+  const openEditClientModal = (c) => {
+    setEditingClient(c);
+    setClientFormData({
+      rfc: c.rfc || '',
+      razonSocial: c.razonSocial || '',
+      regimen: c.regimen || '',
+      cp: c.cp || '',
+      email: c.email || '',
+      usoCfdi: c.usoCfdi || '',
+      code: c.code || ''
+    });
+    setShowClientModal(true);
+  };
+
+  const handleSaveClient = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMensaje({ type: '', text: '' });
+    
+    try {
+      const cleanRfc = String(clientFormData.rfc || '').toUpperCase().trim();
+      const cleanRazon = String(clientFormData.razonSocial || '').toUpperCase().trim();
+      const cleanRegimen = String(clientFormData.regimen || '').trim();
+      const cleanCp = String(clientFormData.cp || '').trim();
+      const cleanEmail = String(clientFormData.email || '').trim();
+      const cleanUso = String(clientFormData.usoCfdi || '').trim();
+      const cleanCode = String(clientFormData.code || '').trim();
+
+      const regObj = regimenes.find(r => r.value === cleanRegimen);
+      const regimenFiscalLargo = regObj ? regObj.label : cleanRegimen;
+      
+      const payload = {
+        rfc: cleanRfc,
+        razonSocial: cleanRazon,
+        regimen: cleanRegimen,
+        codigoPostal: cleanCp,
+        regimenFiscal: regimenFiscalLargo,
+        email: cleanEmail,
+        usoCfdi: cleanUso,
+        code: cleanCode,
+        // Compatibilidad con Google Sheets
+        "RFC": cleanRfc,
+        "Razón Social": cleanRazon,
+        "Regimen": cleanRegimen,
+        "CP": cleanCp,
+        "Régimen Fiscal": regimenFiscalLargo,
+        "Email": cleanEmail,
+        "Uso CFDI": cleanUso,
+        "Code": cleanCode
+      };
+      
+      const res = await fetch('/api/registrar-datos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await safeParseJson(res);
+      if (!res.ok) throw new Error(data.message || 'Error al guardar cliente');
+      
+      setShowClientModal(false);
+      setMensaje({ type: 'success', text: `Cliente ${clientFormData.rfc} guardado con éxito` });
+      cargarClientes(); // Recargar la lista
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // --- ESTADO PARA EMISION ---
   const [datosFiscales, setDatosFiscales] = useState({
@@ -227,28 +335,137 @@ export default function AdminPortal() {
   const [previewPdf, setPreviewPdf] = useState(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [cfdiDetails, setCfdiDetails] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [pdfError, setPdfError] = useState(null);
+
+  const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const renderSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return <ArrowUpDown size={10} className="text-gray-300 ml-1" />;
+    }
+    return sortConfig.direction === 'asc' 
+      ? <ArrowUp size={10} className="text-blue-600 ml-1 font-black" />
+      : <ArrowDown size={10} className="text-blue-600 ml-1 font-black" />;
+  };
+
+  const sortedAndFilteredFacturas = useMemo(() => {
+    let items = facturas.filter(f => 
+      !filtros.busqueda || 
+      f.rfc?.toLowerCase().includes(filtros.busqueda.toLowerCase()) || 
+      f.razonSocial?.toLowerCase().includes(filtros.busqueda.toLowerCase()) ||
+      f.ticket?.toLowerCase().includes(filtros.busqueda.toLowerCase()) ||
+      f.usuario?.toLowerCase().includes(filtros.busqueda.toLowerCase())
+    );
+
+    if (sortConfig.key !== null) {
+      items.sort((a, b) => {
+        let aVal = a[sortConfig.key];
+        let bVal = b[sortConfig.key];
+
+        if (aVal === undefined || aVal === null) aVal = '';
+        if (bVal === undefined || bVal === null) bVal = '';
+
+        if (sortConfig.key === 'total') {
+          return sortConfig.direction === 'asc' 
+            ? Number(aVal) - Number(bVal)
+            : Number(bVal) - Number(aVal);
+        }
+
+        if (sortConfig.key === 'ticket') {
+          const getTicketNum = (t) => {
+            const match = String(t).match(/\d+$/);
+            return match ? parseInt(match[0], 10) : 0;
+          };
+          const numA = getTicketNum(aVal);
+          const numB = getTicketNum(bVal);
+          if (numA !== numB) {
+            return sortConfig.direction === 'asc' ? numA - numB : numB - numA;
+          }
+        }
+
+        const strA = String(aVal).toLowerCase();
+        const strB = String(bVal).toLowerCase();
+
+        if (strA < strB) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (strA > strB) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return items;
+  }, [facturas, filtros.busqueda, sortConfig]);
 
   useEffect(() => {
     if (previewPdf) {
-      fetchPdf(previewPdf.facturamaId);
+      if (previewPdf.status === 'TIMBRADO' && previewPdf.facturamaId) {
+        setPdfError(null);
+        fetchPdf(previewPdf.facturamaId);
+        fetchCfdiDetails(previewPdf.facturamaId);
+      } else {
+        if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl);
+        setPdfBlobUrl(null);
+        setCfdiDetails(null);
+        setPdfError('Esta factura no ha sido timbrada en Facturama o se encuentra en estado de error.');
+      }
     } else {
       if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl);
       setPdfBlobUrl(null);
+      setCfdiDetails(null);
+      setPdfError(null);
     }
   }, [previewPdf]);
 
+  const fetchCfdiDetails = async (id) => {
+    setDetailsLoading(true);
+    try {
+      const res = await fetch(`/api/cfdi/descargar?id=${id}&type=details`);
+      if (!res.ok) throw new Error('No se pudieron recuperar los detalles de la factura');
+      const data = await res.json();
+      setCfdiDetails(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
   const fetchPdf = async (id) => {
     setPdfLoading(true);
+    setPdfError(null);
     try {
-      // Añadimos un timestamp para evitar que el navegador use una respuesta cacheada (304)
       const res = await fetch(`/api/cfdi/descargar?id=${id}&type=pdf&t=${Date.now()}`);
-      if (!res.ok) throw new Error('No se pudo recuperar el PDF');
+      if (!res.ok) {
+        let msg = 'No se pudo recuperar el PDF de Facturama.';
+        try {
+          const errorData = await res.json();
+          if (errorData.message) msg = errorData.message;
+        } catch (_) {
+          try {
+            const text = await res.text();
+            if (text && text.trim().length < 150) msg = text;
+          } catch (__) {}
+        }
+        throw new Error(msg);
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       setPdfBlobUrl(url);
     } catch (err) {
       console.error(err);
-      alert('Error al cargar el PDF de Facturama');
+      setPdfError(err.message || 'Error al cargar el PDF de Facturama.');
     } finally {
       setPdfLoading(false);
     }
@@ -272,7 +489,7 @@ export default function AdminPortal() {
           fechaPago: cpDatos.fecha
         })
       });
-      const data = await res.json();
+      const data = await safeParseJson(res);
       if (!res.ok) throw new Error(data.message || 'Error al emitir complemento');
       
       setMensaje({ type: 'success', text: '¡Complemento emitido correctamente!' });
@@ -298,10 +515,10 @@ export default function AdminPortal() {
           total: showEmailModal.total,
           rfc: showEmailModal.rfc,
           uuid: showEmailModal.uuid,
-          fecha: showEmailModal.fechaTicket || showEmailModal.createdAt
+          fecha: showEmailModal.createdAt || showEmailModal.fechaTicket
         })
       });
-      const data = await res.json();
+      const data = await safeParseJson(res);
       if (!res.ok) throw new Error(data.error || 'Error al enviar');
       alert('¡Correo enviado con éxito!');
       setShowEmailModal(null);
@@ -323,7 +540,7 @@ export default function AdminPortal() {
     try {
       // Usamos el endpoint de gas-ticket pero con la acción listClients
       const res = await fetch('/api/gas-ticket?action=listClients');
-      const data = await res.json();
+      const data = await safeParseJson(res);
       if (data.ok) setClientes(data.items || []);
       else throw new Error(data.error || 'Error al cargar clientes');
     } catch (err) {
@@ -470,7 +687,7 @@ export default function AdminPortal() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      const data = await res.json();
+      const data = await safeParseJson(res);
       if (!res.ok) throw new Error(data.message || 'Error en emisión');
       setFacturaGenerada(data);
       setMensaje({ type: 'success', text: '¡Factura emitida!' });
@@ -633,6 +850,12 @@ export default function AdminPortal() {
                 className={`px-8 py-3 rounded-xl font-bold transition-all ${activeTab === 'facturado' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 Facturado
+              </button>
+              <button 
+                onClick={() => setActiveTab('clientes')}
+                className={`px-8 py-3 rounded-xl font-bold transition-all ${activeTab === 'clientes' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Clientes
               </button>
             </div>
           </div>
@@ -1027,23 +1250,59 @@ export default function AdminPortal() {
                 <table className="w-full text-left">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Fecha / Ticket</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Receptor / Usuario</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Importe</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Método / Pago</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Acciones</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest select-none">
+                        <div className="flex items-center gap-2">
+                          <span 
+                            onClick={() => handleSort('createdAt')}
+                            className="cursor-pointer hover:text-blue-600 flex items-center gap-0.5 transition-all"
+                          >
+                            Fecha
+                            {renderSortIcon('createdAt')}
+                          </span>
+                          <span className="text-gray-300">/</span>
+                          <span 
+                            onClick={() => handleSort('ticket')}
+                            className="cursor-pointer hover:text-blue-600 flex items-center gap-0.5 transition-all"
+                          >
+                            Ticket
+                            {renderSortIcon('ticket')}
+                          </span>
+                        </div>
+                      </th>
+                      <th 
+                        onClick={() => handleSort('razonSocial')}
+                        className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-all select-none"
+                      >
+                        <div className="flex items-center gap-1">
+                          Receptor / Usuario
+                          {renderSortIcon('razonSocial')}
+                        </div>
+                      </th>
+                      <th 
+                        onClick={() => handleSort('total')}
+                        className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-all select-none"
+                      >
+                        <div className="flex items-center gap-1">
+                          Importe
+                          {renderSortIcon('total')}
+                        </div>
+                      </th>
+                      <th 
+                        onClick={() => handleSort('metodoPago')}
+                        className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-blue-600 transition-all select-none"
+                      >
+                        <div className="flex items-center gap-1">
+                          Método / Pago
+                          {renderSortIcon('metodoPago')}
+                        </div>
+                      </th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center select-none">
+                        Acciones
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {facturas
-                      .filter(f => 
-                        !filtros.busqueda || 
-                        f.rfc?.toLowerCase().includes(filtros.busqueda.toLowerCase()) || 
-                        f.razonSocial?.toLowerCase().includes(filtros.busqueda.toLowerCase()) ||
-                        f.ticket?.toLowerCase().includes(filtros.busqueda.toLowerCase()) ||
-                        f.usuario?.toLowerCase().includes(filtros.busqueda.toLowerCase())
-                      )
-                      .map((f, i) => (
+                    {sortedAndFilteredFacturas.map((f, i) => (
                       <tr 
                         key={i} 
                         className="hover:bg-blue-50/30 transition-all group cursor-pointer"
@@ -1057,13 +1316,13 @@ export default function AdminPortal() {
                             {f.ticket}
                           </p>
                           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                            {formatFechaCDMX(f.fechaTicket)}
+                            {formatFechaCDMX(f.createdAt)}
                           </p>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-1.5 mb-0.5">
                             <p className="text-xs font-black text-blue-600 uppercase tracking-tight line-clamp-1">
-                              {f.razonSocial || 'PÚBLICO EN GENERAL'}
+                              {f.razonSocial || (f.rfc === 'XAXX010101000' ? 'PÚBLICO EN GENERAL' : '')}
                             </p>
                             {f.usuario && (
                               <span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-md font-black flex items-center gap-1">
@@ -1140,6 +1399,125 @@ export default function AdminPortal() {
                 <div className="p-20 text-center space-y-4">
                   <div className="mx-auto w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300"><FileText size={40}/></div>
                   <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No se encontraron facturas en este periodo</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* --- PESTAÑA CLIENTES (CRUD Y LISTA) --- */}
+        {activeTab === 'clientes' && (
+          <div className="space-y-6">
+            {/* Barra de Búsqueda y Botón Nuevo */}
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-wrap items-center justify-between gap-6">
+              <div className="flex items-center gap-4 flex-1 min-w-[300px]">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input 
+                    type="text" 
+                    placeholder="Buscar cliente por Código, RFC o Razón Social..." 
+                    value={filtroClientesTab}
+                    onChange={(e) => setFiltroClientesTab(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-2xl bg-gray-50 border-none text-sm font-bold focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button 
+                  onClick={cargarClientes} 
+                  className="p-3 bg-blue-50 text-blue-600 rounded-2xl hover:bg-blue-100 transition-all"
+                  title="Recargar clientes"
+                >
+                  <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                </button>
+                <button 
+                  onClick={openCreateClientModal}
+                  className="px-6 py-3 bg-[#003082] text-white rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all shadow-md shadow-blue-100"
+                >
+                  <UserPlus size={18} /> Nuevo Cliente
+                </button>
+              </div>
+            </div>
+
+            {/* Tabla de Clientes */}
+            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Código</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">RFC</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente / Razón Social</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Régimen Fiscal</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">C.P.</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Correo</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Uso CFDI</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {(Array.isArray(clientes) ? clientes : [])
+                      .filter(c => {
+                        const term = filtroClientesTab.toLowerCase().trim();
+                        if (!term) return true;
+                        return (
+                          String(c.rfc || '').toLowerCase().includes(term) ||
+                          String(c.razonSocial || '').toLowerCase().includes(term) ||
+                          String(c.code || '').toLowerCase().includes(term)
+                        );
+                      })
+                      .map((c, i) => (
+                      <tr 
+                        key={i} 
+                        className="hover:bg-blue-50/30 transition-all group"
+                      >
+                        <td className="px-6 py-4">
+                          <span className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase ${c.code ? 'bg-indigo-50 text-indigo-600' : 'bg-gray-100 text-gray-400'}`}>
+                            {c.code || 'SIN CÓDIGO'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-mono font-bold text-xs text-blue-600">
+                          {c.rfc || 'S/RFC'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-black text-gray-800 uppercase line-clamp-1">
+                            {c.razonSocial || 'SIN NOMBRE'}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-xs font-bold text-gray-600 truncate max-w-[200px]" title={c.regimenFiscal}>
+                            {c.regimen ? `${c.regimen} - ` : ''}{c.regimenFiscal || '---'}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4 text-xs font-bold text-gray-500">
+                          {c.cp || '---'}
+                        </td>
+                        <td className="px-6 py-4 text-xs font-bold text-gray-500 lowercase">
+                          {c.email || '---'}
+                        </td>
+                        <td className="px-6 py-4 text-xs font-bold text-gray-400 uppercase">
+                          {c.usoCfdi || '---'}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <button 
+                            onClick={() => openEditClientModal(c)}
+                            className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 shadow-sm"
+                            title="Editar Cliente"
+                          >
+                            <Edit size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {clientes.length === 0 && !loading && (
+                <div className="p-20 text-center space-y-4">
+                  <div className="mx-auto w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
+                    <User size={40} />
+                  </div>
+                  <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No se encontraron clientes registrados</p>
                 </div>
               )}
             </div>
@@ -1228,6 +1606,149 @@ export default function AdminPortal() {
                     <p className="text-center py-10 text-gray-400 font-bold uppercase text-xs">No se encontraron clientes</p>
                   )}
                 </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* --- MODAL PARA CREAR O EDITAR CLIENTE (CRUD) --- */}
+        <AnimatePresence>
+          {showClientModal && (
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#003082]/40 backdrop-blur-sm"
+            >
+              <motion.div 
+                initial={{ scale: 0.9, y: 20 }} 
+                animate={{ scale: 1, y: 0 }} 
+                className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              >
+                <div className="bg-blue-600 p-8 text-white relative">
+                  <button onClick={() => setShowClientModal(false)} className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all">
+                    <X size={20} />
+                  </button>
+                  <h3 className="text-2xl font-black mb-1 flex items-center gap-2">
+                    <UserCheck size={28} /> {editingClient ? 'Modificar Cliente' : 'Crear Nuevo Cliente'}
+                  </h3>
+                  <p className="text-blue-100 text-sm font-bold uppercase tracking-widest opacity-80">
+                    {editingClient ? `RFC: ${editingClient.rfc}` : 'Ingresa los datos del receptor fiscal'}
+                  </p>
+                </div>
+
+                <form onSubmit={handleSaveClient} className="flex-1 overflow-y-auto p-8 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Código de Cliente (opcional) */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1">Código de Cliente (H)</label>
+                      <input 
+                        type="text"
+                        value={clientFormData.code}
+                        onChange={(e) => setClientFormData({...clientFormData, code: e.target.value.toUpperCase()})}
+                        className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-none font-bold text-gray-700 focus:ring-2 focus:ring-blue-500"
+                        placeholder="Ej. CL-101"
+                      />
+                    </div>
+                    {/* RFC */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1">RFC (A) *</label>
+                      <input 
+                        type="text"
+                        required
+                        disabled={!!editingClient} // El RFC es llave en sheets, bloquear si es edición
+                        value={clientFormData.rfc}
+                        onChange={(e) => setClientFormData({...clientFormData, rfc: e.target.value.toUpperCase()})}
+                        className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-none font-bold text-gray-700 disabled:opacity-60 focus:ring-2 focus:ring-blue-500"
+                        placeholder="RFC a 12 o 13 posiciones"
+                      />
+                    </div>
+                    {/* Razón Social */}
+                    <div className="space-y-1 col-span-full">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1">Razón Social o Nombre (B) *</label>
+                      <input 
+                        type="text"
+                        required
+                        value={clientFormData.razonSocial}
+                        onChange={(e) => setClientFormData({...clientFormData, razonSocial: e.target.value.toUpperCase()})}
+                        className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-none font-bold text-gray-700 focus:ring-2 focus:ring-blue-500"
+                        placeholder="Ej. JUAN PÉREZ GÓMEZ o ARQUITECTURA S.A. DE C.V."
+                      />
+                    </div>
+                    {/* Régimen Fiscal */}
+                    <div className="space-y-1 col-span-full">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1">Régimen Fiscal (C y E) *</label>
+                      <select 
+                        required
+                        value={clientFormData.regimen}
+                        onChange={(e) => setClientFormData({...clientFormData, regimen: e.target.value})}
+                        className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-none font-bold text-gray-700 focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Selecciona el régimen...</option>
+                        {regimenes.map(r => (
+                          <option key={r.value} value={r.value}>{r.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* Código Postal */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1">C.P. Fiscal (D) *</label>
+                      <input 
+                        type="text"
+                        required
+                        maxLength={5}
+                        value={clientFormData.cp}
+                        onChange={(e) => setClientFormData({...clientFormData, cp: e.target.value})}
+                        className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-none font-bold text-gray-700 focus:ring-2 focus:ring-blue-500"
+                        placeholder="Ej. 48315"
+                      />
+                    </div>
+                    {/* Correo Electrónico */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1">Email de Envío (F) *</label>
+                      <input 
+                        type="email"
+                        required
+                        value={clientFormData.email}
+                        onChange={(e) => setClientFormData({...clientFormData, email: e.target.value})}
+                        className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-none font-bold text-gray-700 focus:ring-2 focus:ring-blue-500"
+                        placeholder="ejemplo@correo.com"
+                      />
+                    </div>
+                    {/* Uso de CFDI */}
+                    <div className="space-y-1 col-span-full">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block ml-1">Uso de CFDI (G) *</label>
+                      <select 
+                        required
+                        value={clientFormData.usoCfdi}
+                        onChange={(e) => setClientFormData({...clientFormData, usoCfdi: e.target.value})}
+                        className="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border-none font-bold text-gray-700 focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Selecciona el uso...</option>
+                        {usosCFDI.map(u => (
+                          <option key={u.value} value={u.value}>{u.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-100 flex gap-4">
+                    <button 
+                      type="button" 
+                      onClick={() => setShowClientModal(false)}
+                      className="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-gray-200 transition-all text-center"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-100 hover:bg-blue-700 active:scale-95 transition-all flex justify-center items-center gap-2"
+                    >
+                      {loading ? <Loader2 className="animate-spin" size={18} /> : <><CheckCircle size={18} /> Guardar Cliente</>}
+                    </button>
+                  </div>
+                </form>
               </motion.div>
             </motion.div>
           )}
@@ -1366,23 +1887,121 @@ export default function AdminPortal() {
                   </div>
                 </div>
 
-                <div className="flex-1 bg-gray-100 flex items-center justify-center relative">
-                  {(pdfLoading || !pdfBlobUrl) && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-blue-600 z-20 bg-gray-50/80 backdrop-blur-sm">
-                      <Loader2 size={48} className="animate-spin" />
-                      <p className="font-black text-sm uppercase tracking-tighter">
-                        {pdfLoading ? 'Conectando con Facturama...' : 'Preparando visualización...'}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {pdfBlobUrl && (
-                    <iframe 
-                      src={`${pdfBlobUrl}#toolbar=0`} 
-                      className="w-full h-full border-none relative z-10"
-                      title="PDF Preview"
-                    />
-                  )}
+                <div className="flex-1 bg-gray-100 flex flex-col md:flex-row relative min-h-0 overflow-hidden">
+                  {/* Panel izquierdo: Datos y Conceptos */}
+                  <div className="w-full md:w-1/2 bg-white p-6 border-r border-gray-100 overflow-y-auto h-full flex flex-col gap-5">
+                    {detailsLoading ? (
+                      <div className="flex-1 flex flex-col items-center justify-center gap-3 text-blue-600 py-10">
+                        <Loader2 size={36} className="animate-spin" />
+                        <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Cargando conceptos...</p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Cabecera de datos */}
+                        <div className="space-y-3 bg-gray-50 p-4 rounded-2xl">
+                          <div className="flex justify-between text-xs border-b border-gray-200/60 pb-2">
+                            <span className="text-gray-400 font-bold uppercase">RFC:</span>
+                            <span className="text-gray-700 font-black font-mono">{previewPdf?.rfc || 'S/N'}</span>
+                          </div>
+                          <div className="flex justify-between text-xs border-b border-gray-200/60 pb-2">
+                            <span className="text-gray-400 font-bold uppercase">Receptor:</span>
+                            <span className="text-gray-700 font-black text-right line-clamp-1">{previewPdf?.razonSocial || (previewPdf?.rfc === 'XAXX010101000' ? 'PÚBLICO EN GENERAL' : '')}</span>
+                          </div>
+                          <div className="flex justify-between text-xs border-b border-gray-200/60 pb-2">
+                            <span className="text-gray-400 font-bold uppercase">Fecha Factura:</span>
+                            <span className="text-gray-700 font-black">{formatFechaCDMX(previewPdf?.createdAt)}</span>
+                          </div>
+                          {previewPdf?.fechaPago && (
+                            <div className="flex justify-between text-xs border-b border-gray-200/60 pb-2">
+                              <span className="text-gray-400 font-bold uppercase">Fecha Pago:</span>
+                              <span className="text-gray-700 font-black">{formatFechaCDMX(previewPdf?.fechaPago)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between text-xs border-b border-gray-200/60 pb-2">
+                            <span className="text-gray-400 font-bold uppercase">Uso de CFDI:</span>
+                            <span className="text-gray-700 font-black">{previewPdf?.usoCfdi || 'S/N'}</span>
+                          </div>
+                          <div className="flex justify-between text-xs border-b border-gray-200/60 pb-2">
+                            <span className="text-gray-400 font-bold uppercase">Régimen Fiscal:</span>
+                            <span className="text-gray-700 font-black">{previewPdf?.regimenFiscal || 'S/N'}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-400 font-bold uppercase">UUID Fiscal:</span>
+                            <span className="text-gray-700 font-black font-mono text-[9px] break-all">{previewPdf?.uuid || 'S/N'}</span>
+                          </div>
+                        </div>
+
+                        {/* Listado de Conceptos */}
+                        <div className="flex-1 flex flex-col min-h-0">
+                          <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Conceptos / Líneas de Factura</h4>
+                          <div className="border border-gray-100 rounded-2xl overflow-hidden overflow-y-auto max-h-[250px]">
+                            <table className="w-full text-left text-xs">
+                              <thead className="bg-gray-50 text-[10px] text-gray-400 font-black uppercase tracking-wider border-b border-gray-100">
+                                <tr>
+                                  <th className="px-4 py-2 text-center w-12">Cant</th>
+                                  <th className="px-4 py-2">Descripción</th>
+                                  <th className="px-4 py-2 text-right">P. Unit</th>
+                                  <th className="px-4 py-2 text-right">Importe</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-50 font-bold text-gray-600">
+                                {((cfdiDetails?.Items || cfdiDetails?.items || []).length > 0) ? (
+                                  (cfdiDetails?.Items || cfdiDetails?.items).map((item, idx) => (
+                                    <tr key={idx} className="hover:bg-gray-50/50">
+                                      <td className="px-4 py-2.5 text-center font-black text-[#003082] bg-gray-50/20">{item.Quantity || item.quantity || 1}</td>
+                                      <td className="px-4 py-2.5 line-clamp-2 max-w-[200px]" title={item.Description || item.description}>{item.Description || item.description || 'Sin descripción'}</td>
+                                      <td className="px-4 py-2.5 text-right font-mono">${Number(item.UnitPrice || item.unitPrice || 0).toFixed(2)}</td>
+                                      <td className="px-4 py-2.5 text-right font-black font-mono text-gray-800">${Number(item.Subtotal || item.subtotal || item.Total || item.total || 0).toFixed(2)}</td>
+                                    </tr>
+                                  ))
+                                ) : (
+                                  <tr>
+                                    <td colSpan={4} className="px-4 py-6 text-center text-gray-400 italic">No hay conceptos cargados o es formato estándar.</td>
+                                  </tr>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Total consolidado */}
+                        <div className="pt-3 border-t border-gray-100 flex justify-between items-center text-sm font-black">
+                          <span className="text-gray-400 uppercase tracking-widest text-[10px]">Total Facturado:</span>
+                          <span className="text-2xl text-blue-600 font-black">${Number(previewPdf?.total || 0).toFixed(2)}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Panel derecho: PDF Viewer */}
+                  <div className="w-full md:w-1/2 h-[40vh] md:h-full relative bg-gray-100">
+                    {pdfError ? (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center gap-4 z-20 bg-red-50/90 backdrop-blur-sm">
+                        <AlertCircle size={36} className="text-red-500" />
+                        <p className="font-black text-[10px] uppercase tracking-wider text-red-600">
+                          Error de Carga
+                        </p>
+                        <p className="text-xs text-gray-500 max-w-[280px]">
+                          {pdfError}
+                        </p>
+                      </div>
+                    ) : (pdfLoading || !pdfBlobUrl) && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-blue-600 z-20 bg-gray-50/80 backdrop-blur-sm">
+                        <Loader2 size={36} className="animate-spin" />
+                        <p className="font-black text-[10px] uppercase tracking-wider text-gray-400">
+                          {pdfLoading ? 'Cargando documento PDF...' : 'Preparando visor...'}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {!pdfError && pdfBlobUrl && (
+                      <iframe 
+                        src={`${pdfBlobUrl}#toolbar=0`} 
+                        className="w-full h-full border-none relative z-10"
+                        title="PDF Preview"
+                      />
+                    )}
+                  </div>
                 </div>
 
                 <div className="p-5 bg-white border-t border-gray-100 flex flex-col md:flex-row justify-center gap-4 shadow-2xl">

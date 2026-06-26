@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Check, AlertCircle, Search, ArrowRight, UserCheck, RefreshCw, FileText as FileIcon, Menu, X, Printer, Phone, Mail } from 'lucide-react';
+import { Check, AlertCircle, Search, ArrowRight, ArrowLeft, UserCheck, RefreshCw, FileText as FileIcon, Menu, X, Printer, Phone, Mail } from 'lucide-react';
 
 // === PARA TU PROYECTO LOCAL: DESCOMENTA ESTAS LINEAS ===
 import Navbar from '../components/Navbar';
@@ -124,6 +124,7 @@ export default function Facturar() {
   const [pollMessage, setPollMessage] = useState('');
   const [payments, setPayments] = useState([]);
   const [codigoCliente, setCodigoCliente] = useState('');
+  const [tipoCliente, setTipoCliente] = useState(null); // null, 'nuevo', 'existente', 'existente_cargado'
   const [showClientCodeInput, setShowClientCodeInput] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -270,11 +271,8 @@ export default function Facturar() {
     setLoading(true); 
     setError('');
     
-    // REEMPLAZA CON TU URL REAL DEL SCRIPT DE GOOGLE
-    const urlScript = 'https://script.google.com/macros/s/AKfycbzf_-GMn9ZGNrNWZOFcDSHfX_Kc4DdXsXQjACOr4AVj8SjPGJSsOFasApCeZMQeOW9r/exec';
-    
     try {
-      const res = await fetch(`${urlScript}?codigo=${encodeURIComponent(codigoCliente.toUpperCase())}`);
+      const res = await fetch(`/api/consultar-cliente?codigo=${encodeURIComponent(codigoCliente.toUpperCase())}`);
       const data = await res.json();
       
       if (!res.ok || !data.success) {
@@ -282,25 +280,34 @@ export default function Facturar() {
       }
       
       const cliente = data.data;
-      let regimenCode = extraerRegimen(String(cliente.regimenFiscal || ''));
-      let usoCode = extraerUso(String(cliente.usoCfdi || ''));
+      const rfcValue = cliente.rfc || cliente.RFC || '';
+      const razonSocialValue = cliente.razonSocial || cliente['Razón Social'] || cliente.nombre || '';
+      const cpValue = cliente.codigoPostal || cliente.CP || cliente.cp || '';
+      const emailValue = cliente.email || cliente.Email || cliente.correo || '';
       
-      if (!regimenCode && extraerUso(String(cliente.regimenFiscal || ''))) {
-        regimenCode = extraerUso(String(cliente.regimenFiscal || ''));
+      const rawRegimen = cliente.regimen || cliente.Regimen || cliente.regimenFiscal || cliente['Régimen Fiscal'] || '';
+      const rawUso = cliente.usoCfdi || cliente['Uso CFDI'] || '';
+      
+      let regimenCode = extraerRegimen(String(rawRegimen));
+      let usoCode = extraerUso(String(rawUso));
+      
+      if (!regimenCode && extraerUso(String(rawRegimen))) {
+        regimenCode = extraerUso(String(rawRegimen));
       }
-      if (!usoCode && extraerRegimen(String(cliente.usoCfdi || ''))) {
-        regimenCode = extraerRegimen(String(cliente.usoCfdi || ''));
+      if (!usoCode && extraerRegimen(String(rawUso))) {
+        usoCode = extraerRegimen(String(rawUso));
       }
 
       setDatosFiscales({
-        rfc: cliente.rfc || '',
-        razonSocial: cliente.razonSocial || '',
+        rfc: rfcValue,
+        razonSocial: razonSocialValue,
         regimenFiscal: regimenCode || '',
         usoCfdi: usoCode || '',
-        codigoPostal: cliente.codigoPostal || '',
-        email: cliente.email || '',
+        codigoPostal: cpValue,
+        email: emailValue,
       });
       setSuccess('Datos cargados correctamente.');
+      setTipoCliente('existente_cargado');
     } catch (err) { 
       setSuccess(''); 
       setError(err.message); 
@@ -683,6 +690,41 @@ export default function Facturar() {
     }
   };
 
+  const handleRegistrarClienteNuevo = async () => {
+    try {
+      const regObj = regimenes.find(r => r.value === datosFiscales.regimenFiscal);
+      const regimenFiscalLargo = regObj ? regObj.label : datosFiscales.regimenFiscal;
+
+      await fetch('/api/registrar-datos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rfc: datosFiscales.rfc,
+          razonSocial: datosFiscales.razonSocial,
+          regimen: datosFiscales.regimenFiscal,
+          codigoPostal: datosFiscales.codigoPostal,
+          regimenFiscal: regimenFiscalLargo,
+          email: datosFiscales.email,
+          usoCfdi: datosFiscales.usoCfdi,
+          code: '',
+          // Compatibilidad exacta con las columnas A a H en la pestaña Clientes:
+          "RFC": datosFiscales.rfc,
+          "Razón Social": datosFiscales.razonSocial,
+          "Regimen": datosFiscales.regimenFiscal,
+          "CP": datosFiscales.codigoPostal,
+          "Régimen Fiscal": regimenFiscalLargo,
+          "Email": datosFiscales.email,
+          "Uso CFDI": datosFiscales.usoCfdi,
+          "Code": ''
+        })
+      });
+    } catch (err) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Error al registrar cliente nuevo:', err);
+      }
+    }
+  };
+
   const handleEmitFactura = async () => {
     let hadError = false;
     setConfirmLoading(true);
@@ -786,6 +828,11 @@ export default function Facturar() {
       const xml = data?.xml || null;
       const isAlreadyInvoiced = data?.alreadyInvoiced === true;
 
+      // Si es cliente nuevo y se timbró con éxito, lo registramos en Google Sheets
+      if (cfdiId && tipoCliente === 'nuevo') {
+        handleRegistrarClienteNuevo();
+      }
+
       // Disparar animación de ¡GOOOL! al tener éxito
       window.dispatchEvent(new CustomEvent('soccer-goal', { 
         detail: { x: window.innerWidth / 2, y: window.innerHeight / 2 } 
@@ -827,7 +874,8 @@ export default function Facturar() {
     } catch (err) { 
       hadError = true;
       const msg = String(err?.message || '').trim();
-      setConfirmError(msg || 'No pudimos timbrar la factura. Intenta nuevamente o contáctanos.');
+      const friendlyMsg = msg || 'No pudimos timbrar la factura. Intenta nuevamente o contáctanos.';
+      setConfirmError(friendlyMsg);
       if (reserveResponse) {
         failTicket({
           ticket,
@@ -840,7 +888,7 @@ export default function Facturar() {
           }
         });
       }
-      setError('No pudimos timbrar la factura. Intenta nuevamente o contáctanos.');
+      setError(friendlyMsg);
       setErrorDetails(err.details || err.message);
     } finally {
       setLoading(false);
@@ -901,6 +949,7 @@ export default function Facturar() {
     setPendingRecovery(null);
     setRecoverRfc('');
     setRecoverError('');
+    setTipoCliente(null);
     setDatosFiscales({ 
       rfc: '', 
       razonSocial: '', 
@@ -1265,83 +1314,188 @@ export default function Facturar() {
             {/* Paso 2: Datos Fiscales */}
             {step === 3 && productos.length > 0 && verified && (
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <form onSubmit={handleSubmit} className="bg-white p-8 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 flex flex-col h-full">
-                  <h2 className="text-2xl font-bold mb-6 text-[#003082] font-brand flex items-center gap-2">
-                    <UserCheck className="text-[#0B63B2]" /> Datos fiscales
-                  </h2>
-                  
-                  {/* Opción Cargar Cliente (Bloqueado Temporalmente) */}
-                  <div className="bg-[#F3F7FC]/50 p-4 rounded-2xl mb-6 border border-dashed border-gray-200 relative group">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center space-x-3 opacity-50">
-                        <input 
-                          type="checkbox" 
-                          id="yaSoyClienteCheckbox" 
-                          disabled
-                          className="w-5 h-5 rounded border-gray-300 text-gray-400 cursor-not-allowed" 
-                        />
-                        <label htmlFor="yaSoyClienteCheckbox" className="text-sm font-semibold text-gray-500 cursor-not-allowed">Ya soy cliente</label>
-                      </div>
-                      <span className="bg-[#0B63B2]/10 text-[#0B63B2] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border border-[#0B63B2]/20">
-                        Próximamente
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-gray-400 italic ml-8">
-                      Estamos trabajando en esta nueva función para ti.
+                {tipoCliente === null ? (
+                  <div className="bg-white p-8 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 flex flex-col justify-center h-full min-h-[420px]">
+                    <h2 className="text-2xl font-extrabold mb-2 text-[#003082] font-brand text-center">
+                      ¿Ya eres cliente de Puerto Copy?
+                    </h2>
+                    <p className="text-sm text-gray-500 text-center mb-8">
+                      Si has facturado anteriormente, podemos rellenar tus datos automáticamente.
                     </p>
-                  </div>
-
-                  {/* Campos del Formulario */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
-                    <input name="rfc" value={datosFiscales.rfc} onChange={handleChange} placeholder="RFC" className="w-full text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm" />
-                    <input name="razonSocial" value={datosFiscales.razonSocial} onChange={handleChange} placeholder="Razón Social" className="w-full md:col-span-2 text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm" />
-                    <input name="email" value={datosFiscales.email} onChange={handleChange} placeholder="Correo" className="w-full md:col-span-2 text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm" />
-                    <input
-                      name="codigoPostal"
-                      value={datosFiscales.codigoPostal}
-                      onChange={handleChange}
-                      placeholder="CP Receptor (domicilio fiscal)"
-                      type="text"
-                      maxLength={5}
-                      disabled={isPublicoGeneral}
-                      className={`w-full text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm ${isPublicoGeneral ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    />
                     
-                    <select 
-                      name="regimenFiscal" 
-                      value={datosFiscales.regimenFiscal} 
-                      onChange={handleChange} 
-                      disabled={isPublicoGeneral}
-                      className={`w-full text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm ${isPublicoGeneral ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    >
-                      <option value="">Régimen Fiscal</option>
-                      {regimenes.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                    </select>
-                    
-                    <select 
-                      name="usoCfdi" 
-                      value={datosFiscales.usoCfdi} 
-                      onChange={handleChange} 
-                      disabled={isPublicoGeneral}
-                      className={`w-full text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm ${isPublicoGeneral ? 'opacity-60 cursor-not-allowed' : ''}`}
-                    >
-                      <option value="">Uso CFDI</option>
-                      {usosCFDI.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
-                    </select>
-                  </div>
-
-                  <div className="mt-8">
-                    {!facturaGenerada ? (
-                      <button type="submit" disabled={loading} className="w-full py-3 md:py-4 bg-[#0B63B2] text-white rounded-full font-bold shadow-lg hover:bg-[#004a8f] disabled:bg-gray-300">
-                        {loading && loadingAction === 'timbrar' ? 'Timbrando...' : 'Facturar Ahora'}
+                    <div className="space-y-4">
+                      <button
+                        type="button"
+                        onClick={() => setTipoCliente('existente')}
+                        className="w-full p-6 text-left rounded-3xl border border-blue-100 bg-[#F3F7FC] hover:bg-blue-50/70 transition-all duration-300 flex items-center gap-4 group"
+                      >
+                        <div className="w-12 h-12 rounded-2xl bg-[#0B63B2]/10 flex items-center justify-center text-[#0B63B2] group-hover:scale-110 transition-transform">
+                          <UserCheck size={24} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-[#003082] text-base">Sí, ya soy cliente registrado</div>
+                          <div className="text-xs text-gray-500 mt-0.5 truncate">Buscar datos con código o nombre completo.</div>
+                        </div>
+                        <ArrowRight className="text-[#0B63B2] opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0" size={20} />
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTipoCliente('nuevo');
+                          setDatosFiscales({
+                            rfc: '',
+                            razonSocial: '',
+                            regimenFiscal: '',
+                            usoCfdi: '',
+                            codigoPostal: '',
+                            email: ''
+                          });
+                        }}
+                        className="w-full p-6 text-left rounded-3xl border border-gray-100 bg-white hover:bg-gray-50/50 hover:border-gray-200 transition-all duration-300 flex items-center gap-4 group"
+                      >
+                        <div className="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center text-green-600 group-hover:scale-110 transition-transform">
+                          <Check size={24} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-gray-800 text-base">No, soy un cliente nuevo</div>
+                          <div className="text-xs text-gray-500 mt-0.5 truncate">Ingresar datos manualmente y registrarme.</div>
+                        </div>
+                        <ArrowRight className="text-green-600 opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0" size={20} />
+                      </button>
+                    </div>
+                  </div>
+                ) : tipoCliente === 'existente' ? (
+                  <div className="bg-white p-8 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 flex flex-col justify-center h-full min-h-[420px]">
+                    <button
+                      type="button"
+                      onClick={() => setTipoCliente(null)}
+                      className="self-start flex items-center gap-2 text-xs font-semibold text-gray-500 hover:text-gray-700 mb-6 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition-colors"
+                    >
+                      <ArrowLeft size={14} /> Regresar
+                    </button>
+                    
+                    <h2 className="text-2xl font-bold mb-2 text-[#003082] font-brand">
+                      Cargar Datos de Cliente
+                    </h2>
+                    <p className="text-sm text-gray-500 mb-6">
+                      Ingresa el código que te asignamos en Puerto Copy o tu Razón Social completa.
+                    </p>
+
+                    <div className="space-y-4">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={codigoCliente}
+                          onChange={(e) => setCodigoCliente(e.target.value)}
+                          placeholder="Código de cliente o Nombre Completo"
+                          className="w-full bg-[#F3F7FC] border border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-6 py-4 text-sm outline-none transition-all shadow-inner placeholder-gray-400 font-medium"
+                        />
+                      </div>
+                      
+                      <button
+                        type="button"
+                        onClick={handleCargarDatosCliente}
+                        disabled={!codigoCliente || loading}
+                        className="w-full py-4 bg-[#0B63B2] hover:bg-[#004a8f] text-white rounded-full font-bold shadow-lg hover:shadow-blue-500/20 disabled:opacity-60 transition-all flex justify-center items-center gap-2"
+                      >
+                        {loading ? (
+                          <span className="w-5 h-5 border-2 border-white/70 border-t-transparent rounded-full animate-spin"></span>
+                        ) : (
+                          'Buscar y Cargar Datos'
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="bg-white p-8 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50 flex flex-col h-full">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-2xl font-bold text-[#003082] font-brand flex items-center gap-2">
+                        <UserCheck className="text-[#0B63B2]" /> Datos fiscales
+                      </h2>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTipoCliente(null);
+                          setDatosFiscales({
+                            rfc: '',
+                            razonSocial: '',
+                            regimenFiscal: '',
+                            usoCfdi: '',
+                            codigoPostal: '',
+                            email: ''
+                          });
+                        }}
+                        className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition-colors"
+                      >
+                        <ArrowLeft size={12} /> Cambiar
+                      </button>
+                    </div>
+
+                    {tipoCliente === 'nuevo' ? (
+                      <div className="mb-6 p-4 rounded-2xl border border-green-100 bg-green-50/70 text-xs text-green-800 flex items-center gap-2">
+                        <Check className="shrink-0 text-green-600" size={16} />
+                        <span>Te registraremos automáticamente como cliente en nuestro sistema al emitir la factura.</span>
+                      </div>
                     ) : (
-                      <button type="button" onClick={resetTodo} className="w-full py-3 md:py-4 bg-gray-800 text-white rounded-full font-bold shadow-lg flex justify-center gap-2">
-                        <RefreshCw size={20} /> Otro registro
-                      </button>
+                      <div className="mb-6 p-4 rounded-2xl border border-blue-100 bg-blue-50/70 text-xs text-blue-800 flex items-center gap-2">
+                        <Check className="shrink-0 text-blue-600" size={16} />
+                        <span>Datos cargados correctamente. Puedes modificarlos si es necesario.</span>
+                      </div>
                     )}
-                  </div>
-                </form>
+
+                    {/* Campos del Formulario */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
+                      <input name="rfc" value={datosFiscales.rfc} onChange={handleChange} placeholder="RFC" className="w-full text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm" />
+                      <input name="razonSocial" value={datosFiscales.razonSocial} onChange={handleChange} placeholder="Razón Social" className="w-full md:col-span-2 text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm" />
+                      <input name="email" value={datosFiscales.email} onChange={handleChange} placeholder="Correo" className="w-full md:col-span-2 text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm" />
+                      <input
+                        name="codigoPostal"
+                        value={datosFiscales.codigoPostal}
+                        onChange={handleChange}
+                        placeholder="CP Receptor (domicilio fiscal)"
+                        type="text"
+                        maxLength={5}
+                        disabled={isPublicoGeneral}
+                        className={`w-full text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm ${isPublicoGeneral ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      />
+                      
+                      <select 
+                        name="regimenFiscal" 
+                        value={datosFiscales.regimenFiscal} 
+                        onChange={handleChange} 
+                        disabled={isPublicoGeneral}
+                        className={`w-full text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm ${isPublicoGeneral ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      >
+                        <option value="">Régimen Fiscal</option>
+                        {regimenes.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                      </select>
+                      
+                      <select 
+                        name="usoCfdi" 
+                        value={datosFiscales.usoCfdi} 
+                        onChange={handleChange} 
+                        disabled={isPublicoGeneral}
+                        className={`w-full text-base md:text-sm bg-gray-50 border-transparent focus:bg-white focus:border-[#0B63B2] rounded-2xl px-5 py-3 md:py-3.5 outline-none shadow-sm ${isPublicoGeneral ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      >
+                        <option value="">Uso CFDI</option>
+                        {usosCFDI.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="mt-8">
+                      {!facturaGenerada ? (
+                        <button type="submit" disabled={loading} className="w-full py-3 md:py-4 bg-[#0B63B2] text-white rounded-full font-bold shadow-lg hover:bg-[#004a8f] disabled:bg-gray-300">
+                          {loading && loadingAction === 'timbrar' ? 'Timbrando...' : 'Facturar Ahora'}
+                        </button>
+                      ) : (
+                        <button type="button" onClick={resetTodo} className="w-full py-3 md:py-4 bg-gray-800 text-white rounded-full font-bold shadow-lg flex justify-center gap-2">
+                          <RefreshCw size={20} /> Otro registro
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                )}
 
                 {/* Resumen del Ticket */}
                 <div className="bg-[#F3F7FC] p-6 md:p-8 rounded-[2.5rem] shadow-inner h-fit">
