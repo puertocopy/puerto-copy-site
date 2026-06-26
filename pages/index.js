@@ -135,9 +135,13 @@ export default function Home() {
                 <img
                   src={slideUrl}
                   alt={`Slide ${index + 1}`}
+                  width={1920}
+                  height={1080}
                   className={`absolute inset-0 w-full h-full object-cover ${
                     active ? 'animate-[kenburns_7s_ease-in-out_forwards]' : ''
                   }`}
+                  fetchPriority={index === 0 ? "high" : "low"}
+                  loading={index === 0 ? "eager" : "lazy"}
                 />
                 {/* Overlay Degradado */}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#003082]/90 via-[#003082]/30 to-black/30" />

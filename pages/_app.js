@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
+import { Outfit } from 'next/font/google';
 import '../styles/globals.css';
 import { CartProvider } from '../context/CartContext';
 import { FileUploadModal } from '../components/FileUploadModal';
 import WorldCupDecorations from '../components/WorldCupDecorations';
 import GoalClickEffect from '../components/GoalClickEffect';
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  variable: '--font-outfit',
+  display: 'swap',
+});
 
 function MyApp({ Component, pageProps }) {
   const [mounted, setMounted] = useState(false);
@@ -84,13 +92,13 @@ function MyApp({ Component, pageProps }) {
             }),
           }}
         />
-        {/* Script de Lottie Player para animaciones de alta calidad */}
-        <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js" async></script>
       </Head>
 
-      {mounted && <GoalClickEffect />}
-      <Component {...pageProps} />
-      {mounted && <FileUploadModal />}
+      <div className={`${outfit.variable} font-sans`}>
+        {mounted && <GoalClickEffect />}
+        <Component {...pageProps} />
+        {mounted && <FileUploadModal />}
+      </div>
     </CartProvider>
   );
 }

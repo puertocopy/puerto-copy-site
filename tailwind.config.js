@@ -6,7 +6,9 @@ module.exports = {
   ],
   theme: {
     extend: {
-
+      fontFamily: {
+        sans: ['var(--font-outfit)', 'sans-serif'],
+      },
       colors: {
         blue: {
           700: "#003399", // Azul rey
