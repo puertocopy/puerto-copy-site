@@ -598,10 +598,17 @@ export default function AdminPortal() {
     }
   }, [esGlobal]);
 
-  // PPD -> 99
+  // Control de forma de pago según el método de pago (SAT)
+  // Si es PPD, forzosamente la forma de pago debe ser '99' (Por definir).
+  // Si cambia a PUE y estaba en '99', lo cambiamos por defecto a '01' (Efectivo) para evitar errores.
   useEffect(() => {
-    if (datosFiscales.metodoPago === 'PPD') setDatosFiscales(prev => ({ ...prev, formaPago: '99' }));
-  }, [datosFiscales.metodoPago]);
+    if (datosFiscales.metodoPago === 'PPD') {
+      setDatosFiscales(prev => ({ ...prev, formaPago: '99' }));
+    } else if (datosFiscales.metodoPago === 'PUE' && datosFiscales.formaPago === '99') {
+      setDatosFiscales(prev => ({ ...prev, formaPago: '01' }));
+    }
+  }, [datosFiscales.metodoPago, datosFiscales.formaPago]);
+
 
   // Totales
   const round2 = (v) => Math.round((Number(v) + Number.EPSILON) * 100) / 100;

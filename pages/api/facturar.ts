@@ -213,16 +213,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return Number.isFinite(num) ? num : 0;
   };
 
+  // Determina la clave de la forma de pago (SAT) a partir del nombre o texto del pago
   const resolvePaymentForm = (paymentsValue: any[]) => {
     if (!Array.isArray(paymentsValue) || paymentsValue.length === 0) return '99';
     if (paymentsValue.length > 1) return '99';
     const name = String(paymentsValue[0]?.name || '').toUpperCase().trim();
+    
+    // Si el texto ya comienza con un código de forma de pago conocido de 2 dígitos (ej. "01", "03", etc.)
+    const match = name.match(/^(01|02|03|04|28|99)\b/);
+    if (match) return match[1];
+
+    // Mapeos secundarios por si viene texto plano sin código
     if (name === 'EFECTIVO') return '01';
-    if (name === 'T/DEBITO' || name === 'TARJETA DEBITO') return '28';
-    if (name === 'T/CREDITO' || name === 'TARJETA CREDITO') return '04';
-    if (name === 'TRANSFERENCIA' || name.includes('SPEI')) return '03';
+    if (name === 'T/DEBITO' || name === 'TARJETA DEBITO' || name.includes('DEBITO')) return '28';
+    if (name === 'T/CREDITO' || name === 'TARJETA CREDITO' || name.includes('CREDITO')) return '04';
+    if (name === 'TRANSFERENCIA' || name.includes('SPEI') || name.includes('TRANSFERENCIA')) return '03';
     return '99';
   };
+
 
   let items;
   try {
