@@ -3,7 +3,12 @@ import React, { useState, useMemo } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useCart } from '../context/CartContext';
+import { CardPaymentBrickModal } from '../components/CardPaymentBrick';
+import FlujoPlanos from '../components/FlujoPlanos';
 import productosData from '../data/productosPorTipoPrincipal_conPlanos.json';
+
+
+
 
 // --- COMPONENTE DE TARJETA DE PRODUCTO (SENIOR UX) ---
 const ProductCard = ({ producto, esImpresion, onAdd }) => {
@@ -96,13 +101,13 @@ const ProductCard = ({ producto, esImpresion, onAdd }) => {
 export default function Tienda() {
   const { cart, addItem, removeItem, updateQuantity, validarCarrito } = useCart();
   const [busqueda, setBusqueda] = useState('');
-  const [tabActiva, setTabActiva] = useState('Papelería');
+  const [tabActiva, setTabActiva] = useState('Planos');
 
   // Categorización Senior
   const TABS = [
+    { id: 'Planos', icon: '📐', cats: ['PLANOS', 'IMP GRAN FORMATO'] },
     { id: 'Papelería', icon: '📂', cats: ['PAPELERÍA', 'PAPEL ESPECIAL'] },
     { id: 'Impresiones', icon: '🖨️', cats: ['IMP T/ESTÁNDAR', 'COP/IMP T/ESTÁNDAR CON FONDO O IMAGEN', 'COPIA T/ESTANDAR', 'ESCANEO'] },
-    { id: 'Planos', icon: '📐', cats: ['PLANOS', 'IMP GRAN FORMATO'] },
     { id: 'Servicios', icon: '⚙️', cats: ['ENGARGOLADOS', 'ENMICADOS'] }
   ];
 
@@ -141,12 +146,24 @@ export default function Tienda() {
   const iva = subtotal * 0.16;
   const total = subtotal + iva;
 
+  const [cargandoPago, setCargandoPago] = useState(false);
+  const [errorPago, setErrorPago] = useState(null);
+  const [mostrarFormTarjeta, setMostrarFormTarjeta] = useState(false);
+
   const handlePagar = () => {
+    setErrorPago(null);
     const { needsFile } = validarCarrito();
-    if (!needsFile) {
-      alert('Iniciando Checkout seguro...');
+
+    // Si algún artículo requiere subir archivo PDF, el modal se abre automáticamente y detiene el checkout
+    if (needsFile) {
+      return;
     }
+
+    // Abrir el formulario integrado de tarjeta (Checkout API)
+    setMostrarFormTarjeta(true);
   };
+
+
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans selection:bg-blue-100 selection:text-[#003399]">
@@ -206,23 +223,29 @@ export default function Tienda() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {filtrados.map((p, i) => (
-                <ProductCard 
-                  key={`${p.Nombre}-${p.varianteNombre}-${i}`}
-                  producto={p} 
-                  esImpresion={p.Categoria.includes('PLANOS') || p.Categoria.includes('COPIA') || p.Categoria.includes('IMP')}
-                  onAdd={addItem}
-                />
-              ))}
-              {filtrados.length === 0 && (
-                <div className="col-span-full py-32 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-200">
-                  <p className="text-7xl mb-6">🏜️</p>
-                  <h3 className="text-3xl font-black text-slate-800 mb-2">Sin coincidencias</h3>
-                  <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Intenta con otro término de búsqueda</p>
-                </div>
-              )}
-            </div>
+            {tabActiva === 'Planos' && busqueda === '' ? (
+              <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 p-4 sm:p-8">
+                <FlujoPlanos onAgregar={addItem} />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {filtrados.map((p, i) => (
+                  <ProductCard 
+                    key={`${p.Nombre}-${p.varianteNombre}-${i}`}
+                    producto={p} 
+                    esImpresion={p.Categoria.includes('PLANOS') || p.Categoria.includes('COPIA') || p.Categoria.includes('IMP')}
+                    onAdd={addItem}
+                  />
+                ))}
+                {filtrados.length === 0 && (
+                  <div className="col-span-full py-32 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-200">
+                    <p className="text-7xl mb-6">🏜️</p>
+                    <h3 className="text-3xl font-black text-slate-800 mb-2">Sin coincidencias</h3>
+                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Intenta con otro término de búsqueda</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* CHECKOUT EXPERIENCE (CARRITO) */}
@@ -311,12 +334,36 @@ export default function Tienda() {
                     </div>
                   </div>
 
+                  {errorPago && (
+                    <div className="mb-4 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-xs font-bold flex items-start gap-2">
+                      <span className="text-base">⚠️</span>
+                      <p>{errorPago}</p>
+                    </div>
+                  )}
+
                   <button
                     onClick={handlePagar}
-                    className="w-full py-6 rounded-[2rem] font-black text-white shadow-2xl shadow-blue-900/30 transition-all bg-[#003399] hover:bg-blue-800 hover:scale-[1.02] active:scale-95 text-lg uppercase tracking-[0.3em] flex items-center justify-center gap-3"
+                    disabled={cargandoPago}
+                    className={`w-full py-6 rounded-[2rem] font-black text-white shadow-2xl transition-all text-lg uppercase tracking-[0.3em] flex items-center justify-center gap-3 ${
+                      cargandoPago 
+                        ? 'bg-slate-400 cursor-not-allowed shadow-none' 
+                        : 'bg-[#003399] hover:bg-blue-800 hover:scale-[1.02] active:scale-95 shadow-blue-900/30'
+                    }`}
                   >
-                    PAGAR
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    {cargandoPago ? (
+                      <>
+                        <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        PROCESANDO...
+                      </>
+                    ) : (
+                      <>
+                        PAGAR CON MERCADO PAGO
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                      </>
+                    )}
                   </button>
                 </div>
               )}
@@ -326,7 +373,18 @@ export default function Tienda() {
         </div>
       </main>
 
+      {/* CARD PAYMENT BRICK OFICIAL (MÉTODO A - ORDERS API) */}
+      {mostrarFormTarjeta && (
+        <CardPaymentBrickModal
+          total={total}
+          items={cart}
+          onClose={() => setMostrarFormTarjeta(false)}
+        />
+      )}
+
       <Footer />
+
+
       
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {

@@ -4,8 +4,6 @@ import { Outfit } from 'next/font/google';
 import '../styles/globals.css';
 import { CartProvider } from '../context/CartContext';
 import { FileUploadModal } from '../components/FileUploadModal';
-import WorldCupDecorations from '../components/WorldCupDecorations';
-import GoalClickEffect from '../components/GoalClickEffect';
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -95,7 +93,6 @@ function MyApp({ Component, pageProps }) {
       </Head>
 
       <div className={`${outfit.variable} font-sans`}>
-        {mounted && <GoalClickEffect />}
         <Component {...pageProps} />
         {mounted && <FileUploadModal />}
       </div>

@@ -109,7 +109,7 @@ export default function Home() {
   }, [slides.length]);
 
   return (
-    <div className="bg-soccer-pattern text-gray-900 overflow-x-hidden font-sans">
+    <div className="bg-white text-gray-900 overflow-x-hidden font-sans">
       {/* Componentes reutilizables importados */}
       <Navbar /> 
 
@@ -268,7 +268,7 @@ export default function Home() {
       </section>
 
       {/* SERVICIOS */}
-      <section id="servicios" className="relative bg-soccer-pattern py-20 md:py-28 px-4 md:px-12">
+      <section id="servicios" className="relative bg-white py-20 md:py-28 px-4 md:px-12">
         <div className="max-w-7xl mx-auto">
           
           <div className="text-center mb-16 md:mb-20 fade-in-up">
@@ -354,7 +354,7 @@ export default function Home() {
       </section>
 
       {/* CONTACTO */}
-      <div className="bg-soccer-pattern pt-10">
+      <div className="bg-white pt-10">
           <Contacto />
       </div>
 

@@ -11,6 +11,7 @@ export interface CartItem {
   variante: string;
   cantidad: number;
   precioUnitario: number;
+  precio?: number;
   subtotal: number;
   iva: number;
   total: number;
@@ -98,7 +99,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         item.nombre?.toLowerCase().includes('plano') ||
         item.nombre?.toLowerCase().includes('escaneo');
 
-      const precio = item.precioUnitario || 0;
+      const precio = item.precioUnitario || item.precio || 0;
       const subtotal = precio * cantToAdd;
       const iva = subtotal * 0.16;
       const total = subtotal + iva;
@@ -109,11 +110,11 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         variante: item.variante || '',
         cantidad: cantToAdd,
         precioUnitario: precio,
-        subtotal: isPrinting ? 0 : subtotal,
-        iva: isPrinting ? 0 : iva,
-        total: isPrinting ? 0 : total,
-        needsFile: !!isPrinting,
-        fileAnalyzed: false,
+        subtotal: subtotal,
+        iva: iva,
+        total: total,
+        needsFile: false, // Por el momento no se requiere subir PDF
+        fileAnalyzed: true,
         ...item
       };
 
@@ -146,12 +147,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const validarCarrito = () => {
-    const needing = cart.find(item => item.needsFile && !item.fileAnalyzed);
-    if (needing) {
-      setItemToUpload(needing);
-      setIsModalOpen(true);
-      return { needsFile: true, item: needing };
-    }
+    // Por el momento no se requiere validación de PDF
     return { needsFile: false };
   };
 
