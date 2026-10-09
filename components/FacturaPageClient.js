@@ -6,7 +6,7 @@ import { Check, AlertCircle, Search, ArrowRight, ArrowLeft, UserCheck, RefreshCw
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import FloatingBubbles from '../components/FloatingBubbles';
-import { checkTicket, reserveTicket, finalizeTicket, failTicket } from '../lib/gasTickets';
+import { checkTicket, reserveTicket, finalizeTicket, failTicket } from '../lib/gasTicketsClient';
 
 /* === PANEL LATERAL (Local en esta página) === */
 const SidePanel = ({ href = "#", side = "left", alt = "Imagen lateral" }) => (
@@ -583,9 +583,13 @@ export default function Facturar() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: toEmail,
+          email: toEmail,
+          ticket: ticket,
           receiverRfc: ticketCheck?.rfc || datosFiscales.rfc || '',
+          rfc: ticketCheck?.rfc || datosFiscales.rfc || '',
           total: receiptTotal || total || '',
           date: ticketFecha || new Date().toISOString(),
+          fecha: ticketFecha || new Date().toISOString(),
           uuid: facturaGenerada.cfdiId
         })
       });

@@ -1,11 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { getTicket } from '../../../lib/gasTickets';
+import { generateCfdiPdf, parseCfdiXml } from '../../../lib/cfdiPdfGenerator';
 
 const PROD_BASE_URL = 'https://api.facturama.mx';
 
 function getBaseUrl() {
   let url = process.env.FACTURAMA_API_BASE_URL || PROD_BASE_URL;
-  
-  // Limpieza robusta: si el usuario puso la URL completa del endpoint o incluye paths, extraemos solo la base
   if (url.includes('/api-lite') || url.includes('/3/') || url.includes('/cfdi/')) {
     try {
       const parsed = new URL(url);
@@ -14,12 +14,7 @@ function getBaseUrl() {
       url = PROD_BASE_URL;
     }
   }
-  
-  // Eliminar barra diagonal final si existe
-  if (url.endsWith('/')) {
-    url = url.slice(0, -1);
-  }
-  
+  if (url.endsWith('/')) url = url.slice(0, -1);
   return url;
 }
 
@@ -33,7 +28,7 @@ function getAuthHeader() {
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function fetchWithRetry(url: string, authHeader: string, type: string) {
-  for (let attempt = 1; attempt <= 6; attempt += 1) {
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
     try {
       const response = await fetch(url, { 
         headers: { 
@@ -46,45 +41,29 @@ async function fetchWithRetry(url: string, authHeader: string, type: string) {
       if (status === 200) {
         const text = await response.text();
         if (text && text.trim().length > 10) {
-          // Facturama a veces devuelve un JSON { "Content": "base64..." } 
-          // y otras veces el base64 directo.
           try {
             const parsed = JSON.parse(text);
             const content = parsed.Content || parsed.content || parsed.data || parsed.Data;
-            if (content) {
-              return { ok: true, body: content, status };
-            }
-          } catch (e) {
-            // No es JSON, asumimos que es el base64 directo
-          }
+            if (content) return { ok: true, body: content, status };
+          } catch (e) {}
           return { ok: true, body: text, status };
         }
       }
-      
-      console.log(`>>> Intento ${attempt} fallido para ${type}: ${status} en ${url}`);
-    } catch (err) {
-      console.error(`>>> Error en intento ${attempt} para ${type}:`, err.message);
+    } catch (err: any) {
+      console.error(`>>> Error en intento ${attempt} para ${type}:`, err?.message);
     }
-    
-    if (attempt < 6) await sleep(1500);
+    if (attempt < 4) await sleep(1200);
   }
   return { ok: false, body: '', status: 404 };
 }
 
 async function fetchCfdiFile(baseUrl: string, type: string, cfdiId: string, authHeader: string) {
-  // 1. Intentar issuedLite (Prioridad absoluta según requerimiento del usuario)
-  // URL: api.facturama.mx/cfdi/pdf/issuedLite/{id}
-  console.log(`>>> Intentando recuperación via issuedLite para ${type}: ${cfdiId}`);
   const liteRes = await fetchWithRetry(`${baseUrl}/cfdi/${type}/issuedLite/${cfdiId}`, authHeader, type);
   if (liteRes.ok) return liteRes;
-
-  // 2. Fallback: issued (Estándar) si el anterior falla
-  console.log(`>>> Fallback a issued estándar para ${type}: ${cfdiId}`);
   return await fetchWithRetry(`${baseUrl}/cfdi/${type}/issued/${cfdiId}`, authHeader, type);
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Deshabilitar caché para asegurar recuperación fresca de Facturama
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
@@ -94,6 +73,75 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!cfdiId) return res.status(400).json({ message: 'Falta cfdiId' });
 
+  // 1. PRIORIDAD: Consultar directamente en MySQL tickets_facturados
+  try {
+    const localTicket = await getTicket(cfdiId);
+    if (localTicket && localTicket.xml_content) {
+      const xmlString = localTicket.xml_content;
+
+      if (type === 'details') {
+        const parsed = parseCfdiXml(xmlString);
+        return res.status(200).json({
+          cfdiId,
+          uuid: parsed.timbreFiscal.uuid,
+          fecha: parsed.fecha,
+          fechaTimbrado: parsed.timbreFiscal.fechaTimbrado,
+          metodoPago: parsed.metodoPago,
+          formaPago: parsed.formaPago,
+          total: parsed.total,
+          subtotal: parsed.subtotal,
+          moneda: parsed.moneda,
+          serie: parsed.serie,
+          folio: parsed.folio,
+          emisor: parsed.emisor,
+          receptor: parsed.receptor,
+          Items: parsed.conceptos.map(c => ({
+            Quantity: c.cantidad,
+            Description: c.descripcion,
+            UnitPrice: c.valorUnitario,
+            Subtotal: c.importe,
+            Total: c.importe,
+            ClaveProdServ: c.claveProdServ,
+            ClaveUnidad: c.claveUnidad
+          })),
+          items: parsed.conceptos.map(c => ({
+            quantity: c.cantidad,
+            description: c.descripcion,
+            unitPrice: c.valorUnitario,
+            subtotal: c.importe,
+            total: c.importe
+          })),
+          impuestos: parsed.impuestos,
+          timbreFiscal: parsed.timbreFiscal
+        });
+      }
+
+      if (type === 'xml') {
+        res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename=factura_${localTicket.uuid || cfdiId}.xml`);
+        return res.send(xmlString);
+      }
+
+      if (type === 'pdf') {
+        const pdfBuffer = await generateCfdiPdf(xmlString);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=factura_${localTicket.uuid || cfdiId}.pdf`);
+        return res.send(pdfBuffer);
+      }
+
+      // type === 'json' (Utilizado por FacturaPageClient)
+      const pdfBuffer = await generateCfdiPdf(xmlString);
+      return res.status(200).json({
+        cfdiId,
+        pdf: pdfBuffer.toString('base64'),
+        xml: Buffer.from(xmlString, 'utf8').toString('base64')
+      });
+    }
+  } catch (dbErr: any) {
+    console.warn('>>> Error al recuperar CFDI local desde MySQL, intentando Facturama:', dbErr?.message);
+  }
+
+  // 2. FALLBACK: Si no está en MySQL, consultar a Facturama
   const authHeader = getAuthHeader();
   if (!authHeader) return res.status(500).json({ message: 'Faltan credenciales' });
 
@@ -101,34 +149,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (type === 'details') {
     try {
-      // 1. Intentar issuedLite (Multiemisor de Facturama)
-      let response = await fetch(`${baseUrl}/cfdi/issuedLite/${cfdiId}`, {
-        headers: { Authorization: authHeader, Accept: 'application/json' }
-      });
-      
-      if (!response.ok) {
-        // Fallback: api-lite/3/cfdis/{id}
-        response = await fetch(`${baseUrl}/api-lite/3/cfdis/${cfdiId}`, {
-          headers: { Authorization: authHeader, Accept: 'application/json' }
-        });
+      const detailRes = await fetch(`${baseUrl}/cfdi/${cfdiId}`, { headers: { Authorization: authHeader } });
+      if (detailRes.ok) {
+        const data = await detailRes.json();
+        return res.status(200).json(data);
       }
-      
-      if (!response.ok) {
-        // Fallback: issued (Estándar)
-        response = await fetch(`${baseUrl}/cfdi/issued/${cfdiId}`, {
-          headers: { Authorization: authHeader, Accept: 'application/json' }
-        });
-      }
-      
-      if (!response.ok) {
-        return res.status(response.status).json({ message: `No se pudieron obtener los detalles del CFDI (${response.status})` });
-      }
-      
-      const data = await response.json();
-      return res.status(200).json(data);
-    } catch (err: any) {
-      return res.status(500).json({ message: err.message || 'Error al conectar con Facturama' });
-    }
+    } catch (_) {}
   }
 
   if (type === 'pdf' || type === 'xml') {

@@ -1,5 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { isAuthenticated } from '../../lib/auth';
+import {
+  reserveTicket,
+  finalizeTicket,
+  failTicket,
+  checkTicket
+} from '../../lib/gasTickets';
+import { generateCfdiPdf, parseCfdiXml } from '../../lib/cfdiPdfGenerator';
+import { sendInvoiceEmail } from '../../utils/send-invoice-email';
 
 const PROD_BASE_URL = 'https://api.facturama.mx';
 
@@ -44,25 +52,18 @@ function getAuthHeader() {
 
 const normalizeTicket = (value: any) => String(value || '').replace(/\D+/g, '');
 
-const gasPost = async (body: any) => {
+// Función opcional para mantener sincronizado Google Sheets en segundo plano sin bloquear el flujo principal
+const syncToGasBackground = async (body: any) => {
   const gasUrl = process.env.GAS_WEBAPP_URL;
   const gasToken = process.env.GAS_API_TOKEN;
-  if (!gasUrl || !gasToken) {
-    throw new Error('Missing env GAS_WEBAPP_URL/GAS_API_TOKEN');
-  }
-  const res = await fetch(`${gasUrl}?token=${encodeURIComponent(gasToken)}`, {
+  if (!gasUrl || !gasToken) return;
+  fetch(`${gasUrl}?token=${encodeURIComponent(gasToken)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify(body || {}),
-    redirect: 'follow'
+  }).catch((err) => {
+    console.warn('Sync background a GAS omitido o con advertencia:', err?.message || err);
   });
-  const text = await res.text().catch(() => '');
-  const trimmed = text.trim();
-  if (trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html')) {
-    throw new Error('GAS returned HTML');
-  }
-  const data = JSON.parse(text || '{}');
-  return { status: res.status, data };
 };
 
 // Timeout anterior: ninguno explícito. Nuevo timeout: 300,000 ms.
@@ -75,6 +76,58 @@ const fetchWithTimeout = async (url: string, options: any, timeoutMs = 300000) =
     clearTimeout(timeoutId);
   }
 };
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetchXmlFromFacturama(baseUrl: string, cfdiId: string, authHeader: string): Promise<string | null> {
+  const urls = [
+    `${baseUrl}/cfdi/xml/issuedLite/${cfdiId}`,
+    `${baseUrl}/cfdi/xml/issued/${cfdiId}`,
+    `${baseUrl}/api-lite/cfdis/${cfdiId}?format=xml`
+  ];
+
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    for (const url of urls) {
+      try {
+        const response = await fetch(url, {
+          headers: {
+            Authorization: authHeader,
+            Accept: 'application/xml, text/xml, application/json'
+          }
+        });
+
+        if (response.ok) {
+          const text = await response.text();
+          if (text && text.trim().length > 10) {
+            // Facturama devuelve a veces JSON con { "Content": "base64..." }
+            try {
+              const parsed = JSON.parse(text);
+              const content = parsed.Content || parsed.content || parsed.data || parsed.Data;
+              if (content) {
+                return Buffer.from(content, 'base64').toString('utf8');
+              }
+            } catch (_) {}
+
+            // Si es base64 directo
+            if (!text.trim().startsWith('<') && /^[A-Za-z0-9+/=]+$/.test(text.trim())) {
+              return Buffer.from(text.trim(), 'base64').toString('utf8');
+            }
+
+            // Si es XML en texto plano
+            if (text.includes('<') && (text.includes('Comprobante') || text.includes('xml'))) {
+              return text;
+            }
+          }
+        }
+      } catch (err: any) {
+        console.warn(`Intento ${attempt} para descargar XML falló en ${url}:`, err?.message || err);
+      }
+    }
+    if (attempt < 4) await sleep(1200);
+  }
+  return null;
+}
+
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Verificación de seguridad: Se deshabilita para permitir facturación desde el portal público (Autoservicio)
@@ -606,9 +659,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     let reserveData: any = null;
     try {
-      const reserveResult = await gasPost(reservePayload);
-      reserveData = reserveResult.data || {};
-      console.log('GAS reserve result:', reserveData);
+      reserveData = await reserveTicket({
+        ticket: ticketValue,
+        storeId,
+        fechaTicket: fechaTicket || new Date().toISOString(),
+        total: Number.isFinite(totalForReserve) ? totalForReserve : 0,
+        rfc: normalizedRfc,
+        razonSocial: normalizedRazon,
+        email: normalizedEmail,
+        codigoPostal: String(codigoPostal || '').trim(),
+        usoCfdi: cfdiUse,
+        regimenFiscal: fiscalRegime,
+        usuario: usuario || '',
+        metodoPago: metodoPago || 'PUE',
+        uuidRelacion: uuidRelacionado || '',
+        fechaPago: fechaPago || '',
+        payload
+      });
+      syncToGasBackground(reservePayload);
+      console.log('MySQL reserve result:', reserveData);
+
+      // Si el ticket ya fue timbrado previamente, detenemos la emisión para no duplicar en Facturama
       if (reserveData?.ok === true && reserveData?.status === 'TIMBRADO' && reserveData?.facturamaId) {
         return res.status(200).json({
           ok: true,
@@ -618,29 +689,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           uuid: reserveData.uuid || reserveData.facturamaId
         });
       }
-      if (reserveData?.ok === true && reserveData?.status === 'PENDING') {
-        try {
-          const checkResult = await gasPost({
-            action: 'check',
-            ticket: ticketValue,
-            storeId
-          });
-          const checkData = checkResult.data || {};
-          if (checkData?.ok === true && checkData?.status === 'TIMBRADO' && checkData?.facturamaId) {
-            return res.status(200).json({
-              ok: true,
-              alreadyInvoiced: true,
-              facturamaId: checkData.facturamaId,
-              cfdiId: checkData.facturamaId,
-              uuid: checkData.uuid || checkData.facturamaId
-            });
-          }
-        } catch (checkErr) {
-          console.error('gasCheckError', { ticketKey, error: String(checkErr?.message || checkErr) });
-        }
+
+      // Si está bloqueado activamente por otra transacción reciente (lock activo para evitar doble timbrado)
+      if (reserveData?.ok === false && reserveData?.status === 'BLOQUEADO') {
+        return res.status(409).json({
+          ok: false,
+          code: 'TICKET_LOCKED',
+          message: reserveData.error || 'El ticket está en proceso de facturación en este momento. Intenta en unos minutos.'
+        });
       }
     } catch (reserveErr) {
-      console.error('gasReserveError', { ticketKey, error: String(reserveErr?.message || reserveErr) });
+      console.error('mysqlReserveError', { ticketKey, error: String(reserveErr?.message || reserveErr) });
     }
 
     if (process.env.NODE_ENV !== 'production') {
@@ -667,33 +726,93 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.error('facturamaTimeout', { ticketKey });
         const recovery = await findExistingCfdiAfterTimeout();
         if (recovery.found && recovery.cfdiId) {
+          let recoveryXml: string | null = null;
           try {
-            await gasPost({
+            recoveryXml = await fetchXmlFromFacturama(baseUrl, recovery.cfdiId, authHeader.header);
+          } catch (_) {}
+
+          let recoveryPdfBase64: string | null = null;
+          if (recoveryXml) {
+            try {
+              const buf = await generateCfdiPdf(recoveryXml);
+              recoveryPdfBase64 = buf.toString('base64');
+            } catch (_) {}
+          }
+
+          let recoveryRealUuid = recovery.uuid || recovery.cfdiId;
+          if (recoveryXml) {
+            try {
+              const parsed = parseCfdiXml(recoveryXml);
+              if (parsed.timbreFiscal?.uuid) recoveryRealUuid = parsed.timbreFiscal.uuid;
+            } catch (_) {}
+          }
+
+          try {
+            await finalizeTicket({
+              ticket: ticketValue,
+              storeId,
+              rfc: normalizedRfc,
+              email: normalizedEmail,
+              facturamaId: recovery.cfdiId,
+              uuid: recoveryRealUuid,
+              xmlContent: recoveryXml || undefined,
+              errorMsg: ''
+            });
+            syncToGasBackground({
               action: 'finalize',
               ticket: ticketValue,
               storeId,
               rfc: normalizedRfc,
               email: normalizedEmail,
               facturamaId: recovery.cfdiId,
-              uuid: recovery.uuid || recovery.cfdiId,
+              uuid: recoveryRealUuid,
               errorMsg: ''
             });
           } catch (finalizeErr) {
-            console.error('gasFinalizeError', { ticketKey, error: String(finalizeErr?.message || finalizeErr) });
+            console.error('mysqlFinalizeError', { ticketKey, error: String(finalizeErr?.message || finalizeErr) });
           }
+
+          let recoveryEmailSent = false;
+          if (normalizedEmail && recoveryXml && recoveryPdfBase64) {
+            try {
+              await sendInvoiceEmail({
+                to: normalizedEmail,
+                subject: `Factura Puerto Copy – Ticket ${ticketValue}`,
+                pdfBase64: recoveryPdfBase64,
+                xmlBase64: Buffer.from(recoveryXml, 'utf8').toString('base64'),
+                issuerRfc: process.env.FACTURAMA_ISSUER_RFC || 'PARI980727RWA',
+                total: Number(totalForReserve || 0).toFixed(2),
+                uuid: recoveryRealUuid,
+                receiverRfc: normalizedRfc,
+                ticket: ticketValue,
+                context: 'original'
+              });
+              recoveryEmailSent = true;
+            } catch (_) {}
+          }
+
           return res.status(200).json({
             ok: true,
             recoveredAfterTimeout: true,
             message: 'Factura emitida correctamente',
             facturamaId: recovery.cfdiId,
             cfdiId: recovery.cfdiId,
-            uuid: recovery.uuid || recovery.cfdiId
+            uuid: recoveryRealUuid,
+            xml: recoveryXml ? Buffer.from(recoveryXml, 'utf8').toString('base64') : null,
+            pdf: recoveryPdfBase64,
+            emailSent: recoveryEmailSent
           });
         }
 
         if (recovery.hadSuccessfulLookup) {
           try {
-            await gasPost({
+            await failTicket({
+              ticket: ticketValue,
+              storeId,
+              rfc: normalizedRfc,
+              errorMsg: 'Facturama timeout sin CFDI encontrado'.slice(0, 500)
+            });
+            syncToGasBackground({
               action: 'fail',
               ticket: ticketValue,
               storeId,
@@ -701,7 +820,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               errorMsg: 'Facturama timeout sin CFDI encontrado'.slice(0, 500)
             });
           } catch (failErr) {
-            console.error('gasFailError', { ticketKey, error: String(failErr?.message || failErr) });
+            console.error('mysqlFailError', { ticketKey, error: String(failErr?.message || failErr) });
           }
           return res.status(504).json({
             ok: false,
@@ -731,7 +850,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     if (!createRes.ok) {
       try {
-        await gasPost({
+        await failTicket({
+          ticket: ticketValue,
+          storeId,
+          rfc: normalizedRfc,
+          errorMsg: `Facturama error ${createRes.status}`.slice(0, 500)
+        });
+        syncToGasBackground({
           action: 'fail',
           ticket: ticketValue,
           storeId,
@@ -739,7 +864,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           errorMsg: `Facturama error ${createRes.status}`.slice(0, 500)
         });
       } catch (failErr) {
-        console.error('gasFailError', { ticketKey, error: String(failErr?.message || failErr) });
+        console.error('mysqlFailError', { ticketKey, error: String(failErr?.message || failErr) });
       }
 
       let errorMessage = 'Error al generar CFDI';
@@ -763,53 +888,185 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       createData?.Complement?.Id ||
       createData?.Complement?.CfdiId ||
       createData?.Complement?.UUID;
+
+    // Extracción precisa de los metadatos fiscales requeridos
     const uuid =
+      createData?.Complement?.TaxStamp?.Uuid ||
       createData?.Complemento?.TimbreFiscalDigital?.UUID ||
       createData?.Complemento?.TimbreFiscalDigital?.Uuid ||
       createData?.Complement?.TimbreFiscalDigital?.UUID ||
       createData?.Complement?.TimbreFiscalDigital?.Uuid ||
-      createData?.Complement?.UUID ||
-      createData?.Complement?.Uuid ||
-      createData?.UUID ||
       createData?.Uuid ||
+      createData?.uuid ||
+      createData?.UUID ||
       cfdiId;
+
+    const fechaPagoExtraida =
+      createData?.Complement?.TaxStamp?.Date ||
+      createData?.Complemento?.TimbreFiscalDigital?.FechaTimbrado ||
+      createData?.Date ||
+      fechaPago ||
+      '';
+
+    const metodoPagoExtraido =
+      createData?.PaymentMethod ||
+      metodoPago ||
+      'PUE';
+
+    const uuidRelacionExtraido =
+      createData?.Relations?.Cfdis?.[0]?.Uuid ||
+      uuidRelacionado ||
+      '';
+
     if (!cfdiId) {
       return res.status(502).json({ message: 'Respuesta inválida de Facturama', detalles: createData });
     }
     console.log('FACTURAMA response id:', cfdiId);
 
+    // Descargar ÚNICAMENTE el archivo XML de Facturama
+    let xmlContent: string | null = null;
     try {
-      await gasPost({
+      xmlContent = await fetchXmlFromFacturama(baseUrl, cfdiId, authHeader.header);
+      if (xmlContent) {
+        console.log(`>>> XML descargado con éxito de Facturama (${xmlContent.length} bytes)`);
+      } else {
+        console.warn('>>> Advertencia: Facturama no devolvió el XML en los reintentos');
+      }
+    } catch (xmlErr: any) {
+      console.error('>>> Error al recuperar XML de Facturama:', xmlErr?.message || xmlErr);
+    }
+
+    // Extracción de metadatos fiscales directamente desde el XML del SAT
+    let realUuid = uuid || cfdiId;
+    let realFechaPago = fechaPagoExtraida || '';
+    let realMetodoPago = metodoPagoExtraido || 'PUE';
+    let realTotal = Number(totalFromBody) || 0;
+    let realRfc = normalizedRfc;
+    let realRazonSocial = normalizedRazon;
+    let realCodigoPostal = String(codigoPostal || '').trim();
+    let realRegimenFiscal = fiscalRegime;
+    let realUsoCfdi = cfdiUse;
+    let realUuidRelacion = uuidRelacionExtraido || '';
+
+    if (xmlContent) {
+      try {
+        const parsed = parseCfdiXml(xmlContent);
+        if (parsed.timbreFiscal?.uuid) realUuid = parsed.timbreFiscal.uuid;
+        if (parsed.timbreFiscal?.fechaTimbrado || parsed.fecha) {
+          realFechaPago = parsed.timbreFiscal.fechaTimbrado || parsed.fecha;
+        }
+        if (parsed.metodoPago) realMetodoPago = parsed.metodoPago;
+        if (parsed.total !== undefined && Number.isFinite(parsed.total)) realTotal = parsed.total;
+        if (parsed.receptor?.rfc) realRfc = parsed.receptor.rfc;
+        if (parsed.receptor?.nombre) realRazonSocial = parsed.receptor.nombre;
+        if (parsed.receptor?.domicilioFiscalReceptor) realCodigoPostal = parsed.receptor.domicilioFiscalReceptor;
+        if (parsed.receptor?.regimenFiscalReceptor) realRegimenFiscal = parsed.receptor.regimenFiscalReceptor;
+        if (parsed.receptor?.usoCfdi) realUsoCfdi = parsed.receptor.usoCfdi;
+        console.log(`>>> CFDI parseado con éxito: UUID=${realUuid}, Total=${realTotal}, Fecha=${realFechaPago}`);
+      } catch (xmlParseErr: any) {
+        console.warn('>>> Advertencia al parsear datos fiscales del XML:', xmlParseErr?.message);
+      }
+    }
+
+    // Generar representación impresa en PDF bajo demanda a partir del XML
+    let pdfBase64: string | null = null;
+    if (xmlContent) {
+      try {
+        const pdfBuffer = await generateCfdiPdf(xmlContent);
+        pdfBase64 = pdfBuffer.toString('base64');
+      } catch (pdfErr: any) {
+        console.error('>>> Error al generar PDF bajo demanda:', pdfErr?.message || pdfErr);
+      }
+    }
+
+    try {
+      await finalizeTicket({
+        ticket: ticketValue,
+        storeId,
+        rfc: realRfc,
+        razonSocial: realRazonSocial,
+        email: normalizedEmail,
+        codigoPostal: realCodigoPostal,
+        usoCfdi: realUsoCfdi,
+        regimenFiscal: realRegimenFiscal,
+        facturamaId: cfdiId,
+        uuid: realUuid,
+        usuario: usuario || '',
+        metodoPago: realMetodoPago,
+        uuidRelacion: realUuidRelacion,
+        fechaPago: realFechaPago,
+        total: realTotal,
+        xmlContent: xmlContent || undefined,
+        errorMsg: ''
+      });
+      syncToGasBackground({
         action: 'finalize',
         ticket: ticketValue,
         storeId,
-        rfc: normalizedRfc,
-        razonSocial: normalizedRazon,
+        rfc: realRfc,
+        razonSocial: realRazonSocial,
         email: normalizedEmail,
-        codigoPostal: String(codigoPostal || '').trim(),
-        usoCfdi: cfdiUse,
-        regimenFiscal: fiscalRegime,
+        codigoPostal: realCodigoPostal,
+        usoCfdi: realUsoCfdi,
+        regimenFiscal: realRegimenFiscal,
         facturamaId: cfdiId,
-        uuid: uuid || cfdiId,
+        uuid: realUuid,
         usuario: usuario || '',
-        metodoPago: metodoPago || 'PUE',
-        uuidRelacion: uuidRelacionado || '',
-        fechaPago: fechaPago || '',
+        metodoPago: realMetodoPago,
+        uuidRelacion: realUuidRelacion,
+        fechaPago: realFechaPago,
         errorMsg: ''
       });
     } catch (finalizeErr) {
-      console.error('gasFinalizeError', { ticketKey, error: String(finalizeErr?.message || finalizeErr) });
+      console.error('mysqlFinalizeError', { ticketKey, error: String(finalizeErr?.message || finalizeErr) });
+    }
+
+    // Envío automático de correo con la factura timbrada (PDF y XML)
+    let emailSent = false;
+    let emailError: string | null = null;
+    if (normalizedEmail && xmlContent && pdfBase64) {
+      try {
+        await sendInvoiceEmail({
+          to: normalizedEmail,
+          subject: `Factura Puerto Copy – Ticket ${ticketValue}`,
+          pdfBase64,
+          xmlBase64: Buffer.from(xmlContent, 'utf8').toString('base64'),
+          issuerRfc: process.env.FACTURAMA_ISSUER_RFC || 'PARI980727RWA',
+          total: Number(realTotal).toFixed(2),
+          uuid: realUuid,
+          receiverRfc: realRfc,
+          date: realFechaPago || new Date().toISOString(),
+          ticket: ticketValue,
+          context: 'original'
+        });
+        emailSent = true;
+        console.log(`>>> Factura enviada por correo exitosamente a: ${normalizedEmail}`);
+      } catch (mailErr: any) {
+        emailSent = false;
+        emailError = mailErr?.message || 'Error al enviar correo';
+        console.error('>>> Error al enviar correo de factura:', mailErr?.message || mailErr);
+      }
     }
 
     return res.status(200).json({
       ok: true,
       message: 'Factura emitida correctamente',
       cfdiId,
-      uuid
+      uuid: realUuid,
+      xml: xmlContent ? Buffer.from(xmlContent, 'utf8').toString('base64') : null,
+      pdf: pdfBase64,
+      emailSent,
+      emailError
     });
   } catch (error: any) {
     try {
-      await gasPost({
+      await failTicket({
+        ticket: ticketValue,
+        storeId,
+        rfc: normalizedRfc,
+        errorMsg: String(error?.message || error).slice(0, 500)
+      });
+      syncToGasBackground({
         action: 'fail',
         ticket: ticketValue,
         storeId,
@@ -817,7 +1074,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         errorMsg: String(error?.message || error).slice(0, 500)
       });
     } catch (failErr) {
-      console.error('gasFailError', { ticketKey, error: String(failErr?.message || failErr) });
+      console.error('mysqlFailError', { ticketKey, error: String(failErr?.message || failErr) });
     }
     return res.status(500).json({ message: 'Error interno del servidor', error: String(error?.message || error) });
   }

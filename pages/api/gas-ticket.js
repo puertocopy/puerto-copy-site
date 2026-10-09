@@ -1,9 +1,17 @@
+import {
+  reserveTicket,
+  finalizeTicket,
+  failTicket,
+  listInvoices,
+  checkTicket
+} from '../../lib/gasTickets';
+import pool from '../../lib/db';
+
 const PROD_BASE_URL = 'https://api.facturama.mx';
 
 function getFacturamaBaseUrl() {
   let url = process.env.FACTURAMA_API_BASE_URL || PROD_BASE_URL;
   
-  // Limpieza robusta: si el usuario puso la URL completa del endpoint o incluye paths, extraemos solo la base
   if (url.includes('/api-lite') || url.includes('/3/') || url.includes('/cfdi/')) {
     try {
       const parsed = new URL(url);
@@ -13,7 +21,6 @@ function getFacturamaBaseUrl() {
     }
   }
   
-  // Eliminar barra diagonal final si existe
   if (url.endsWith('/')) {
     url = url.slice(0, -1);
   }
@@ -29,136 +36,125 @@ function getFacturamaAuth() {
 }
 
 export default async function handler(req, res) {
-  // Verificación de seguridad robusta
   const cookies = req.headers.cookie || '';
   const isAuthenticated = cookies.split(';').some(c => c.trim().startsWith('admin_session=true'));
 
-  const GAS_URL = process.env.GAS_WEBAPP_URL;
-  const GAS_TOKEN = process.env.GAS_API_TOKEN;
-
-  // Soporte para POST (Delegamos a GAS para los locks transaccionales)
+  // ==========================================
+  // SOPORTE PARA POST (Operaciones de tickets)
+  // ==========================================
   if (req.method === 'POST') {
-    if (!GAS_URL || !GAS_TOKEN) {
-      return res.status(500).json({ ok: false, error: 'Missing env GAS_WEBAPP_URL/GAS_API_TOKEN' });
-    }
-    try {
-      const r = await fetch(`${GAS_URL}?token=${encodeURIComponent(GAS_TOKEN)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(req.body),
-        redirect: 'follow'
-      });
+    const { action, ...payload } = req.body || {};
 
-      const text = await r.text();
-      return res.status(200).json(JSON.parse(text));
+    try {
+      if (action === 'reserve') {
+        const result = await reserveTicket(payload);
+        return res.status(200).json(result);
+      }
+
+      if (action === 'finalize') {
+        const result = await finalizeTicket(payload);
+        return res.status(200).json(result);
+      }
+
+      if (action === 'fail') {
+        const result = await failTicket(payload);
+        return res.status(200).json(result);
+      }
+
+      return res.status(400).json({ ok: false, error: `Acción POST desconocida: ${action}` });
     } catch (e) {
       console.error('>>> Error en POST /api/gas-ticket:', e.message);
       return res.status(500).json({ ok: false, error: e.message });
     }
   }
 
-  // Soporte para GET
+  // ==========================================
+  // SOPORTE PARA GET (Listados y consultas)
+  // ==========================================
   if (req.method === 'GET') {
     const { action } = req.query;
 
-    // Si la acción es listClients, usamos Google Sheets
+    // Directorio de Clientes (para Admin)
     if (action === 'listClients') {
       if (!isAuthenticated) return res.status(401).json({ ok: false, error: 'No autorizado' });
+
       try {
-        if (!GAS_URL || !GAS_TOKEN) {
-          throw new Error('Faltan variables de entorno GAS_WEBAPP_URL o GAS_API_TOKEN');
+        console.log('>>> Consultando Directorio de Clientes en MySQL...');
+        const [rows] = await pool.query(`
+          SELECT 
+            rfc,
+            MAX(razon_social) AS razonSocial,
+            MAX(regimen_fiscal) AS regimen,
+            MAX(regimen_fiscal) AS regimenFiscal,
+            MAX(codigo_postal) AS cp,
+            MAX(COALESCE(correo, email)) AS email,
+            MAX(uso_cfdi) AS usoCfdi,
+            MAX(ticket) AS code
+          FROM tickets_facturados
+          WHERE rfc IS NOT NULL AND rfc != ''
+          GROUP BY rfc
+          ORDER BY MAX(updated_at) DESC
+        `);
+
+        if (Array.isArray(rows) && rows.length > 0) {
+          const items = rows.map(c => ({
+            rfc: c.rfc || '',
+            razonSocial: c.razonSocial || '',
+            regimen: c.regimen || '',
+            cp: c.cp || '',
+            regimenFiscal: c.regimenFiscal || '',
+            email: c.email || '',
+            usoCfdi: c.usoCfdi || 'G03',
+            code: c.code || ''
+          }));
+          return res.status(200).json({ ok: true, items });
         }
 
-        console.log('>>> Consultando Directorio de Clientes a Google Sheets...');
+        // Si MySQL no tiene clientes y existe URL de GAS, fallback a GAS
+        const GAS_URL = process.env.GAS_WEBAPP_URL;
+        const GAS_TOKEN = process.env.GAS_API_TOKEN;
+        if (GAS_URL && GAS_TOKEN) {
+          console.log('>>> MySQL vacío para clientes, intentando fallback GAS...');
+          const r = await fetch(`${GAS_URL}?token=${encodeURIComponent(GAS_TOKEN)}&action=listarclientes`, {
+            headers: { 'Accept': 'application/json' },
+            redirect: 'follow'
+          });
+          if (r.ok) {
+            const data = await r.json();
+            if (data.ok && Array.isArray(data.items)) {
+              return res.status(200).json({ ok: true, items: data.items });
+            }
+          }
+        }
 
-        const r = await fetch(`${GAS_URL}?token=${encodeURIComponent(GAS_TOKEN)}&action=listarclientes`, {
-          headers: { 'Accept': 'application/json' },
-          redirect: 'follow'
-        });
-
-        if (!r.ok) throw new Error(`Error de Google Sheets: ${r.status}`);
-
-        const text = await r.text();
-        const data = JSON.parse(text);
-
-        if (!data.ok) throw new Error(data.error || 'Error al listar clientes de GAS');
-
-        const items = (Array.isArray(data.items) ? data.items : []).map(c => ({
-          rfc: c.rfc || '',
-          razonSocial: c.razonSocial || '',
-          regimen: c.regimen || '',
-          cp: c.cp || '',
-          regimenFiscal: c.regimenFiscal || '',
-          email: c.email || '',
-          usoCfdi: c.usoCfdi || 'G03',
-          code: c.code || ''
-        }));
-
-        return res.status(200).json({ ok: true, items });
+        return res.status(200).json({ ok: true, items: [] });
       } catch (e) {
-        console.error('>>> Error en Directorio Sheets:', e.message);
+        console.error('>>> Error en Directorio de Clientes:', e.message);
         return res.status(500).json({ ok: false, error: e.message });
       }
     }
 
-    // Si la acción es LIST, consultamos a GAS para obtener el histórico real con todos los campos (Usuario, UUID, etc.)
+    // Listado de Facturas (para Admin)
     if (action === 'list') {
       if (!isAuthenticated) return res.status(401).json({ ok: false, error: 'No autorizado' });
-      
-      const { month = String(new Date().getMonth() + 1).padStart(2, '0'), year = String(new Date().getFullYear()), rfc } = req.query;
+
+      const {
+        month = String(new Date().getMonth() + 1).padStart(2, '0'),
+        year = String(new Date().getFullYear()),
+        rfc
+      } = req.query;
 
       try {
-        // 1. Consultar a GAS primero (Fuente de verdad transaccional)
-        if (!GAS_URL || !GAS_TOKEN) {
-          throw new Error('Faltan variables de entorno GAS_WEBAPP_URL o GAS_API_TOKEN');
+        console.log('>>> Consultando historial de facturas en MySQL:', { month, year, rfc });
+        const result = await listInvoices({ month, year, rfc });
+
+        if (result.ok && Array.isArray(result.items) && result.items.length > 0) {
+          console.log(`>>> Se encontraron ${result.items.length} registros en MySQL`);
+          return res.status(200).json({ ok: true, items: result.items });
         }
 
-        const gasParams = new URLSearchParams({
-          action: 'list',
-          month,
-          year,
-          token: GAS_TOKEN
-        });
-        if (rfc) gasParams.set('rfc', rfc);
-
-        console.log('>>> Consultando historial a GAS:', month, year);
-        const gasRes = await fetch(`${GAS_URL}?${gasParams.toString()}`, {
-          redirect: 'follow'
-        });
-        const gasData = await gasRes.json();
-
-        if (gasData.ok && Array.isArray(gasData.items) && gasData.items.length > 0) {
-          console.log(`>>> Se encontraron ${gasData.items.length} registros en GAS`);
-          
-          // Mapeamos los datos de GAS (Estructura de 23 columnas)
-          const items = gasData.items.map(f => ({
-            fechaTicket: f.fechaTicket || f.createdAt,
-            createdAt: f.createdAt,
-            updatedAt: f.updatedAt,
-            ticket: f.ticket || f.Ticket || (f.ticketKey ? String(f.ticketKey).split(':').pop() : 'S/N'),
-            storeId: f.storeId,
-            razonSocial: f['Razon Social'] || f.razonSocial || f.razon || (f.rfc === 'XAXX010101000' ? 'PÚBLICO EN GENERAL' : ''),
-            rfc: f.rfc,
-            email: f.Correo || f.email,
-            total: f.total,
-            status: f.status,
-            facturamaId: f.facturamaId,
-            uuid: f.UUID || f.uuid || f.facturamaId,
-            usuario: f.Usuario || f.usuario || '',
-            metodoPago: f.MetodoPago || f.metodoPago || 'PUE',
-            uuidRelacion: f.UUIDRelacion || '',
-            fechaPago: f['Fecha de pago'] || f.fechaPago || '',
-            codigoPostal: f['Codigo Postal'] || f.codigoPostal || '',
-            usoCfdi: f['Uso de CFDI'] || f.usoCfdi || '',
-            regimenFiscal: f['Regimen Fiscal'] || f.regimenFiscal || '',
-            errorMsg: f.errorMsg || ''
-          }));
-
-          return res.status(200).json({ ok: true, items });
-        }
-
-        // 2. Fallback: Si GAS no devuelve nada, intentamos Facturama (como respaldo)
-        console.log('>>> GAS no devolvió datos o está vacío, usando Facturama como fallback...');
+        // Fallback a Facturama si MySQL no tiene registros aún para este mes
+        console.log('>>> MySQL sin registros para el periodo, consultando Facturama como fallback...');
         const auth = getFacturamaAuth();
         if (!auth) return res.status(200).json({ ok: true, items: [] });
 
@@ -200,35 +196,25 @@ export default async function handler(req, res) {
         }));
 
         return res.status(200).json({ ok: true, items: itemsFallback });
-
       } catch (e) {
-        console.error('>>> Error en listado consolidado:', e.message);
+        console.error('>>> Error en listado de facturas:', e.message);
         return res.status(500).json({ ok: false, error: e.message });
       }
     }
 
-    // Para otras acciones (como check), seguimos intentando con GAS
-    if (!GAS_URL || !GAS_TOKEN) {
-      return res.status(500).json({ ok: false, error: 'Missing env GAS_WEBAPP_URL/GAS_API_TOKEN' });
+    // Consulta puntual de un ticket (action=check)
+    if (action === 'check') {
+      const { ticket = '', storeId = 'PV' } = req.query;
+      try {
+        const result = await checkTicket(ticket, storeId);
+        return res.status(200).json(result);
+      } catch (e) {
+        console.error('>>> Error en check de ticket:', e.message);
+        return res.status(500).json({ ok: false, error: e.message });
+      }
     }
 
-    try {
-      const query = new URLSearchParams(req.query);
-      query.set('token', GAS_TOKEN);
-      query.set('_t', Date.now().toString()); // Evitar caché
-      
-      const r = await fetch(`${GAS_URL}?${query.toString()}`, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        redirect: 'follow'
-      });
-
-      const text = await r.text();
-      return res.status(200).json(JSON.parse(text));
-    } catch (e) {
-      console.error('>>> Error en GET /api/gas-ticket:', e.message);
-      return res.status(500).json({ ok: false, error: e.message });
-    }
+    return res.status(400).json({ ok: false, error: `Acción GET desconocida: ${action}` });
   }
 
   return res.status(405).json({ ok: false, error: 'Method not allowed' });

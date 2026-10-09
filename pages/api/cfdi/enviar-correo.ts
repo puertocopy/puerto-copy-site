@@ -1,12 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { sendInvoiceEmail } from '../../../utils/send-invoice-email';
+import { getTicket } from '../../../lib/gasTickets';
+import { generateCfdiPdf } from '../../../lib/cfdiPdfGenerator';
 
 const PROD_BASE_URL = 'https://api.facturama.mx';
 
 function getBaseUrl() {
   let url = process.env.FACTURAMA_API_BASE_URL || PROD_BASE_URL;
-  
-  // Limpieza robusta: si el usuario puso la URL completa del endpoint o incluye paths, extraemos solo la base
   if (url.includes('/api-lite') || url.includes('/3/') || url.includes('/cfdi/')) {
     try {
       const parsed = new URL(url);
@@ -15,12 +15,7 @@ function getBaseUrl() {
       url = PROD_BASE_URL;
     }
   }
-  
-  // Eliminar barra diagonal final si existe
-  if (url.endsWith('/')) {
-    url = url.slice(0, -1);
-  }
-  
+  if (url.endsWith('/')) url = url.slice(0, -1);
   return url;
 }
 
@@ -45,7 +40,6 @@ async function fetchFromFacturama(url: string, authHeader: string) {
             const content = parsed.Content || parsed.content || parsed.data || parsed.Data;
             if (content) return content;
           } catch (_) {
-            // Si no es JSON, asumimos que es el base64 directo
             return text;
           }
         }
@@ -62,41 +56,70 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') return res.status(405).json({ message: 'Método no permitido' });
 
   const cfdiId = String(req.query.id || req.body.id || req.body.cfdiId || '').trim();
-  const { email, ticket, total, rfc, uuid, fecha } = req.body;
-
-  if (!cfdiId || !email) return res.status(400).json({ message: 'Faltan campos (id o email)' });
-
-  const authHeader = getAuthHeader();
-  if (!authHeader) return res.status(500).json({ message: 'Faltan credenciales de Facturama' });
+  if (!cfdiId) return res.status(400).json({ ok: false, error: 'Falta identificador de factura (id)' });
 
   try {
-    const baseUrl = getBaseUrl();
-    const [pdfBase64, xmlBase64] = await Promise.all([
-      fetchFromFacturama(`${baseUrl}/cfdi/pdf/issuedLite/${cfdiId}`, authHeader),
-      fetchFromFacturama(`${baseUrl}/cfdi/xml/issuedLite/${cfdiId}`, authHeader)
-    ]);
+    let pdfBase64: string | null = null;
+    let xmlBase64: string | null = null;
+
+    // 1. PRIORIDAD: Obtener XML de MySQL y generar PDF localmente
+    const localTicket = await getTicket(cfdiId);
+
+    const targetEmail = String(req.body.email || req.body.to || localTicket?.email || localTicket?.correo || '').trim();
+    if (!targetEmail) {
+      return res.status(400).json({ ok: false, error: 'Falta correo electrónico destinatario' });
+    }
+
+    const ticketVal = String(req.body.ticket || localTicket?.ticket || '').trim() || 'S/N';
+    const resolvedRfc = String(req.body.rfc || req.body.receiverRfc || localTicket?.rfc || '').trim();
+    let resolvedUuid = localTicket?.uuid || req.body.uuid || cfdiId;
+    let resolvedTotal = req.body.total || localTicket?.total || '0.00';
+    let resolvedFecha = req.body.fecha || req.body.date || (localTicket?.fecha_pago ? new Date(localTicket.fecha_pago).toISOString() : new Date().toISOString());
+
+    if (localTicket && localTicket.xml_content) {
+      console.log('>>> Generando PDF y XML para envío de correo desde MySQL...');
+      xmlBase64 = Buffer.from(localTicket.xml_content, 'utf8').toString('base64');
+      const pdfBuffer = await generateCfdiPdf(localTicket.xml_content);
+      pdfBase64 = pdfBuffer.toString('base64');
+      resolvedUuid = localTicket.uuid || resolvedUuid;
+      resolvedTotal = localTicket.total || resolvedTotal;
+    } else {
+      // 2. FALLBACK: Descargar de Facturama si el registro no tenía XML local
+      console.log('>>> Ticket no encontrado en MySQL con XML, usando Facturama como fallback para correo...');
+      const authHeader = getAuthHeader();
+      if (!authHeader) return res.status(500).json({ ok: false, error: 'Faltan credenciales de Facturama' });
+
+      const baseUrl = getBaseUrl();
+      const [fetchedPdf, fetchedXml] = await Promise.all([
+        fetchFromFacturama(`${baseUrl}/cfdi/pdf/issuedLite/${cfdiId}`, authHeader),
+        fetchFromFacturama(`${baseUrl}/cfdi/xml/issuedLite/${cfdiId}`, authHeader)
+      ]);
+
+      pdfBase64 = fetchedPdf;
+      xmlBase64 = fetchedXml;
+    }
 
     if (!pdfBase64 || !xmlBase64) {
-      throw new Error('No se pudieron recuperar los archivos PDF/XML de Facturama');
+      throw new Error('No se pudieron recuperar los archivos PDF/XML para el envío');
     }
 
     await sendInvoiceEmail({
-      to: email,
-      subject: `Factura Puerto Copy - Ticket ${ticket || 'S/N'}`,
+      to: targetEmail,
+      subject: `Factura Puerto Copy - Ticket ${ticketVal}`,
       pdfBase64,
       xmlBase64,
       issuerRfc: process.env.FACTURAMA_ISSUER_RFC || 'PARI980727RWA',
-      total: String(total || '0.00'),
-      uuid: uuid || cfdiId,
-      receiverRfc: rfc,
-      date: fecha,
-      ticket: ticket,
+      total: String(resolvedTotal || '0.00'),
+      uuid: resolvedUuid,
+      receiverRfc: resolvedRfc,
+      date: resolvedFecha,
+      ticket: ticketVal,
       context: 'resend'
     });
 
-    return res.status(200).json({ ok: true, message: 'Correo enviado con éxito' });
+    return res.status(200).json({ ok: true, emailSent: true, message: 'Correo enviado con éxito' });
   } catch (error: any) {
-    console.error('>>> Error en reenvío:', error.message);
-    return res.status(500).json({ ok: false, error: error.message });
+    console.error('>>> Error en reenvío de correo:', error?.message || error);
+    return res.status(500).json({ ok: false, emailSent: false, error: error?.message || 'Error al enviar correo' });
   }
 }
